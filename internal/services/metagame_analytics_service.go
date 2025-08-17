@@ -87,7 +87,7 @@ func (mas *MetagameAnalyticsService) AnalyzeChampionMeta(days int) ([]models.Cha
 		if champ.GamesPlayed > 0 {
 			champ.WinRate = float64(champ.Wins) / float64(champ.GamesPlayed) * 100
 		}
-		
+
 		// Calculer un score de performance
 		champ.TierScore = mas.calculateTierScore(champ)
 		champ.TrendDirection = mas.calculateTrend(champ.ChampionName, days)
@@ -255,17 +255,17 @@ func (mas *MetagameAnalyticsService) GetMetagameStats() (*models.MetagameStats, 
 func (mas *MetagameAnalyticsService) calculateTierScore(champ models.ChampionMetrics) float64 {
 	// Formule simple: (winrate * 0.4) + (games_played_weight * 0.3) + (kda_weight * 0.3)
 	winrateScore := champ.WinRate / 100 * 40
-	
+
 	gamesWeight := float64(champ.GamesPlayed) / 100 * 30
 	if gamesWeight > 30 {
 		gamesWeight = 30
 	}
-	
+
 	kdaWeight := champ.AvgKDA / 3 * 30
 	if kdaWeight > 30 {
 		kdaWeight = 30
 	}
-	
+
 	return winrateScore + gamesWeight + kdaWeight
 }
 
@@ -277,7 +277,7 @@ func (mas *MetagameAnalyticsService) calculateTrend(championName string, days in
 		FROM matches 
 		WHERE champion_name = ? AND created_at >= datetime('now', '-3 days')
 	`
-	
+
 	previousQuery := `
 		SELECT AVG(CASE WHEN result = 'Victory' THEN 1.0 ELSE 0.0 END) * 100
 		FROM matches 
@@ -285,22 +285,22 @@ func (mas *MetagameAnalyticsService) calculateTrend(championName string, days in
 		AND created_at >= datetime('now', '-6 days') 
 		AND created_at < datetime('now', '-3 days')
 	`
-	
+
 	var recentWinrate, previousWinrate float64
-	
+
 	err1 := mas.db.QueryRow(recentQuery, championName).Scan(&recentWinrate)
 	err2 := mas.db.QueryRow(previousQuery, championName).Scan(&previousWinrate)
-	
+
 	if err1 != nil || err2 != nil {
 		return "stable"
 	}
-	
+
 	diff := recentWinrate - previousWinrate
 	if diff > 3 {
 		return "rising"
 	} else if diff < -3 {
 		return "falling"
 	}
-	
+
 	return "stable"
 }
