@@ -1,22 +1,22 @@
 services:
+  # Backend Go API
   lol-exporter:
     build:
       context: .
-      dockerfile: Dockerfile.backend
-      target: production
+      dockerfile: Dockerfile.backend.simple
     container_name: lol-exporter-production
     restart: unless-stopped
     environment:
       - GIN_MODE=release
       - LOG_LEVEL=info
-      - CORS_ORIGINS=https://herald.lol
+      - CORS_ORIGINS=https://herald.lol,http://herald.lol
       - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
       - DB_CONNECTION=sqlite:///app/data/lol_matches_production.db
       - WEBHOOK_TIMEOUT=30s
       - MAX_REQUEST_SIZE=10MB
       - REQUEST_TIMEOUT=30s
-    ports:
-      - "8080:8000"
+    expose:
+      - "8000"
     networks:
       - lol-production
     volumes:
@@ -38,6 +38,22 @@ services:
       retries: 3
       start_period: 60s
 
+  # Frontend React
+  lol-frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_BASE=http://herald.lol
+    container_name: lol-frontend-production
+    restart: unless-stopped
+    expose:
+      - "80"
+    networks:
+      - lol-production
+    depends_on:
+      - lol-exporter
+
   nginx:
     image: nginx:alpine
     container_name: lol-nginx-proxy
@@ -45,13 +61,74 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./logs/nginx:/var/log/nginx
     networks:
       - lol-production
     depends_on:
       - lol-exporter
+      - lol-frontend
+    volumes:
+      - ./logs/nginx:/var/log/nginx
+    command: |
+      sh -c '
+      cat > /etc/nginx/nginx.conf << "EOF"
+      events {
+          worker_connections 1024;
+      }
+      http {
+          include /etc/nginx/mime.types;
+          default_type application/octet-stream;
+          
+          upstream backend {
+              server lol-exporter-production:8000;
+          }
+          upstream frontend {
+              server lol-frontend-production:80;
+          }
+          
+          server {
+              listen 80;
+              server_name herald.lol www.herald.lol;
+              
+              # API routes vers backend Go
+              location /api/ {
+                  proxy_pass http://backend;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $$scheme;
+                  
+                  # CORS headers
+                  add_header Access-Control-Allow-Origin "*" always;
+                  add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+                  add_header Access-Control-Allow-Headers "Origin, Content-Type, Authorization, X-Requested-With" always;
+                  
+                  if ($$request_method = OPTIONS) {
+                      return 204;
+                  }
+              }
+              
+              # Tout le reste vers frontend React
+              location / {
+                  proxy_pass http://frontend;
+                  proxy_set_header Host $$host;
+                  proxy_set_header X-Real-IP $$remote_addr;
+                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $$scheme;
+                  
+                  # Headers pour SPA
+                  proxy_intercept_errors on;
+                  error_page 404 = @fallback;
+              }
+              
+              # Fallback pour React Router
+              location @fallback {
+                  proxy_pass http://frontend/;
+              }
+          }
+      }
+      EOF
+      nginx -g "daemon off;"
+      '
 
 networks:
   lol-production:
