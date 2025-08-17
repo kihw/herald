@@ -24,7 +24,7 @@ import {
 import {
   BugReport,
   Send,
-  Copy,
+  ContentCopy,
   ExpandMore,
   Close,
   CheckCircle,
@@ -238,7 +238,7 @@ Navigateur: ${browserInfo}
             <Box>
               <Tooltip title="Copier les détails de l'erreur">
                 <IconButton onClick={handleCopyError} size="small">
-                  <Copy />
+                  <ContentCopy />
                 </IconButton>
               </Tooltip>
               <Button
