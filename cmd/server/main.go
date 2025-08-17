@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -163,28 +164,56 @@ func main() {
 		api.PUT("/settings", dashboardHandler.UpdateSettings)
 	}
 
-	// Serve static files (JS, CSS, etc.)
-	r.Static("/assets", "./web/dist/assets")
-	
-	// Serve favicon
-	r.GET("/favicon.svg", func(c *gin.Context) {
-		c.File("./web/dist/favicon.svg")
-	})
-	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.File("./web/dist/favicon.svg")
-	})
-	
-	// Serve React app on root
-	r.GET("/", func(c *gin.Context) {
-		c.File("./web/dist/index.html")
-	})
+	// Check if web files exist (for integrated mode)
+	webDistExists := false
+	if _, err := os.Stat("./web/dist/index.html"); err == nil {
+		webDistExists = true
+		log.Println("🌐 Web files detected - serving integrated frontend")
+		
+		// Serve static files (JS, CSS, etc.)
+		r.Static("/assets", "./web/dist/assets")
+		
+		// Serve favicon
+		r.GET("/favicon.svg", func(c *gin.Context) {
+			c.File("./web/dist/favicon.svg")
+		})
+		r.GET("/favicon.ico", func(c *gin.Context) {
+			c.File("./web/dist/favicon.svg")
+		})
+		
+		// Serve React app on root
+		r.GET("/", func(c *gin.Context) {
+			c.File("./web/dist/index.html")
+		})
+	} else {
+		log.Println("🔧 API-only mode - frontend served separately")
+		
+		// Simple status page for API-only mode
+		r.GET("/", func(c *gin.Context) {
+			c.JSON(http.StatusOK, gin.H{
+				"service": "Herald LoL Analytics API",
+				"status":  "running",
+				"mode":    "api-only",
+				"version": "1.0.0",
+				"endpoints": gin.H{
+					"health": "/api/health",
+					"docs":   "/api/docs",
+				},
+			})
+		})
+	}
 
 	// Fallback for SPA (serve React app for any non-API routes)
 	r.NoRoute(func(c *gin.Context) {
 		if len(c.Request.URL.Path) >= 4 && c.Request.URL.Path[:4] == "/api" {
 			c.JSON(404, gin.H{"error": "API endpoint not found"})
-		} else {
+		} else if webDistExists {
 			c.File("./web/dist/index.html")
+		} else {
+			c.JSON(404, gin.H{
+				"error": "Not found",
+				"note":  "This is an API-only backend. Frontend is served separately.",
+			})
 		}
 	})
 
