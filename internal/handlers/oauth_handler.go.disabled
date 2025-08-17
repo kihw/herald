@@ -1,0 +1,319 @@
+package handlers
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"sync"
+	"time"
+
+	"lol-match-exporter/internal/auth"
+	"lol-match-exporter/internal/models"
+	"lol-match-exporter/internal/services"
+
+	"github.com/gin-gonic/gin"
+)
+
+// Temporary in-memory storage for OAuth states (use Redis in production)
+var (
+	oauthStates      = make(map[string]string)
+	oauthStatesMutex sync.RWMutex
+)
+
+type OAuthHandler struct {
+	authService  *auth.AuthService
+	userService  *services.UserService
+	oauthService *services.RiotOAuthService
+	syncService  *services.SyncService
+	demoService  *services.DemoService
+}
+
+func NewOAuthHandler(authService *auth.AuthService, userService *services.UserService, 
+	oauthService *services.RiotOAuthService, syncService *services.SyncService, demoService *services.DemoService) *OAuthHandler {
+	return &OAuthHandler{
+		authService:  authService,
+		userService:  userService,
+		oauthService: oauthService,
+		syncService:  syncService,
+		demoService:  demoService,
+	}
+}
+
+// InitOAuth initiates the OAuth flow
+func (h *OAuthHandler) InitOAuth(c *gin.Context) {
+	var req models.OAuthInitRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format"})
+		return
+	}
+
+	// Generate secure state parameter
+	state, err := h.oauthService.GenerateState()
+	if err != nil {
+		log.Printf("Failed to generate OAuth state: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize OAuth flow"})
+		return
+	}
+
+	// Store state temporarily (in production, use Redis or database)
+	// For now, we'll store it in memory - this is not production-ready
+	oauthStates[state] = req.RedirectURI
+
+	// Get authorization URL
+	authURL := h.oauthService.GetAuthURL(state)
+
+	c.JSON(http.StatusOK, models.OAuthInitResponse{
+		AuthURL: authURL,
+		State:   state,
+	})
+}
+
+// HandleCallback handles the OAuth callback from Riot
+func (h *OAuthHandler) HandleCallback(c *gin.Context) {
+	var req models.OAuthCallbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid callback data"})
+		return
+	}
+
+	// Verify state parameter
+	oauthStatesMutex.RLock()
+	storedRedirectURI, exists := oauthStates[req.State]
+	oauthStatesMutex.RUnlock()
+	
+	if !exists {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid state parameter"})
+		return
+	}
+
+	// Exchange code for token
+	tokenData, err := h.oauthService.ExchangeCodeForToken(req.Code)
+	if err != nil {
+		log.Printf("Failed to exchange OAuth code for token: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete OAuth flow"})
+		return
+	}
+
+	// Get user information
+	userInfo, err := h.oauthService.GetUserInfo(tokenData.AccessToken)
+	if err != nil {
+		log.Printf("Failed to get user info from OAuth: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve user information"})
+		return
+	}
+
+	// Determine user's region (default to EUW1, can be changed later)
+	region := "euw1"
+	if os.Getenv("DEFAULT_REGION") != "" {
+		region = os.Getenv("DEFAULT_REGION")
+	}
+
+	// Create or update user
+	user, err := h.userService.CreateOrUpdateUserFromOAuth(userInfo, tokenData, region)
+	if err != nil {
+		log.Printf("Failed to create/update user from OAuth: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user account"})
+		return
+	}
+
+	// Generate our application's JWT token
+	appToken, refreshToken, err := h.authService.GenerateTokens(user.ID)
+	if err != nil {
+		log.Printf("Failed to generate application tokens: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to complete authentication"})
+		return
+	}
+
+	// Clean up OAuth state from memory
+	oauthStatesMutex.Lock()
+	delete(oauthStates, req.State)
+	oauthStatesMutex.Unlock()
+	
+	log.Printf("User authenticated successfully: %s#%s (PUUID: %s)", user.RiotID, user.RiotTag, user.RiotPUUID)
+
+	c.JSON(http.StatusOK, models.AuthResponse{
+		User:         *user,
+		AccessToken:  appToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    3600, // 1 hour
+	})
+}
+
+// Logout handles user logout
+func (h *OAuthHandler) Logout(c *gin.Context) {
+	// For now, just return success
+	// In production, invalidate tokens in database/Redis
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}
+
+// Profile returns the current user's profile
+func (h *OAuthHandler) Profile(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	user, err := h.userService.GetUserByID(userID.(int))
+	if err != nil {
+		log.Printf("Failed to get user profile: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve profile"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
+// Dashboard returns dashboard statistics for the user
+func (h *OAuthHandler) Dashboard(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	stats, err := h.userService.GetDashboardStats(userID.(int))
+	if err != nil {
+		log.Printf("Failed to get dashboard stats: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve dashboard data"})
+		return
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// Sync performs match synchronization for the user
+func (h *OAuthHandler) Sync(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	var syncReq models.SyncRequest
+	if err := c.ShouldBindJSON(&syncReq); err != nil {
+		// If no body provided, use default values
+		syncReq.Force = false
+	}
+
+	// Check cooldown unless force sync
+	if !syncReq.Force {
+		canSync, cooldown, err := h.userService.CanUserSync(userID.(int), 5) // 5 minute cooldown
+		if err != nil {
+			log.Printf("Failed to check sync cooldown: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check sync status"})
+			return
+		}
+
+		if !canSync {
+			c.JSON(http.StatusTooManyRequests, gin.H{
+				"error":    "Sync cooldown active",
+				"cooldown": fmt.Sprintf("%.0f seconds", cooldown.Seconds()),
+			})
+			return
+		}
+	}
+
+	// Get user for sync
+	user, err := h.userService.GetUserByID(userID.(int))
+	if err != nil {
+		log.Printf("Failed to get user for sync: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user data"})
+		return
+	}
+
+	// Start sync job
+	err = h.syncService.SyncUserMatches(user.ID, user.RiotID, user.RiotTag)
+	if err != nil {
+		log.Printf("Failed to start sync job: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to start synchronization"})
+		return
+	}
+
+	c.JSON(http.StatusOK, models.SyncResponse{
+		JobID:   0, // TODO: Return actual job ID from sync service
+		Status:  "completed",
+		Message: "Match synchronization completed successfully",
+	})
+}
+
+// SyncDemo performs demo data synchronization
+func (h *OAuthHandler) SyncDemo(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	log.Printf("🎮 Starting demo sync for user ID: %d", userID.(int))
+
+	// Get user for demo sync
+	user, err := h.userService.GetUserByID(userID.(int))
+	if err != nil {
+		log.Printf("❌ Failed to get user for demo sync: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user data"})
+		return
+	}
+
+	log.Printf("✅ User found: %s#%s", user.RiotID, user.RiotTag)
+
+	// Generate demo matches
+	err = h.demoService.GenerateDemoMatches(user.ID, user.RiotID, user.RiotTag)
+	if err != nil {
+		log.Printf("❌ Failed to generate demo matches: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate demo data"})
+		return
+	}
+
+	log.Printf("✅ Demo sync completed successfully")
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Demo synchronization completed successfully",
+		"status":  "completed",
+	})
+}
+
+// GetSettings retrieves user settings
+func (h *OAuthHandler) GetSettings(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	settings, err := h.userService.GetUserSettings(userID.(int))
+	if err != nil {
+		log.Printf("Failed to get user settings: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, settings)
+}
+
+// UpdateSettings updates user settings
+func (h *OAuthHandler) UpdateSettings(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Not authenticated"})
+		return
+	}
+
+	var settings models.UserSettings
+	if err := c.ShouldBindJSON(&settings); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid settings data"})
+		return
+	}
+
+	settings.UserID = userID.(int)
+	settings.UpdatedAt = time.Now()
+
+	if err := h.userService.UpdateUserSettings(&settings); err != nil {
+		log.Printf("Failed to update user settings: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Settings updated successfully"})
+}

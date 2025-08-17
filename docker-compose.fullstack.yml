@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+  lol-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.fullstack
+      target: production
+    container_name: lol-fullstack-app
+    restart: unless-stopped
+    environment:
+      - GIN_MODE=release
+      - LOG_LEVEL=info
+      - CORS_ORIGINS=https://herald.lol,http://herald.lol
+      - JWT_SECRET=${JWT_SECRET:-dev-secret-change-in-production}
+      - DB_CONNECTION=sqlite:///app/data/lol_matches_production.db
+    ports:
+      - "80:80"
+      - "8000:8000"
+    networks:
+      - lol-fullstack
+    volumes:
+      - ./data:/app/data
+      - ./exports:/app/exports
+      - ./logs:/var/log/nginx
+    deploy:
+      resources:
+        limits:
+          memory: 1GB
+          cpus: "2.0"
+        reservations:
+          memory: 512M
+          cpus: "1.0"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  lol-fullstack:
+    driver: bridge
+
+volumes:
+  fullstack-data:
+    driver: local
+  fullstack-exports:
+    driver: local
+  fullstack-logs:
+    driver: local

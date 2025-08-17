@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+  lol-exporter-debug:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    container_name: lol-exporter-debug
+    ports:
+      - "8080:8080"
+      - "8000:8000" # Port alternatif
+    environment:
+      - GIN_MODE=debug
+      - PORT=8080
+      - LOG_LEVEL=debug
+    volumes:
+      - ./data:/app/data
+      - ./exports:/app/exports
+      - ./logs:/app/logs
+    restart: unless-stopped
+    healthcheck:
+      test:
+        ["CMD-SHELL", "wget -q --spider http://localhost:8080/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - lol-debug
+
+networks:
+  lol-debug:
+    driver: bridge

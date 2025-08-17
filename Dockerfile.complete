@@ -1,0 +1,65 @@
+# Multi-stage build for fullstack application
+FROM node:18-alpine AS frontend-builder
+
+# Build frontend
+WORKDIR /app/web
+COPY web/package*.json ./
+RUN npm ci --only=production
+COPY web/ ./
+RUN npm run build
+
+# Backend builder stage
+FROM golang:1.23-alpine AS backend-builder
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source files
+COPY main.go ./
+COPY cmd/real-server/ cmd/real-server/
+COPY internal/ internal/
+
+# Build the application
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server main.go
+
+# Production stage with Nginx
+FROM nginx:alpine AS production
+
+# Install runtime dependencies
+RUN apk --no-cache add ca-certificates curl
+
+# Copy custom nginx configuration
+COPY nginx/nginx-fullstack.conf /etc/nginx/nginx.conf
+
+# Copy frontend files
+COPY --from=frontend-builder /app/web/dist /usr/share/nginx/html
+
+# Copy backend binary
+COPY --from=backend-builder /app/server /usr/local/bin/server
+
+# Create directories and set permissions
+RUN mkdir -p /app/data /app/logs /app/exports && \
+    chmod +x /usr/local/bin/server
+
+# Copy startup script
+COPY scripts/start-fullstack.sh /start.sh
+RUN chmod +x /start.sh
+
+# Expose ports
+EXPOSE 80
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost/api/health || exit 1
+
+# Start both nginx and backend
+CMD ["/start.sh"]

@@ -1,0 +1,56 @@
+# Debug Dockerfile for LoL Match Exporter Phase 2 Server
+FROM golang:1.23-alpine AS debug
+
+# Install debugging tools and dependencies
+RUN apk add --no-cache git curl bash wget netcat-openbsd
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files first for better layer caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download && go mod verify
+
+# Copy source code
+COPY . .
+
+# Build Phase 2 server with debug symbols
+RUN go build -gcflags="all=-N -l" -o phase2-server-debug ./cmd/phase2-server
+
+# Expose application port
+EXPOSE 8080
+
+# Set default command
+CMD ["./phase2-server-debug"]
+
+# Production target for Phase 2 server
+FROM golang:1.23-alpine AS production
+
+RUN apk add --no-cache ca-certificates curl wget
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+# Build optimized Phase 2 server binary
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o phase2-server ./cmd/phase2-server
+
+# Create non-root user
+RUN adduser -D -s /bin/sh app && chown -R app:app /app
+
+# Create directories
+RUN mkdir -p /app/data /app/exports /app/logs && chown -R app:app /app
+
+USER app
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:8080/health || wget -q --spider http://localhost:8080/health || exit 1
+
+CMD ["./phase2-server"]

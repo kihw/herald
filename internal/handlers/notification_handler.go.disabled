@@ -1,0 +1,296 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"lol-match-exporter/internal/services"
+)
+
+// NotificationHandler handles notification-related HTTP requests
+type NotificationHandler struct {
+	notificationService *services.NotificationService
+}
+
+// NewNotificationHandler creates a new notification handler
+func NewNotificationHandler(notificationService *services.NotificationService) *NotificationHandler {
+	return &NotificationHandler{
+		notificationService: notificationService,
+	}
+}
+
+// GetInsightsRequest represents the request for getting insights
+type GetInsightsRequest struct {
+	Limit      int  `form:"limit"`
+	OnlyUnread bool `form:"only_unread"`
+}
+
+// MarkAsReadRequest represents the request for marking insights as read
+type MarkAsReadRequest struct {
+	InsightIDs []int `json:"insight_ids"`
+}
+
+// GetUserInsights retrieves insights for the authenticated user
+// @Summary Get user insights
+// @Description Retrieve real-time insights and notifications for the authenticated user
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Param limit query int false "Maximum number of insights to return"
+// @Param only_unread query bool false "Only return unread insights"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/notifications/insights [get]
+func (nh *NotificationHandler) GetUserInsights(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req GetInsightsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set default limit if not provided
+	if req.Limit == 0 {
+		req.Limit = 20
+	}
+
+	insights, err := nh.notificationService.GetUserInsights(userID.(int), req.Limit, req.OnlyUnread)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve insights"})
+		return
+	}
+
+	// Count unread insights
+	unreadCount := 0
+	for _, insight := range insights {
+		if !insight.IsRead {
+			unreadCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"insights":     insights,
+		"total":        len(insights),
+		"unread_count": unreadCount,
+	})
+}
+
+// MarkInsightsAsRead marks specified insights as read
+// @Summary Mark insights as read
+// @Description Mark one or more insights as read for the authenticated user
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Param request body MarkAsReadRequest true "Insight IDs to mark as read"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/notifications/insights/read [post]
+func (nh *NotificationHandler) MarkInsightsAsRead(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req MarkAsReadRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if len(req.InsightIDs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No insight IDs provided"})
+		return
+	}
+
+	err := nh.notificationService.MarkAsRead(userID.(int), req.InsightIDs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to mark insights as read"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Insights marked as read",
+		"count":   len(req.InsightIDs),
+	})
+}
+
+// StreamInsights provides real-time insight notifications via Server-Sent Events
+// @Summary Stream real-time insights
+// @Description Get real-time insight notifications via Server-Sent Events
+// @Tags notifications
+// @Produce text/event-stream
+// @Success 200 {string} string "text/event-stream"
+// @Failure 401 {object} map[string]interface{}
+// @Router /api/notifications/stream [get]
+func (nh *NotificationHandler) StreamInsights(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	// Set headers for Server-Sent Events
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+	c.Header("Access-Control-Allow-Origin", "*")
+
+	// Subscribe to insights for this user
+	insightChannel := nh.notificationService.Subscribe(userID.(int))
+	defer nh.notificationService.Unsubscribe(userID.(int), insightChannel)
+
+	// Send initial connection confirmation
+	c.SSEvent("connected", gin.H{
+		"user_id":   userID,
+		"timestamp": time.Now(),
+	})
+	c.Writer.Flush()
+
+	// Keep connection alive and send insights
+	clientGone := c.Writer.CloseNotify()
+	
+	for {
+		select {
+		case insight := <-insightChannel:
+			// Send insight as SSE
+			c.SSEvent("insight", insight)
+			c.Writer.Flush()
+			
+		case <-clientGone:
+			// Client disconnected
+			return
+			
+		case <-time.After(30 * time.Second):
+			// Send heartbeat to keep connection alive
+			c.SSEvent("heartbeat", gin.H{"timestamp": time.Now()})
+			c.Writer.Flush()
+		}
+	}
+}
+
+// GetInsightStats provides statistics about user insights
+// @Summary Get insight statistics
+// @Description Get statistics about insights for the authenticated user
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/notifications/stats [get]
+func (nh *NotificationHandler) GetInsightStats(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	// Get all insights for statistics
+	allInsights, err := nh.notificationService.GetUserInsights(userID.(int), 0, false)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve insight statistics"})
+		return
+	}
+
+	// Calculate statistics
+	stats := map[string]interface{}{
+		"total_insights": len(allInsights),
+		"unread_count":   0,
+		"by_type":        make(map[string]int),
+		"by_level":       make(map[string]int),
+		"recent_count":   0, // Last 24 hours
+	}
+
+	recentThreshold := time.Now().Add(-24 * time.Hour)
+
+	for _, insight := range allInsights {
+		if !insight.IsRead {
+			stats["unread_count"] = stats["unread_count"].(int) + 1
+		}
+
+		// Count by type
+		typeCount, _ := stats["by_type"].(map[string]int)
+		typeCount[string(insight.Type)]++
+		stats["by_type"] = typeCount
+
+		// Count by level
+		levelCount, _ := stats["by_level"].(map[string]int)
+		levelCount[string(insight.Level)]++
+		stats["by_level"] = levelCount
+
+		// Count recent insights
+		if insight.CreatedAt.After(recentThreshold) {
+			stats["recent_count"] = stats["recent_count"].(int) + 1
+		}
+	}
+
+	c.JSON(http.StatusOK, stats)
+}
+
+// CreateTestInsight creates a test insight (for development/testing)
+// @Summary Create test insight
+// @Description Create a test insight for development and testing purposes
+// @Tags notifications
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/notifications/test [post]
+func (nh *NotificationHandler) CreateTestInsight(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	testInsight := services.Insight{
+		UserID:  userID.(int),
+		Type:    services.PerformanceInsight,
+		Level:   services.LevelInfo,
+		Title:   "🧪 Test Insight",
+		Message: "This is a test insight to verify the notification system is working correctly.",
+		Data: map[string]interface{}{
+			"test": true,
+			"timestamp": time.Now(),
+		},
+		ActionURL: "/analytics/dashboard",
+	}
+
+	err := nh.notificationService.CreateInsight(testInsight)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create test insight"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Test insight created successfully",
+		"insight": testInsight,
+	})
+}
+
+// RegisterNotificationRoutes registers notification-related routes
+func RegisterNotificationRoutes(router *gin.RouterGroup, handler *NotificationHandler) {
+	notifications := router.Group("/notifications")
+	{
+		notifications.GET("/insights", handler.GetUserInsights)
+		notifications.POST("/insights/read", handler.MarkInsightsAsRead)
+		notifications.GET("/stream", handler.StreamInsights)
+		notifications.GET("/stats", handler.GetInsightStats)
+		
+		// Development/testing endpoints
+		notifications.POST("/test", handler.CreateTestInsight)
+	}
+}

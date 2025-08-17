@@ -1,0 +1,548 @@
+package handlers
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"lol-match-exporter/internal/services"
+)
+
+// FeedbackHandler handles feedback-related HTTP requests
+type FeedbackHandler struct {
+	feedbackService *services.FeedbackService
+}
+
+// NewFeedbackHandler creates a new feedback handler
+func NewFeedbackHandler(feedbackService *services.FeedbackService) *FeedbackHandler {
+	return &FeedbackHandler{
+		feedbackService: feedbackService,
+	}
+}
+
+// SubmitFeedbackRequest represents the request for submitting feedback
+type SubmitFeedbackRequest struct {
+	Type             string                 `json:"type" binding:"required"`
+	RelatedID        *int                   `json:"related_id,omitempty"`
+	Rating           int                    `json:"rating" binding:"required,min=1,max=5"`
+	IsHelpful        bool                   `json:"is_helpful"`
+	IsAccurate       bool                   `json:"is_accurate"`
+	IsActionable     bool                   `json:"is_actionable"`
+	Comment          string                 `json:"comment,omitempty"`
+	FollowedAdvice   bool                   `json:"followed_advice"`
+	PerceivedImpact  *int                   `json:"perceived_impact,omitempty"`
+	Tags             []string               `json:"tags,omitempty"`
+	Metadata         map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// GetFeedbackRequest represents the request for getting feedback
+type GetFeedbackRequest struct {
+	Limit int    `form:"limit"`
+	Type  string `form:"type"`
+}
+
+// GetAnalyticsRequest represents the request for feedback analytics
+type GetAnalyticsRequest struct {
+	Timeframe string `form:"timeframe"`
+	UserOnly  bool   `form:"user_only"`
+}
+
+// SubmitFeedback submits user feedback
+// @Summary Submit user feedback
+// @Description Submit feedback on recommendations, insights, or general experience
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param request body SubmitFeedbackRequest true "Feedback data"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/feedback [post]
+func (fh *FeedbackHandler) SubmitFeedback(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req SubmitFeedbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Convert request to feedback struct
+	feedback := services.UserFeedback{
+		UserID:          userID.(int),
+		Type:            services.FeedbackType(req.Type),
+		RelatedID:       req.RelatedID,
+		Rating:          services.FeedbackRating(req.Rating),
+		IsHelpful:       req.IsHelpful,
+		IsAccurate:      req.IsAccurate,
+		IsActionable:    req.IsActionable,
+		Comment:         req.Comment,
+		FollowedAdvice:  req.FollowedAdvice,
+		PerceivedImpact: req.PerceivedImpact,
+		Tags:            req.Tags,
+		Metadata:        req.Metadata,
+	}
+
+	// Submit feedback
+	submittedFeedback, err := fh.feedbackService.SubmitFeedback(feedback)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to submit feedback"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":  true,
+		"message":  "Feedback submitted successfully",
+		"feedback": submittedFeedback,
+	})
+}
+
+// GetUserFeedback retrieves feedback for the authenticated user
+// @Summary Get user feedback
+// @Description Retrieve feedback submitted by the authenticated user
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param limit query int false "Maximum number of feedback items to return"
+// @Param type query string false "Filter by feedback type"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/feedback [get]
+func (fh *FeedbackHandler) GetUserFeedback(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req GetFeedbackRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set default limit
+	if req.Limit == 0 {
+		req.Limit = 50
+	}
+
+	// Convert type filter
+	var feedbackType *services.FeedbackType
+	if req.Type != "" {
+		ft := services.FeedbackType(req.Type)
+		feedbackType = &ft
+	}
+
+	// Get user feedback
+	feedbacks, err := fh.feedbackService.GetUserFeedback(userID.(int), req.Limit, feedbackType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve feedback"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"feedbacks": feedbacks,
+		"total":     len(feedbacks),
+	})
+}
+
+// GetFeedbackAnalytics provides feedback analytics
+// @Summary Get feedback analytics
+// @Description Get comprehensive analytics on user feedback
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param timeframe query string false "Time period for analytics (day, week, month, quarter, year)"
+// @Param user_only query bool false "Include only current user's feedback"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/feedback/analytics [get]
+func (fh *FeedbackHandler) GetFeedbackAnalytics(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	var req GetAnalyticsRequest
+	if err := c.ShouldBindQuery(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Set default timeframe
+	if req.Timeframe == "" {
+		req.Timeframe = "month"
+	}
+
+	// Determine if we should filter by user
+	var filterUserID *int
+	if req.UserOnly {
+		uid := userID.(int)
+		filterUserID = &uid
+	}
+
+	// Get analytics
+	analytics, err := fh.feedbackService.GetFeedbackAnalytics(filterUserID, req.Timeframe)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get feedback analytics"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"analytics": analytics,
+		"timeframe": req.Timeframe,
+		"user_only": req.UserOnly,
+	})
+}
+
+// GetFeedbackQuestions provides a list of feedback questions for different contexts
+// @Summary Get feedback questions
+// @Description Get context-appropriate feedback questions
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param context query string true "Feedback context (recommendation, insight, performance, general)"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Router /api/feedback/questions [get]
+func (fh *FeedbackHandler) GetFeedbackQuestions(c *gin.Context) {
+	context := c.Query("context")
+	if context == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Context parameter is required"})
+		return
+	}
+
+	questions := fh.getFeedbackQuestions(context)
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"context":   context,
+		"questions": questions,
+	})
+}
+
+// GetFeedbackSuggestions provides smart feedback suggestions based on user behavior
+// @Summary Get feedback suggestions
+// @Description Get smart suggestions for feedback prompts
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Router /api/feedback/suggestions [get]
+func (fh *FeedbackHandler) GetFeedbackSuggestions(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	suggestions := fh.generateFeedbackSuggestions(userID.(int))
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     true,
+		"suggestions": suggestions,
+	})
+}
+
+// UpdateFeedback updates existing feedback
+// @Summary Update feedback
+// @Description Update previously submitted feedback
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param id path int true "Feedback ID"
+// @Param request body SubmitFeedbackRequest true "Updated feedback data"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /api/feedback/{id} [put]
+func (fh *FeedbackHandler) UpdateFeedback(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	feedbackID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback ID"})
+		return
+	}
+
+	var req SubmitFeedbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// For now, return not implemented
+	// In a full implementation, this would:
+	// 1. Verify the feedback belongs to the user
+	// 2. Update the feedback in database
+	// 3. Reprocess for learning if significantly changed
+
+	c.JSON(http.StatusNotImplemented, gin.H{
+		"error": "Feedback updates not yet implemented",
+	})
+}
+
+// DeleteFeedback deletes feedback
+// @Summary Delete feedback
+// @Description Delete previously submitted feedback
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param id path int true "Feedback ID"
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Router /api/feedback/{id} [delete]
+func (fh *FeedbackHandler) DeleteFeedback(c *gin.Context) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+		return
+	}
+
+	feedbackID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid feedback ID"})
+		return
+	}
+
+	// For now, return not implemented
+	// In a full implementation, this would:
+	// 1. Verify the feedback belongs to the user
+	// 2. Soft delete the feedback (mark as deleted)
+	// 3. Update learning models to exclude this feedback
+
+	c.JSON(http.StatusNotImplemented, gin.H{
+		"error": "Feedback deletion not yet implemented",
+		"feedback_id": feedbackID,
+		"user_id": userID,
+	})
+}
+
+// Helper methods
+
+// getFeedbackQuestions returns context-appropriate feedback questions
+func (fh *FeedbackHandler) getFeedbackQuestions(context string) map[string]interface{} {
+	questions := make(map[string]interface{})
+
+	switch context {
+	case "recommendation":
+		questions = map[string]interface{}{
+			"rating": map[string]interface{}{
+				"type":     "scale",
+				"question": "How would you rate this recommendation?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Very Poor", "Poor", "Average", "Good", "Excellent"}},
+				"required": true,
+			},
+			"helpful": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Was this recommendation helpful?",
+				"required": true,
+			},
+			"accurate": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Was this recommendation accurate for your situation?",
+				"required": true,
+			},
+			"actionable": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Was this recommendation actionable?",
+				"required": false,
+			},
+			"followed": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Did you follow this recommendation?",
+				"required": false,
+			},
+			"impact": map[string]interface{}{
+				"type":     "scale",
+				"question": "If you followed it, what impact did it have?",
+				"scale":    map[string]interface{}{"min": 1, "max": 10, "labels": []string{"No Impact", "Moderate Impact", "High Impact"}},
+				"required": false,
+				"conditional": "followed",
+			},
+			"comment": map[string]interface{}{
+				"type":        "text",
+				"question":    "Any additional comments?",
+				"placeholder": "Tell us more about your experience...",
+				"required":    false,
+			},
+		}
+
+	case "insight":
+		questions = map[string]interface{}{
+			"rating": map[string]interface{}{
+				"type":     "scale",
+				"question": "How valuable was this insight?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Not Valuable", "Slightly Valuable", "Moderately Valuable", "Very Valuable", "Extremely Valuable"}},
+				"required": true,
+			},
+			"helpful": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Did this insight help you understand your performance?",
+				"required": true,
+			},
+			"timely": map[string]interface{}{
+				"type":     "boolean",
+				"question": "Was this insight delivered at the right time?",
+				"required": false,
+			},
+			"comment": map[string]interface{}{
+				"type":        "text",
+				"question":    "How could we improve this type of insight?",
+				"placeholder": "Your suggestions for improvement...",
+				"required":    false,
+			},
+		}
+
+	case "performance":
+		questions = map[string]interface{}{
+			"rating": map[string]interface{}{
+				"type":     "scale",
+				"question": "How would you rate the overall analytics experience?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Very Poor", "Poor", "Average", "Good", "Excellent"}},
+				"required": true,
+			},
+			"accuracy": map[string]interface{}{
+				"type":     "scale",
+				"question": "How accurate do you find the performance metrics?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Very Inaccurate", "Somewhat Inaccurate", "Neutral", "Mostly Accurate", "Very Accurate"}},
+				"required": true,
+			},
+			"usefulness": map[string]interface{}{
+				"type":     "scale",
+				"question": "How useful are the analytics for improving your gameplay?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Not Useful", "Slightly Useful", "Moderately Useful", "Very Useful", "Extremely Useful"}},
+				"required": true,
+			},
+			"features": map[string]interface{}{
+				"type":     "multiselect",
+				"question": "Which features do you find most valuable?",
+				"options":  []string{"Performance Trends", "Champion Analytics", "MMR Tracking", "Recommendations", "Match History", "Real-time Insights"},
+				"required": false,
+			},
+			"improvements": map[string]interface{}{
+				"type":        "text",
+				"question":    "What improvements would you like to see?",
+				"placeholder": "Tell us what features or improvements you'd like...",
+				"required":    false,
+			},
+		}
+
+	case "general":
+		questions = map[string]interface{}{
+			"rating": map[string]interface{}{
+				"type":     "scale",
+				"question": "How would you rate your overall experience?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5, "labels": []string{"Very Poor", "Poor", "Average", "Good", "Excellent"}},
+				"required": true,
+			},
+			"recommend": map[string]interface{}{
+				"type":     "scale",
+				"question": "How likely are you to recommend this tool to other players?",
+				"scale":    map[string]interface{}{"min": 0, "max": 10, "labels": []string{"Not Likely", "Very Likely"}},
+				"required": true,
+			},
+			"frequency": map[string]interface{}{
+				"type":     "select",
+				"question": "How often do you use this application?",
+				"options":  []string{"Daily", "Several times a week", "Weekly", "Monthly", "Rarely"},
+				"required": false,
+			},
+			"comment": map[string]interface{}{
+				"type":        "text",
+				"question":    "Any other feedback?",
+				"placeholder": "Tell us anything else about your experience...",
+				"required":    false,
+			},
+		}
+
+	default:
+		questions = map[string]interface{}{
+			"rating": map[string]interface{}{
+				"type":     "scale",
+				"question": "How would you rate this?",
+				"scale":    map[string]interface{}{"min": 1, "max": 5},
+				"required": true,
+			},
+		}
+	}
+
+	return questions
+}
+
+// generateFeedbackSuggestions generates smart feedback suggestions for the user
+func (fh *FeedbackHandler) generateFeedbackSuggestions(userID int) []map[string]interface{} {
+	// In a real implementation, this would analyze:
+	// - User's recent activity
+	// - Recommendations they've received
+	// - Time since last feedback
+	// - Areas needing feedback
+
+	suggestions := []map[string]interface{}{
+		{
+			"id":       "rec_feedback_1",
+			"type":     "recommendation",
+			"title":    "Rate Recent Champion Suggestion",
+			"message":  "How did the Kai'Sa recommendation work out for you?",
+			"priority": "high",
+			"context": map[string]interface{}{
+				"related_id": 123,
+				"related_type": "recommendation",
+			},
+		},
+		{
+			"id":       "insight_feedback_1",
+			"type":     "insight",
+			"title":    "Performance Insight Feedback",
+			"message":  "Was the win streak notification helpful?",
+			"priority": "medium",
+			"context": map[string]interface{}{
+				"related_id": 456,
+				"related_type": "insight",
+			},
+		},
+		{
+			"id":       "general_feedback_1",
+			"type":     "general",
+			"title":    "Monthly Check-in",
+			"message":  "How has your experience been this month?",
+			"priority": "low",
+			"context": map[string]interface{}{
+				"timeframe": "month",
+			},
+		},
+	}
+
+	return suggestions
+}
+
+// RegisterFeedbackRoutes registers feedback-related routes
+func RegisterFeedbackRoutes(router *gin.RouterGroup, handler *FeedbackHandler) {
+	feedback := router.Group("/feedback")
+	{
+		feedback.POST("", handler.SubmitFeedback)
+		feedback.GET("", handler.GetUserFeedback)
+		feedback.GET("/analytics", handler.GetFeedbackAnalytics)
+		feedback.GET("/questions", handler.GetFeedbackQuestions)
+		feedback.GET("/suggestions", handler.GetFeedbackSuggestions)
+		feedback.PUT("/:id", handler.UpdateFeedback)
+		feedback.DELETE("/:id", handler.DeleteFeedback)
+	}
+}
