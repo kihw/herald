@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
   lol-exporter:
     build:
       context: .
-      dockerfile: Dockerfile.production
+      dockerfile: Dockerfile.backend
       target: production
     container_name: lol-exporter-production
     restart: unless-stopped
