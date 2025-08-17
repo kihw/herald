@@ -3,7 +3,7 @@ services:
   lol-exporter:
     build:
       context: .
-      dockerfile: Dockerfile.backend.simple
+      dockerfile: Dockerfile.backend
     container_name: lol-exporter-production
     restart: unless-stopped
     environment:
