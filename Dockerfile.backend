@@ -16,14 +16,14 @@ RUN go mod download
 # Copy source code
 COPY cmd/ cmd/
 COPY internal/ internal/
-COPY pkg/ pkg/
+COPY main.go .
 
 # Build the application using main.go or cmd/server
 RUN if [ -f "./main.go" ]; then \
-      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./main.go; \
-    else \
-      CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server; \
-    fi
+  CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./main.go; \
+  else \
+  CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server; \
+  fi
 
 # Production stage
 FROM alpine:latest AS production
@@ -41,11 +41,8 @@ WORKDIR /app
 # Copy binary from builder stage
 COPY --from=builder /app/server .
 
-# Copy configuration files
-COPY --chown=appuser:appgroup config/ config/
-
-# Create logs directory
-RUN mkdir -p logs && chown -R appuser:appgroup logs
+# Create necessary directories
+RUN mkdir -p logs data exports config && chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
