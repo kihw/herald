@@ -1,23 +1,5 @@
-# Multi-stage Docker build for Go backend
-FROM node:18-alpine AS web-builder
-
-# Set working directory for web build
-WORKDIR /app/web
-
-# Copy web package files
-COPY web/package*.json ./
-
-# Install web dependencies
-RUN npm ci --only=production
-
-# Copy web source
-COPY web/ ./
-
-# Build web assets
-RUN npm run build
-
-# Go builder stage
-FROM golang:1.23-alpine AS go-builder
+# Simple Docker build for Go backend (no web files)
+FROM golang:1.23-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -35,9 +17,6 @@ RUN go mod download
 COPY cmd/ cmd/
 COPY internal/ internal/
 COPY main.go .
-
-# Copy built web files from web-builder stage
-COPY --from=web-builder /app/web/dist/ web/dist/
 
 # Build the application using main.go or cmd/server
 RUN if [ -f "./main.go" ]; then \
@@ -59,14 +38,11 @@ RUN addgroup -g 1000 appgroup && \
 # Set working directory
 WORKDIR /app
 
-# Copy binary from go-builder stage
-COPY --from=go-builder /app/server .
-
-# Copy web files for static serving
-COPY --from=go-builder /app/web/dist/ web/dist/
+# Copy binary from builder stage
+COPY --from=builder /app/server .
 
 # Create necessary directories
-RUN mkdir -p logs data exports config web/dist && chown -R appuser:appgroup /app
+RUN mkdir -p logs data exports config && chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
