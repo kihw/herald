@@ -166,6 +166,14 @@ func main() {
 	// Serve static files (JS, CSS, etc.)
 	r.Static("/assets", "./web/dist/assets")
 	
+	// Serve favicon
+	r.GET("/favicon.svg", func(c *gin.Context) {
+		c.File("./web/dist/favicon.svg")
+	})
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.File("./web/dist/favicon.svg")
+	})
+	
 	// Serve React app on root
 	r.GET("/", func(c *gin.Context) {
 		c.File("./web/dist/index.html")

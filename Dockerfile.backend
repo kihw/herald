@@ -18,6 +18,9 @@ COPY cmd/ cmd/
 COPY internal/ internal/
 COPY main.go .
 
+# Copy web files for static serving
+COPY web/dist/ web/dist/
+
 # Build the application using main.go or cmd/server
 RUN if [ -f "./main.go" ]; then \
   CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./main.go; \
@@ -41,8 +44,11 @@ WORKDIR /app
 # Copy binary from builder stage
 COPY --from=builder /app/server .
 
+# Copy web files for static serving
+COPY --from=builder /app/web/dist/ web/dist/
+
 # Create necessary directories
-RUN mkdir -p logs data exports config && chown -R appuser:appgroup /app
+RUN mkdir -p logs data exports config web/dist && chown -R appuser:appgroup /app
 
 # Switch to non-root user
 USER appuser
