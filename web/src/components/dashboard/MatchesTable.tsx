@@ -26,19 +26,34 @@ import {
   FilterList,
 } from '@mui/icons-material';
 
-interface Match {
-  id: string;
-  gameMode: string;
-  championName: string;
-  result: 'WIN' | 'LOSS';
-  kda: string;
-  duration: string;
-  date: string;
-  rank?: string;
+interface MatchSummary {
+  match: {
+    id: number;
+    match_id: string;
+    platform: string;
+    game_creation: number;
+    game_duration: number;
+    game_mode: string | null;
+    game_type: string | null;
+    queue_id: number | null;
+    created_at: string;
+  };
+  participant: {
+    champion_id: number;
+    champion_name: string | null;
+    kills: number;
+    deaths: number;
+    assists: number;
+    total_damage_dealt_to_champions: number;
+    gold_earned: number;
+    total_minions_killed: number;
+    vision_score: number;
+    win: boolean;
+  };
 }
 
 interface MatchesTableProps {
-  matches: Match[];
+  matches: MatchSummary[];
   loading?: boolean;
   onSync?: () => void;
   onViewMatch?: (matchId: string) => void;
@@ -67,12 +82,40 @@ const MatchesTable: React.FC<MatchesTableProps> = ({
     setPage(value);
   };
 
-  const getResultColor = (result: string) => {
-    return result === 'WIN' ? 'success' : 'error';
+  const getResultColor = (win: boolean) => {
+    return win ? 'success' : 'error';
   };
 
-  const getChampionImage = (championName: string) => {
-    return `https://ddragon.leagueoflegends.com/cdn/14.17.1/img/champion/${championName}.png`;
+  const getChampionImage = (championName: string | null) => {
+    if (!championName) return '';
+    return `https://ddragon.leagueoflegends.com/cdn/14.21.1/img/champion/${championName}.png`;
+  };
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: '2-digit'
+    });
+  };
+
+  const formatKDA = (kills: number, deaths: number, assists: number) => {
+    return `${kills}/${deaths}/${assists}`;
+  };
+
+  const getGameMode = (queueId: number | null, gameMode: string | null) => {
+    if (queueId === 420) return 'Ranked Solo';
+    if (queueId === 440) return 'Ranked Flex';
+    if (queueId === 400) return 'Normal Draft';
+    if (queueId === 430) return 'Normal Blind';
+    if (queueId === 450) return 'ARAM';
+    return gameMode || 'Unknown';
   };
 
   if (loading) {
@@ -145,64 +188,66 @@ const MatchesTable: React.FC<MatchesTableProps> = ({
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {currentMatches.map((match) => (
-                    <TableRow key={match.id} hover>
+                  {currentMatches.map((matchData) => (
+                    <TableRow key={matchData.match.match_id} hover>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                           <Avatar
-                            src={getChampionImage(match.championName)}
+                            src={getChampionImage(matchData.participant.champion_name)}
                             sx={{ width: 32, height: 32, mr: 2 }}
                           >
-                            {match.championName[0]}
+                            {matchData.participant.champion_name?.[0] || '?'}
                           </Avatar>
                           <Typography variant="body2">
-                            {match.championName}
+                            {matchData.participant.champion_name || 'Unknown'}
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={match.gameMode}
+                          label={getGameMode(matchData.match.queue_id, matchData.match.game_mode)}
                           size="small"
                           variant="outlined"
                         />
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={match.result}
-                          color={getResultColor(match.result)}
+                          label={matchData.participant.win ? 'WIN' : 'LOSS'}
+                          color={getResultColor(matchData.participant.win)}
                           size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" fontFamily="monospace">
-                          {match.kda}
+                          {formatKDA(
+                            matchData.participant.kills,
+                            matchData.participant.deaths,
+                            matchData.participant.assists
+                          )}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {match.duration}
+                          {formatDuration(matchData.match.game_duration)}
                         </Typography>
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {match.date}
+                          {formatDate(matchData.match.game_creation)}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {match.rank && (
-                          <Chip
-                            label={match.rank}
-                            size="small"
-                            color="primary"
-                            variant="outlined"
-                          />
-                        )}
+                        <Chip
+                          label="Unranked"
+                          size="small"
+                          color="default"
+                          variant="outlined"
+                        />
                       </TableCell>
                       <TableCell>
                         <IconButton
                           size="small"
-                          onClick={() => onViewMatch?.(match.id)}
+                          onClick={() => onViewMatch?.(matchData.match.match_id)}
                           title="View Details"
                         >
                           <Visibility />

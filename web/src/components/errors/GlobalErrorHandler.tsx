@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import { Alert, AlertTitle, Snackbar, Box, Fab, Badge } from '@mui/material';
+import { Alert, Typography, Snackbar, Box, Fab, Badge } from '@mui/material';
 import { BugReport, Close } from '@mui/icons-material';
 import { ErrorReporting, useErrorReporting } from './ErrorReporting';
 
@@ -194,9 +194,9 @@ export const GlobalErrorProvider: React.FC<GlobalErrorProviderProps> = ({
               </Box>
             }
           >
-            <AlertTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>
               Erreur {latestError.severity === 'critical' ? 'critique' : 'importante'} détectée
-            </AlertTitle>
+            </Typography>
             {latestError.context && `${latestError.context}: `}
             {latestError.error.message}
           </Alert>

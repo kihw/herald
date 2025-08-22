@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Alert,
-  AlertTitle,
   Collapse,
   IconButton,
   LinearProgress,
@@ -337,7 +336,7 @@ class EnhancedErrorBoundaryClass extends Component<
                   <Collapse in={this.state.showDetails}>
                     <Divider sx={{ my: 2 }} />
                     <Alert severity="warning" sx={{ mb: 2 }}>
-                      <AlertTitle>Informations de débogage</AlertTitle>
+                      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Informations de débogage</Typography>
                       Ces informations peuvent aider les développeurs à identifier le problème.
                     </Alert>
                     
@@ -455,7 +454,7 @@ export const ErrorDisplay: React.FC<{
         </Box>
       }
     >
-      <AlertTitle>Erreur</AlertTitle>
+      <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Erreur</Typography>
       {error.message}
     </Alert>
   );

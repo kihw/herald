@@ -36,12 +36,12 @@ import {
   Groups,
   TrendingUp,
 } from '@mui/icons-material';
-import { useThemeMode } from '../../context/ThemeContext';
+import { useTheme as useAppTheme } from '../../App';
 
 const DRAWER_WIDTH = 280;
 
 // Types pour la navigation
-export type ViewType = 'overview' | 'roles' | 'champions' | 'details' | 'analytics-dashboard' | 'analytics-champions' | 'analytics-mmr' | 'comparator' | 'heatmap';
+export type ViewType = 'overview' | 'roles' | 'champions' | 'details' | 'analytics-dashboard' | 'analytics-champions' | 'analytics-mmr' | 'comparator' | 'heatmap' | 'groups';
 
 export interface AppLayoutProps {
   children: React.ReactNode;
@@ -86,7 +86,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   data = [],
 }) => {
   const theme = useTheme();
-  const { mode, toggleTheme } = useThemeMode();
+  const { isDarkMode, toggleTheme } = useAppTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('lg'));
   
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -117,6 +117,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
       icon: <SportsEsports />,
       view: 'roles' as ViewType,
     },
+    {
+      key: 'groups',
+      label: 'Groupes d\'Amis',
+      icon: <Groups />,
+      view: 'groups' as ViewType,
+    },
   ];
 
   // Navigation pour les analytics avancées
@@ -130,7 +136,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     {
       key: 'analytics-champions',
       label: 'Analyse Champions',
-      icon: <Groups />,
+      icon: <EmojiEvents />,
       view: 'analytics-champions' as ViewType,
     },
     {
@@ -142,13 +148,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     {
       key: 'comparator',
       label: 'Comparateur',
-      icon: <Groups />,
+      icon: <Settings />,
       view: 'comparator' as ViewType,
     },
     {
       key: 'heatmap',
       label: 'Heatmap',
-      icon: <Assessment />,
+      icon: <Analytics />,
       view: 'heatmap' as ViewType,
     },
   ];
@@ -436,12 +442,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             </IconButton>
           </Tooltip>
           
-          <Tooltip title={`Passer au thème ${mode === 'dark' ? 'clair' : 'sombre'}`}>
+          <Tooltip title={`Passer au thème ${isDarkMode ? 'clair' : 'sombre'}`}>
             <IconButton 
               onClick={toggleTheme}
-              aria-label={`Activer le thème ${mode === 'dark' ? 'clair' : 'sombre'}`}
+              aria-label={`Activer le thème ${isDarkMode ? 'clair' : 'sombre'}`}
             >
-              {mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+              {isDarkMode ? <Brightness7 /> : <Brightness4 />}
             </IconButton>
           </Tooltip>
         </Toolbar>

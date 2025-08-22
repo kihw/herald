@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { getApiUrl } from '../utils/api-config';
 import {
   Card,
   CardContent,
@@ -106,7 +107,7 @@ export const ExporterMUI: React.FC<ExporterProps> = ({
   }, [showJobs]);
 
   const lineCountRef = useRef(0);
-  const API = ((window as any).VITE_API_BASE || 'http://localhost:8000');
+  const API = getApiUrl('');
 
   const handleQueueChange = (queueId: string, checked: boolean) => {
     const newSelected = new Set(selectedQueues);

@@ -18,7 +18,7 @@ import { EnhancedDashboard } from './components/dashboard/EnhancedDashboard';
 import { ChampionsAnalytics } from './components/ChampionsAnalytics';
 import { MMRAnalytics } from './components/MMRAnalytics';
 import { Row } from './types';
-import { Box, Fade, Alert, AlertTitle } from '@mui/material';
+import { Box, Fade, Alert, Typography } from '@mui/material';
 
 // Types pour la gestion des données
 export interface AppState {
@@ -336,7 +336,7 @@ export default function NewApp() {
                     errorLevel="medium"
                     fallback={
                       <Alert severity="warning" sx={{ mb: 2 }}>
-                        <AlertTitle>Erreur d'export</AlertTitle>
+                        <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Erreur d'export</Typography>
                         L'interface d'export est temporairement indisponible. 
                         Veuillez rafraîchir la page.
                       </Alert>

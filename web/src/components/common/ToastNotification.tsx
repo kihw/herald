@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Snackbar,
   Alert,
-  AlertTitle,
+  Typography,
   Slide,
   SlideProps,
 } from '@mui/material';
@@ -47,7 +47,7 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({
           boxShadow: 3,
         }}
       >
-        {title && <AlertTitle>{title}</AlertTitle>}
+        {title && <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>{title}</Typography>}
         {message}
       </Alert>
     </Snackbar>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../utils/api-config';
 import {
   Card,
   CardContent,
@@ -33,7 +34,7 @@ import {
   TrendingFlat,
   Timeline,
   EmojiEvents,
-  Assessment,
+  Analytics,
   Warning,
   MyLocation,
   Speed,
@@ -134,7 +135,7 @@ export const MMRAnalytics: React.FC<MMRAnalyticsProps> = ({ puuid }) => {
   const [predictionLoading, setPredictionLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API = ((window as any).VITE_API_BASE || 'http://localhost:8004');
+  const API = getApiUrl('');
 
   useEffect(() => {
     fetchMMRHistory();
@@ -368,7 +369,7 @@ export const MMRAnalytics: React.FC<MMRAnalyticsProps> = ({ puuid }) => {
           <Card>
             <CardHeader
               title="Statut MMR actuel"
-              avatar={<Assessment color="primary" />}
+              avatar={<Analytics color="primary" />}
             />
             <CardContent>
               {historyData.trajectory && (
@@ -790,7 +791,7 @@ export const MMRAnalytics: React.FC<MMRAnalyticsProps> = ({ puuid }) => {
                     <React.Fragment key={index}>
                       <ListItem>
                         <ListItemIcon>
-                          <Assessment color="primary" />
+                          <Analytics color="primary" />
                         </ListItemIcon>
                         <ListItemText
                           primary={recommendation}

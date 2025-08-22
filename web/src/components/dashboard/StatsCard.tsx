@@ -50,7 +50,8 @@ interface StatsCardProps {
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({ stats, loading = false }) => {
-  if (loading) {
+  // Guard contre données nulles/undefined
+  if (loading || !stats) {
     return (
       <Grid container spacing={2}>
         {[1, 2, 3, 4].map((i) => (
@@ -83,7 +84,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ stats, loading = false }) => {
               </Typography>
             </Box>
             <Typography variant="h4" component="div" sx={{ mb: 1 }}>
-              {stats.totalMatches}
+              {stats?.totalMatches || 0}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               All time matches played

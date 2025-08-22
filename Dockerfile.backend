@@ -41,6 +41,9 @@ WORKDIR /app
 # Copy binary from builder stage
 COPY --from=builder /app/server .
 
+# Copy migration files
+COPY internal/db/migrations/ ./internal/db/migrations/
+
 # Create necessary directories
 RUN mkdir -p logs data exports config && chown -R appuser:appgroup /app
 

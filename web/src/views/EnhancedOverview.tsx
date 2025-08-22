@@ -298,7 +298,7 @@ export const EnhancedOverview: React.FC<EnhancedOverviewProps> = ({
         errorLevel="medium"
         fallback={
           <Alert severity="warning" sx={{ mb: 3 }}>
-            <AlertTitle>Erreur de filtrage</AlertTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Erreur de filtrage</Typography>
             Les filtres sont temporairement indisponibles. Les données sont affichées sans filtrage.
           </Alert>
         }
@@ -375,7 +375,7 @@ export const EnhancedOverview: React.FC<EnhancedOverviewProps> = ({
         errorLevel="medium"
         fallback={
           <Alert severity="info" sx={{ mt: 3 }}>
-            <AlertTitle>Données indisponibles</AlertTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Données indisponibles</Typography>
             Les classements des champions et rôles ne peuvent pas être affichés pour le moment.
           </Alert>
         }

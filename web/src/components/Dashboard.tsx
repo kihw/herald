@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../utils/api-config';
+import { OAuthCallback } from './auth/OAuthCallback';
+import { GoogleAuth } from './auth/GoogleAuth';
 import {
   Card,
   CardContent,
@@ -19,6 +22,7 @@ import {
   ListItemIcon,
   LinearProgress,
   Divider,
+  Avatar,
 } from '@mui/material';
 import {
   TrendingUp,
@@ -29,7 +33,7 @@ import {
   Lightbulb,
   Timeline,
   Sports,
-  Assessment,
+  Analytics,
 } from '@mui/icons-material';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, ResponsiveContainer } from 'recharts';
 
@@ -102,8 +106,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ puuid }) => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState<boolean>(false);
 
-  const API = ((window as any).VITE_API_BASE || 'http://localhost:8000');
+  const API = getApiUrl('');
+
+  // Vérifier l'authentification au chargement
+  useEffect(() => {
+    const checkAuth = () => {
+      const storedUser = localStorage.getItem('herald_user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        } catch (e) {
+          localStorage.removeItem('herald_user');
+        }
+      }
+      setAuthChecked(true);
+    };
+    
+    checkAuth();
+  }, []);
+
+  const handleAuthSuccess = (userData: any) => {
+    setUser(userData);
+    setAuthChecked(true);
+  };
+
+  const handleAuthError = (error: string) => {
+    console.error('Auth error:', error);
+    setAuthChecked(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('herald_user');
+    setUser(null);
+  };
 
   useEffect(() => {
     fetchDashboardData();
@@ -157,7 +196,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ puuid }) => {
       case 1:
         return <Warning color="error" />;
       case 2:
-        return <Assessment color="warning" />;
+        return <Analytics color="warning" />;
       default:
         return <Lightbulb color="info" />;
     }
@@ -208,12 +247,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ puuid }) => {
     { period: 'Saison', ...data.trends.seasonal_trend },
   ];
 
+  // Gérer le callback OAuth
+  if (!authChecked) {
+    return <OAuthCallback onAuthSuccess={handleAuthSuccess} onAuthError={handleAuthError} />;
+  }
+
+  // Afficher l'authentification si l'utilisateur n'est pas connecté
+  if (!user) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Card sx={{ maxWidth: 500, mx: 'auto', mt: 4 }}>
+          <CardContent>
+            <Typography variant="h5" component="h1" gutterBottom textAlign="center">
+              Herald.lol - Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: 3 }}>
+              Connectez-vous pour accéder à vos statistiques League of Legends
+            </Typography>
+            <GoogleAuth onSuccess={handleAuthSuccess} onError={handleAuthError} />
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 2 }}>
-      {/* Header */}
+      {/* Auth Status & Header */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" component="h1">
-          Dashboard Analytics
+        <Box>
+          <Typography variant="h4" component="h1">
+            Dashboard Analytics
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Connecté en tant que {user.name}
+          </Typography>
+        </Box>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Chip 
+            label={user.email} 
+            variant="outlined" 
+            size="small"
+            avatar={user.picture ? <img src={user.picture} alt="avatar" style={{width: 24, height: 24, borderRadius: '50%'}} /> : undefined}
+          />
+          <Chip 
+            label="Déconnexion" 
+            onClick={handleLogout} 
+            color="secondary" 
+            variant="outlined" 
+            size="small" 
+          />
+        </Box>
+      </Box>
+      
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="h6" component="h2">
+          Statistiques de performance
         </Typography>
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Période</InputLabel>
@@ -237,7 +326,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ puuid }) => {
             <CardHeader
               title="Vue d'ensemble des performances"
               subheader={`Période: ${data.period}`}
-              avatar={<Assessment color="primary" />}
+              avatar={<Analytics color="primary" />}
             />
             <CardContent>
               <Grid container spacing={2}>

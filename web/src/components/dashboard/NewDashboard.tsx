@@ -22,7 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { apiService, DashboardStats } from '../../services/api';
 
 export function NewDashboard() {
-  const { state: authState, logout } = useAuth();
+  const { user, isAuthenticated, logout, error: authError } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -87,10 +87,10 @@ export function NewDashboard() {
             <PersonIcon color="primary" />
             <Box>
               <Typography variant="h5">
-                {authState.user?.username}#{authState.user?.tagline}
+                {user?.riot_id}#{user?.riot_tag}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {authState.user?.email}
+                {user?.region?.toUpperCase()}
               </Typography>
             </Box>
           </Box>

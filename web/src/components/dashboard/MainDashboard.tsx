@@ -23,6 +23,7 @@ import StatsCard from './StatsCard';
 import MatchesTable from './MatchesTable';
 import SettingsPanel from './SettingsPanel';
 import AnalyticsDashboard from './AnalyticsDashboard';
+import MatchDetail from '../match/MatchDetail';
 import ToastNotification from '../common/ToastNotification';
 import LoadingSkeleton from '../common/LoadingSkeleton';
 import HelpPanel from '../common/HelpPanel';
@@ -56,8 +57,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const MainDashboard: React.FC = () => {
-  const { state } = useAuth();
-  const { user } = state;
+  const { user, isAuthenticated, error: authError } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   
   // Stats state
@@ -91,6 +91,10 @@ const MainDashboard: React.FC = () => {
   // Performance monitoring state
   const [showPerformanceStats, setShowPerformanceStats] = useState(false);
   const [performanceMetrics, setPerformanceMetrics] = useState<any[]>([]);
+
+  // Match detail state
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [matchDetailOpen, setMatchDetailOpen] = useState(false);
 
   // Use optimized data processing
   const { 
@@ -153,30 +157,32 @@ const MainDashboard: React.FC = () => {
       // Transform API response to match StatsCard interface
       const transformedStats = {
         totalMatches: response.total_matches || 0,
-        winRate: response.win_rate || 0,
-        mainRole: "ADC", // Mock data for now
+        winRate: (response.win_rate * 100) || 0, // Convert to percentage
+        averageKDA: response.average_kda || 0,
+        mainRole: "ADC", // TODO: Calculate from match data
         favoriteChampion: {
-          name: response.favorite_champion || "Jinx",
-          winRate: 72.3,
-          matches: 23,
+          name: response.favorite_champion || "Unknown",
+          winRate: 72.3, // TODO: Calculate from match data
+          matches: response.total_matches || 0,
         },
         recentPerformance: {
           last7Days: {
-            matches: 8,
-            wins: 6,
-            winRate: 75.0,
+            matches: Math.floor((response.total_matches || 0) * 0.2), // Estimate
+            wins: Math.floor((response.total_matches || 0) * 0.15), // Estimate
+            winRate: response.win_rate * 100 || 0,
           },
           last30Days: {
-            matches: 34,
-            wins: 22,
-            winRate: 64.7,
+            matches: response.total_matches || 0,
+            wins: Math.floor((response.total_matches || 0) * (response.win_rate || 0)),
+            winRate: response.win_rate * 100 || 0,
           },
         },
         rankInfo: {
-          tier: "Gold",
-          division: "II",
-          lp: 67,
+          tier: "Unranked", // TODO: Get from Riot API
+          division: "",
+          lp: 0,
         },
+        lastSync: response.last_sync_at,
       };
       
       setStats(transformedStats);
@@ -218,29 +224,62 @@ const MainDashboard: React.FC = () => {
     try {
       setSyncLoading(true);
       console.log('🔄 Starting match synchronization...');
-      const response = await apiService.syncMatches();
+      const response = await apiService.syncMatches(20);
       console.log('✅ Sync response:', response);
       
-      if (response.success) {
-        const { newMatches, totalMatches } = response.data;
-        console.log(`📊 Sync completed: ${newMatches} new matches, ${totalMatches} total`);
+      if (response.job_id) {
+        console.log(`📊 Sync job started: ${response.job_id}`);
         showNotification(
-          `Synchronized ${newMatches} new matches! Total: ${totalMatches}`, 
-          'success', 
-          'Sync Complete'
+          'Match synchronization started! This may take a few moments...', 
+          'info', 
+          'Sync Started'
         );
+
+        // Poll for sync status
+        const pollStatus = async (jobId: string, attempts = 0) => {
+          if (attempts > 30) { // Max 30 attempts (30 seconds)
+            showNotification('Sync is taking longer than expected. Please check back later.', 'warning');
+            return;
+          }
+
+          try {
+            const status = await apiService.getSyncStatus(jobId);
+            console.log(`📊 Sync status (attempt ${attempts + 1}):`, status);
+            
+            if (status.status === 'completed') {
+              const { matches_new, matches_processed } = status;
+              showNotification(
+                `Synchronized ${matches_new} new matches! (${matches_processed} processed)`, 
+                'success', 
+                'Sync Complete'
+              );
+              // Reload data
+              await Promise.all([loadMatches(), loadStats()]);
+            } else if (status.status === 'failed') {
+              showNotification('Sync failed: ' + (status.error_message || 'Unknown error'), 'error');
+            } else {
+              // Still running, poll again
+              setTimeout(() => pollStatus(jobId, attempts + 1), 1000);
+            }
+          } catch (pollError) {
+            console.error('Error polling sync status:', pollError);
+            if (attempts < 5) { // Retry a few times
+              setTimeout(() => pollStatus(jobId, attempts + 1), 2000);
+            } else {
+              showNotification('Failed to check sync status', 'error');
+            }
+          }
+        };
+
+        pollStatus(response.job_id);
       } else {
-        console.warn('⚠️ Sync returned success=false:', response);
-        showNotification('Sync completed but no data returned', 'warning');
+        console.warn('⚠️ No job_id in response:', response);
+        showNotification('Sync completed but status unclear', 'warning');
+        await Promise.all([loadMatches(), loadStats()]);
       }
-      
-      // Reload matches and stats after sync
-      console.log('🔄 Reloading matches and stats...');
-      await Promise.all([loadMatches(), loadStats()]);
-      console.log('✅ Data reloaded successfully');
     } catch (error) {
       console.error('❌ Failed to sync matches:', error);
-      showNotification('Failed to sync matches', 'error');
+      showNotification('Failed to start sync: ' + (error as Error).message, 'error');
     } finally {
       setSyncLoading(false);
     }
@@ -261,8 +300,19 @@ const MainDashboard: React.FC = () => {
   };
 
   const handleViewMatch = (matchId: string) => {
-    // TODO: Implement match detail view
-    showNotification(`Viewing match ${matchId} (coming soon)`, 'info');
+    // Find the match in our matches array
+    const matchData = matches.find(m => m.match.match_id === matchId);
+    if (matchData) {
+      setSelectedMatch(matchData);
+      setMatchDetailOpen(true);
+    } else {
+      showNotification('Match data not found', 'error');
+    }
+  };
+
+  const handleCloseMatchDetail = () => {
+    setMatchDetailOpen(false);
+    setSelectedMatch(null);
   };
 
   const handleExportMatches = () => {
@@ -418,6 +468,13 @@ const MainDashboard: React.FC = () => {
           />
         )}
       </TabPanel>
+
+      {/* Match Detail Dialog */}
+      <MatchDetail
+        open={matchDetailOpen}
+        onClose={handleCloseMatchDetail}
+        matchData={selectedMatch}
+      />
 
       {/* Notifications */}
       <ToastNotification

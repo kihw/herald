@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { getApiUrl } from '../utils/api-config';
 import Papa from 'papaparse';
 import { Row } from './App';
 import { parseNumber, inferBoolean } from './util';
@@ -40,7 +41,7 @@ export const Exporter: React.FC<Props> = ({ onLoadRows }) => {
   };
   useEffect(()=> { if (showJobs) fetchJobs(false); }, [showJobs]);
   const lineCountRef = useRef(0);
-  const API = ( (window as any).VITE_API_BASE || 'http://localhost:8000');
+  const API = getApiUrl('');
 
   useEffect(()=> {
     let t: any; let es: EventSource | null = null;

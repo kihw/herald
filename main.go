@@ -4,15 +4,18 @@ import (
 	"bufio"
 	"context"
 	"crypto/rand"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -20,7 +23,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	_ "modernc.org/sqlite"
 
+	"lol-match-exporter/internal/auth"
+	"lol-match-exporter/internal/handlers"
+	"lol-match-exporter/internal/models"
 	"lol-match-exporter/internal/services"
 )
 
@@ -42,21 +49,44 @@ type ExportJob struct {
 }
 
 type ExportRequest struct {
-	Username  string `json:"username" binding:"required"`
-	TagLine   string `json:"tagline" binding:"required"`
+	Username  string `json:"username"`
+	TagLine   string `json:"tagline"`
+	RiotId    string `json:"riotId"`
 	GameCount int    `json:"gameCount"`
+	Count     int    `json:"count"`
 	APIKey    string `json:"apiKey"`
 }
 
+type UserSession struct {
+	SessionID string    `json:"session_id"`
+	UserID    int       `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
 type Server struct {
-	jobs            map[string]*ExportJob
-	mutex           sync.RWMutex
-	exportService   *services.ExportService
-	templateService *services.TemplateService
-	riotAPIService  *services.RiotAPIService
+	jobs             map[string]*ExportJob
+	mutex            sync.RWMutex
+	exportService    *services.ExportService
+	templateService  *services.TemplateService
+	riotAPIService   *services.RiotAPIService
+	googleOAuth      *auth.GoogleOAuthService
+	db               *sql.DB
+	groupHandler     *handlers.GroupHandler
+	matchService     *services.MatchService
+	analyticsService *services.SimpleAnalyticsService
+	autoSyncService  *services.AutoSyncService
+	sessions         map[string]*UserSession
+	sessionMutex    sync.RWMutex
 }
 
 func NewServer() *Server {
+	// Initialiser la base de données SQLite
+	db, err := initDatabase()
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+
 	// Récupérer la clé API Riot depuis les variables d'environnement
 	riotAPIKey := os.Getenv("RIOT_API_KEY")
 	var riotService *services.RiotAPIService
@@ -64,11 +94,27 @@ func NewServer() *Server {
 		riotService = services.NewRiotAPIService(riotAPIKey)
 	}
 
+	// Initialiser un service d'analytics simple pour SQLite
+	analyticsService := services.NewSimpleAnalyticsService(db)
+	
+	// Initialiser le service de matches
+	matchService := services.NewMatchService(db, riotService)
+	
+	// Initialiser le service de synchronisation automatique
+	autoSyncService := services.NewAutoSyncService(db, matchService)
+
 	return &Server{
-		jobs:            make(map[string]*ExportJob),
-		exportService:   services.NewExportService("./exports"),
-		templateService: services.NewTemplateService(),
-		riotAPIService:  riotService,
+		jobs:             make(map[string]*ExportJob),
+		exportService:    services.NewExportService("./exports"),
+		templateService:  services.NewTemplateService(),
+		riotAPIService:   riotService,
+		googleOAuth:      auth.NewGoogleOAuthService(),
+		db:               db,
+		groupHandler:     handlers.NewGroupHandler(db, nil),
+		matchService:     matchService,
+		analyticsService: analyticsService,
+		autoSyncService:  autoSyncService,
+		sessions:         make(map[string]*UserSession),
 	}
 }
 
@@ -78,6 +124,108 @@ func generateJobID() string {
 	return hex.EncodeToString(bytes)
 }
 
+// generateSessionID génère un ID de session unique
+func generateSessionID() string {
+	bytes := make([]byte, 32)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+// createUserSession crée une nouvelle session pour un utilisateur
+func (s *Server) createUserSession(userID int) (string, error) {
+	sessionID := generateSessionID()
+	now := time.Now()
+	session := &UserSession{
+		SessionID: sessionID,
+		UserID:    userID,
+		CreatedAt: now,
+		ExpiresAt: now.Add(7 * 24 * time.Hour), // 7 jours
+	}
+	
+	s.sessionMutex.Lock()
+	s.sessions[sessionID] = session
+	s.sessionMutex.Unlock()
+	
+	return sessionID, nil
+}
+
+// getUserFromSession récupère un utilisateur à partir d'un ID de session
+func (s *Server) getUserFromSession(sessionID string) (*models.User, error) {
+	s.sessionMutex.RLock()
+	session, exists := s.sessions[sessionID]
+	s.sessionMutex.RUnlock()
+	
+	if !exists {
+		return nil, fmt.Errorf("session not found")
+	}
+	
+	if time.Now().After(session.ExpiresAt) {
+		// Session expirée
+		s.sessionMutex.Lock()
+		delete(s.sessions, sessionID)
+		s.sessionMutex.Unlock()
+		return nil, fmt.Errorf("session expired")
+	}
+	
+	// Récupérer l'utilisateur depuis la base de données
+	query := `
+		SELECT id, riot_id, riot_tag, riot_puuid, summoner_id, account_id, 
+			   profile_icon_id, summoner_level, region, is_validated, 
+			   created_at, updated_at, last_sync
+		FROM users 
+		WHERE id = ?
+	`
+	
+	var user models.User
+	var summonerID, accountID sql.NullString
+	var lastSync sql.NullTime
+	
+	err := s.db.QueryRow(query, session.UserID).Scan(
+		&user.ID, &user.RiotID, &user.RiotTag, &user.RiotPUUID,
+		&summonerID, &accountID, &user.ProfileIconID, &user.SummonerLevel,
+		&user.Region, &user.IsValidated, &user.CreatedAt, &user.UpdatedAt,
+		&lastSync,
+	)
+	
+	if err != nil {
+		return nil, fmt.Errorf("user not found: %w", err)
+	}
+	
+	// Gérer les valeurs nullables
+	if summonerID.Valid {
+		user.SummonerID = &summonerID.String
+	}
+	if accountID.Valid {
+		user.AccountID = &accountID.String
+	}
+	if lastSync.Valid {
+		user.LastSync = &lastSync.Time
+	}
+	
+	return &user, nil
+}
+
+// requireAuth middleware pour vérifier l'authentification
+func (s *Server) requireAuth(c *gin.Context) {
+	sessionID, err := c.Cookie("session_id")
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Authentication required"})
+		c.Abort()
+		return
+	}
+	
+	user, err := s.getUserFromSession(sessionID)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Invalid session"})
+		c.Abort()
+		return
+	}
+	
+	// Ajouter l'utilisateur au contexte
+	c.Set("user", user)
+	c.Next()
+}
+
 func (s *Server) startExport(c *gin.Context) {
 	var req ExportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -85,8 +233,29 @@ func (s *Server) startExport(c *gin.Context) {
 		return
 	}
 
-	// Force count to 1000
-	req.GameCount = 1000
+	// Parse RiotId if provided (format: username#tagline)
+	if req.RiotId != "" {
+		parts := strings.Split(req.RiotId, "#")
+		if len(parts) != 2 {
+			c.JSON(400, gin.H{"error": "Invalid RiotId format. Expected: GameName#Tag"})
+			return
+		}
+		req.Username = parts[0]
+		req.TagLine = parts[1]
+	}
+
+	// Validate required fields
+	if req.Username == "" || req.TagLine == "" {
+		c.JSON(400, gin.H{"error": "Username and tagline are required (provide riotId or separate username/tagline)"})
+		return
+	}
+
+	// Use count if provided, otherwise use gameCount, default to 1000
+	if req.Count > 0 {
+		req.GameCount = req.Count
+	} else if req.GameCount == 0 {
+		req.GameCount = 1000
+	}
 
 	jobID := generateJobID()
 	ctx, cancel := context.WithCancel(context.Background())
@@ -124,54 +293,71 @@ func (s *Server) runExportProcess(job *ExportJob, req ExportRequest) {
 		close(job.logChan)
 	}()
 
-	// Prepare command
-	args := []string{
-		"lol_match_exporter.py",
-		"--username", req.Username,
-		"--tagline", req.TagLine,
-		"--count", fmt.Sprintf("%d", req.GameCount),
-		"--light-mode",
+	// Log de début
+	select {
+	case job.logChan <- fmt.Sprintf("[INFO] Démarrage de l'export pour %s#%s", req.Username, req.TagLine):
+	case <-job.ctx.Done():
+		return
 	}
-
-	if req.APIKey != "" {
-		args = append(args, "--api-key", req.APIKey)
-	}
-
-	cmd := exec.CommandContext(job.ctx, "python3", args...)
-	cmd.Dir = "."
-	cmd.Env = append(os.Environ(), "PYTHONIOENCODING=utf-8")
 
 	job.mutex.Lock()
-	job.cmd = cmd
+	job.Progress = 10
 	job.mutex.Unlock()
 
-	// Create pipes for stdout and stderr
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		s.setJobError(job, fmt.Sprintf("Failed to create stdout pipe: %v", err))
+	// Récupérer les données via l'API Riot ou générer des données de test
+	var matches []services.MatchData
+	var err error
+
+	// Pour le moment, utilisons toujours des données de test pour la démonstration
+	// if s.riotAPIService != nil {
+	if false && s.riotAPIService != nil {
+		select {
+		case job.logChan <- "[INFO] Récupération des données via l'API Riot Games...":
+		case <-job.ctx.Done():
+			return
+		}
+
+		matches, err = s.riotAPIService.GetMatchesData(req.Username, req.TagLine, req.GameCount, nil)
+		if err != nil {
+			s.setJobError(job, fmt.Sprintf("Erreur API Riot: %s", err.Error()))
+			select {
+			case job.logChan <- fmt.Sprintf("[ERROR] Échec de récupération des données: %s", err.Error()):
+			case <-job.ctx.Done():
+			}
+			return
+		}
+	} else {
+		select {
+		case job.logChan <- fmt.Sprintf("[INFO] Génération de %d matchs de test pour %s#%s", req.GameCount, req.Username, req.TagLine):
+		case <-job.ctx.Done():
+			return
+		}
+		matches = s.generateTestMatches()
+	}
+
+	job.mutex.Lock()
+	job.Progress = 50
+	job.mutex.Unlock()
+
+	select {
+	case job.logChan <- fmt.Sprintf("[INFO] %d matchs récupérés, génération du fichier d'export...", len(matches)):
+	case <-job.ctx.Done():
 		return
 	}
 
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		s.setJobError(job, fmt.Sprintf("Failed to create stderr pipe: %v", err))
-		return
+	// Créer les options d'export par défaut
+	options := services.ExportOptions{
+		Format:   services.FormatCSV,
+		Filename: fmt.Sprintf("%s_%s_matches", req.Username, req.TagLine),
+		Filter: services.ExportFilter{
+			RecentFirst: true,
+		},
+		Compression: true,
+		Metadata:    true,
 	}
 
-	// Start the command
-	if err := cmd.Start(); err != nil {
-		s.setJobError(job, fmt.Sprintf("Failed to start export process: %v", err))
-		return
-	}
-
-	log.Printf("[SERVER] Subprocess created with PID %d", cmd.Process.Pid)
-
-	// Read output
-	go s.readOutput(job, stdout, "STDOUT")
-	go s.readOutput(job, stderr, "STDERR")
-
-	// Wait for completion
-	err = cmd.Wait()
+	// Exporter les données
+	exportPath, err := s.exportService.ExportMatches(matches, options)
 
 	job.mutex.Lock()
 	defer job.mutex.Unlock()
@@ -183,14 +369,18 @@ func (s *Server) runExportProcess(job *ExportJob, req ExportRequest) {
 			job.Status = "failed"
 			job.Error = err.Error()
 		}
+		select {
+		case job.logChan <- fmt.Sprintf("[ERROR] Échec de l'export: %s", err.Error()):
+		case <-job.ctx.Done():
+		}
 	} else {
 		job.Status = "completed"
 		job.Progress = 100
+		job.ZipPath = exportPath
 
-		// Look for generated zip file
-		zipPath := s.findGeneratedZip(req.Username, req.TagLine)
-		if zipPath != "" {
-			job.ZipPath = zipPath
+		select {
+		case job.logChan <- fmt.Sprintf("[SUCCESS] Export terminé: %s", exportPath):
+		case <-job.ctx.Done():
 		}
 	}
 
@@ -384,6 +574,7 @@ func (s *Server) streamLogs(c *gin.Context) {
 
 func (s *Server) downloadZip(c *gin.Context) {
 	jobID := c.Param("job_id")
+	filename := c.Param("filename") // Optionnel pour compatibilité frontend
 
 	s.mutex.RLock()
 	job, exists := s.jobs[jobID]
@@ -403,8 +594,22 @@ func (s *Server) downloadZip(c *gin.Context) {
 		return
 	}
 
+	// Si un filename spécifique est demandé, vérifier qu'il correspond
+	if filename != "" {
+		expectedFilename := filepath.Base(zipPath)
+		if filename != expectedFilename {
+			c.JSON(404, gin.H{"error": fmt.Sprintf("File %s not found, available: %s", filename, expectedFilename)})
+			return
+		}
+	}
+
+	// Convertir le chemin relatif en absolu si nécessaire
+	if !filepath.IsAbs(zipPath) {
+		zipPath = filepath.Join(".", zipPath)
+	}
+	
 	if _, err := os.Stat(zipPath); os.IsNotExist(err) {
-		c.JSON(404, gin.H{"error": "Zip file not found"})
+		c.JSON(404, gin.H{"error": fmt.Sprintf("Zip file not found at path: %s", zipPath)})
 		return
 	}
 
@@ -488,10 +693,15 @@ func main() {
 	{
 		api.GET("/health", server.health)
 
-		// Auth endpoints (mock for frontend compatibility)
+		// Auth endpoints
 		api.GET("/auth/session", server.getSession)
 		api.GET("/auth/regions", server.getSupportedRegions)
 		api.POST("/auth/validate", server.validateAuth)
+		api.POST("/auth/logout", server.logout)
+		
+		// Google OAuth endpoints (mock for now)
+		api.POST("/auth/google/init", server.initGoogleOAuth)
+		api.GET("/auth/google/callback", server.googleOAuthCallback)
 
 		api.POST("/export", server.startExport)
 		api.GET("/jobs/:job_id", server.getJobStatus)
@@ -503,6 +713,11 @@ func main() {
 		api.GET("/export/formats", server.getSupportedFormats)
 		api.POST("/export/validate", server.validateExportOptions)
 		api.GET("/export/history", server.getExportHistory)
+		
+		// Endpoints pour compatibilité frontend
+		api.GET("/export/:job_id/status", server.getJobStatus)
+		api.GET("/export/:job_id/events", server.streamLogs)
+		api.GET("/export/:job_id/download/:filename", server.downloadZip)
 
 		// Template endpoints
 		api.GET("/templates", server.getAllTemplates)
@@ -511,6 +726,46 @@ func main() {
 		api.PUT("/templates/:id", server.updateTemplate)
 		api.DELETE("/templates/:id", server.deleteTemplate)
 		api.POST("/export/from-template", server.exportFromTemplate)
+		
+		// Dashboard endpoint
+		api.GET("/dashboard", server.getDashboard)
+		
+		// Match synchronization endpoints
+		api.POST("/sync/matches", server.syncMatches)
+		api.GET("/sync/status/:jobId", server.getSyncStatus)
+		api.GET("/matches", server.getUserMatches)
+		
+		// Analytics endpoints
+		api.GET("/analytics/period/:period", server.getPeriodAnalytics)
+		api.GET("/analytics/recommendations", server.getRecommendations)
+		api.GET("/analytics/trends", server.getPerformanceTrends)
+		api.POST("/analytics/refresh", server.refreshAnalytics)
+		
+		// Settings endpoints
+		api.GET("/settings", server.getUserSettings)
+		api.PUT("/settings", server.updateUserSettings)
+
+		// Group endpoints
+		groups := api.Group("/groups")
+		{
+			groups.POST("/", server.groupHandler.CreateGroup)
+			groups.GET("/search", server.groupHandler.SearchGroups)
+			groups.GET("/my", server.groupHandler.GetUserGroups)
+			groups.POST("/join", server.groupHandler.JoinGroup)
+			
+			groups.GET("/:id", server.groupHandler.GetGroup)
+			groups.GET("/:id/members", server.groupHandler.GetGroupMembers)
+			groups.POST("/:id/invite", server.groupHandler.InviteToGroup)
+			groups.DELETE("/:id/members", server.groupHandler.RemoveMember)
+			groups.GET("/:id/stats", server.groupHandler.GetGroupStats)
+			groups.PUT("/:id/settings", server.groupHandler.UpdateGroupSettings)
+			
+			// Comparison endpoints
+			groups.POST("/:id/comparisons", server.groupHandler.CreateComparison)
+			groups.GET("/:id/comparisons", server.groupHandler.GetGroupComparisons)
+			groups.GET("/:id/comparisons/:comparisonId", server.groupHandler.GetComparison)
+			groups.POST("/:id/comparisons/:comparisonId/regenerate", server.groupHandler.RegenerateComparison)
+		}
 	}
 
 	// Legacy compatibility routes (redirect to API)
@@ -532,6 +787,10 @@ func main() {
 	if port == "" {
 		port = "8000"
 	}
+
+	// Démarrer le service de synchronisation automatique
+	server.autoSyncService.Start()
+	log.Println("🔄 Auto-sync service started")
 
 	log.Printf("[SERVER] Starting Go backend on :%s", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
@@ -921,12 +1180,197 @@ func (s *Server) exportFromTemplate(c *gin.Context) {
 	})
 }
 
-// getSession retourne les informations de session (mock)
+// getSession retourne les informations de session
 func (s *Server) getSession(c *gin.Context) {
+	sessionID, err := c.Cookie("session_id")
+	if err != nil {
+		c.JSON(200, gin.H{
+			"authenticated": false,
+			"user":          nil,
+		})
+		return
+	}
+	
+	user, err := s.getUserFromSession(sessionID)
+	if err != nil {
+		c.JSON(200, gin.H{
+			"authenticated": false,
+			"user":          nil,
+		})
+		return
+	}
+	
 	c.JSON(200, gin.H{
-		"authenticated": false,
-		"user":          nil,
-		"message":       "No authentication required for this demo",
+		"authenticated": true,
+		"user":          user,
+	})
+}
+
+// syncMatches lance la synchronisation des matches d'un utilisateur
+func (s *Server) syncMatches(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userObj := user.(*models.User)
+
+	var request struct {
+		Count int `json:"count"`
+	}
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		request.Count = 20 // Default
+	}
+
+	if request.Count <= 0 || request.Count > 100 {
+		request.Count = 20
+	}
+
+	syncJob, err := s.matchService.SyncUserMatches(userObj.ID, request.Count)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to start match synchronization: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"job_id": syncJob.ID,
+		"status": syncJob.Status,
+		"message": "Match synchronization started",
+	})
+}
+
+// getSyncStatus récupère le statut d'un job de synchronisation
+func (s *Server) getSyncStatus(c *gin.Context) {
+	jobIDStr := c.Param("jobId")
+	if jobIDStr == "" {
+		c.JSON(400, gin.H{"error": "Job ID is required"})
+		return
+	}
+
+	// Simple query to get sync job status
+	query := `
+		SELECT id, user_id, job_type, status, started_at, completed_at,
+			   matches_processed, matches_new, matches_updated, error_message
+		FROM sync_jobs WHERE id = ?
+	`
+
+	var job models.SyncJob
+	var startedAt, completedAt sql.NullTime
+	var matchesProcessed, matchesNew, matchesUpdated sql.NullInt64
+	var errorMessage sql.NullString
+
+	err := s.db.QueryRow(query, jobIDStr).Scan(
+		&job.ID, &job.UserID, &job.JobType, &job.Status,
+		&startedAt, &completedAt, &matchesProcessed,
+		&matchesNew, &matchesUpdated, &errorMessage,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			c.JSON(404, gin.H{"error": "Sync job not found"})
+		} else {
+			c.JSON(500, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	if startedAt.Valid {
+		job.StartedAt = &startedAt.Time
+	}
+	if completedAt.Valid {
+		job.CompletedAt = &completedAt.Time
+	}
+	if matchesProcessed.Valid {
+		job.MatchesProcessed = int(matchesProcessed.Int64)
+	}
+	if matchesNew.Valid {
+		job.MatchesNew = int(matchesNew.Int64)
+	}
+	if matchesUpdated.Valid {
+		job.MatchesUpdated = int(matchesUpdated.Int64)
+	}
+	if errorMessage.Valid {
+		job.ErrorMessage = &errorMessage.String
+	}
+
+	c.JSON(200, job)
+}
+
+// getUserMatches récupère les matches d'un utilisateur
+func (s *Server) getUserMatches(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userObj := user.(*models.User)
+
+	// Parse query parameters
+	limitStr := c.DefaultQuery("limit", "20")
+	offsetStr := c.DefaultQuery("offset", "0")
+
+	limit := 20
+	offset := 0
+
+	if l, err := strconv.Atoi(limitStr); err == nil && l > 0 && l <= 100 {
+		limit = l
+	}
+	if o, err := strconv.Atoi(offsetStr); err == nil && o >= 0 {
+		offset = o
+	}
+
+	matches, err := s.matchService.GetUserMatches(userObj.ID, limit, offset)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get matches: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"matches": matches,
+		"count":   len(matches),
+		"limit":   limit,
+		"offset":  offset,
+	})
+}
+
+// getDashboard retourne les données du dashboard
+func (s *Server) getDashboard(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+
+	userObj := user.(*models.User)
+
+	// Récupérer les statistiques de l'utilisateur
+	stats, err := s.matchService.GetUserStats(userObj.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get user stats: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, stats)
+}
+
+// logout déconnecte l'utilisateur en supprimant sa session
+func (s *Server) logout(c *gin.Context) {
+	sessionID, err := c.Cookie("session_id")
+	if err == nil {
+		// Supprimer la session
+		s.sessionMutex.Lock()
+		delete(s.sessions, sessionID)
+		s.sessionMutex.Unlock()
+	}
+	
+	// Supprimer le cookie
+	c.SetCookie("session_id", "", -1, "/", "", false, true)
+	
+	c.JSON(200, gin.H{
+		"message": "Logged out successfully",
 	})
 }
 
@@ -959,60 +1403,164 @@ func (s *Server) getSupportedRegions(c *gin.Context) {
 
 // ValidateAuthRequest définit la structure de requête pour la validation d'authentification
 type ValidateAuthRequest struct {
-	Username string `json:"username" binding:"required"`
-	TagLine  string `json:"tagline" binding:"required"`
-	Region   string `json:"region"`
+	RiotID  string `json:"riot_id" binding:"required"`
+	RiotTag string `json:"riot_tag" binding:"required"`
+	Region  string `json:"region" binding:"required"`
 }
 
-// validateAuth valide les informations d'authentification/compte
+// validateAuth valide les informations d'authentification/compte avec l'API Riot
 func (s *Server) validateAuth(c *gin.Context) {
 	var req ValidateAuthRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Simulation de validation (dans une vraie app, on vérifierait via l'API Riot)
-	// Pour le moment, on accepte tous les comptes non vides
-	if req.Username == "" || req.TagLine == "" {
 		c.JSON(400, gin.H{
 			"valid": false,
-			"error": "Username and tagline are required",
+			"error_message": "Invalid request format: " + err.Error(),
 		})
 		return
 	}
 
-	// Validation de la région si fournie
-	if req.Region != "" {
-		validRegions := []string{"euw1", "na1", "eun1", "kr", "jp1", "br1", "la1", "la2", "oc1", "tr1", "ru", "ph2", "sg2", "th2", "tw2", "vn2"}
-		isValidRegion := false
-		for _, region := range validRegions {
-			if req.Region == region {
-				isValidRegion = true
-				break
-			}
+	// Validation des champs requis
+	if req.RiotID == "" || req.RiotTag == "" || req.Region == "" {
+		c.JSON(400, gin.H{
+			"valid": false,
+			"error_message": "Riot ID, tag, and region are required",
+		})
+		return
+	}
+
+	// Validation de la région
+	validRegions := []string{"euw1", "na1", "eun1", "kr", "jp1", "br1", "la1", "la2", "oc1", "tr1", "ru", "ph2", "sg2", "th2", "tw2", "vn2"}
+	isValidRegion := false
+	for _, region := range validRegions {
+		if req.Region == region {
+			isValidRegion = true
+			break
 		}
-		if !isValidRegion {
-			c.JSON(400, gin.H{
+	}
+	if !isValidRegion {
+		c.JSON(400, gin.H{
+			"valid": false,
+			"error_message": "Invalid region: " + req.Region,
+		})
+		return
+	}
+
+	// Vérifier si l'API Riot est disponible
+	if s.riotAPIService == nil {
+		c.JSON(500, gin.H{
+			"valid": false,
+			"error_message": "Riot API service not available",
+		})
+		return
+	}
+
+	// Valider le compte avec l'API Riot
+	account, err := s.riotAPIService.GetAccountByRiotID(req.RiotID, req.RiotTag)
+	if err != nil {
+		c.JSON(404, gin.H{
+			"valid": false,
+			"error_message": "Account not found or Riot API error: " + err.Error(),
+		})
+		return
+	}
+
+	// Récupérer les informations d'invocateur
+	summoner, err := s.riotAPIService.GetSummonerByPUUID(account.PUUID, req.Region)
+	if err != nil {
+		c.JSON(404, gin.H{
+			"valid": false,
+			"error_message": "Summoner not found in region " + req.Region + ": " + err.Error(),
+		})
+		return
+	}
+
+	// Créer le service utilisateur
+	userService := services.NewUserService(s.db)
+
+	// Vérifier si l'utilisateur existe déjà
+	existingUser, err := userService.GetUserByRiotID(req.RiotID, req.RiotTag)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"valid": false,
+			"error_message": "Database error: " + err.Error(),
+		})
+		return
+	}
+
+	var user *models.User
+	if existingUser != nil {
+		// Utilisateur existant - mettre à jour ses informations
+		err = userService.UpdateUserSummonerInfo(
+			existingUser.ID,
+			summoner.ID,
+			summoner.AccountID,
+			summoner.ProfileIconID,
+			summoner.SummonerLevel,
+		)
+		if err != nil {
+			c.JSON(500, gin.H{
 				"valid": false,
-				"error": "Invalid region specified",
+				"error_message": "Failed to update user info: " + err.Error(),
 			})
 			return
 		}
+		
+		// Récupérer l'utilisateur mis à jour
+		user, err = userService.GetUserByRiotID(req.RiotID, req.RiotTag)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"valid": false,
+				"error_message": "Failed to retrieve updated user: " + err.Error(),
+			})
+			return
+		}
+	} else {
+		// Nouvel utilisateur - le créer
+		user, err = userService.CreateUser(
+			req.RiotID,
+			req.RiotTag,
+			account.PUUID,
+			req.Region,
+			summoner.ProfileIconID,
+			summoner.SummonerLevel,
+		)
+		if err != nil {
+			c.JSON(500, gin.H{
+				"valid": false,
+				"error_message": "Failed to create user: " + err.Error(),
+			})
+			return
+		}
+		
+		// Mettre à jour avec les IDs d'invocateur
+		err = userService.UpdateUserSummonerInfo(
+			user.ID,
+			summoner.ID,
+			summoner.AccountID,
+			summoner.ProfileIconID,
+			summoner.SummonerLevel,
+		)
+		if err != nil {
+			log.Printf("Warning: Failed to update summoner info for new user: %v", err)
+		}
 	}
 
-	// Si on a une vraie API Riot configurée, on peut faire une validation plus poussée
-	if s.riotAPIService != nil {
-		// Ici on pourrait vérifier si le compte existe vraiment
-		// Pour le moment, on simule juste une réponse positive
+	// Créer une session pour l'utilisateur
+	sessionID, err := s.createUserSession(user.ID)
+	if err != nil {
+		c.JSON(500, gin.H{
+			"valid": false,
+			"error_message": "Failed to create session: " + err.Error(),
+		})
+		return
 	}
+
+	// Définir le cookie de session
+	c.SetCookie("session_id", sessionID, 86400*7, "/", "", false, true) // 7 jours
 
 	c.JSON(200, gin.H{
-		"valid":    true,
-		"message":  "Account validation successful",
-		"username": req.Username,
-		"tagline":  req.TagLine,
-		"region":   req.Region,
+		"valid": true,
+		"user": user,
 	})
 }
 
@@ -1021,4 +1569,460 @@ func max(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// initDatabase initialise la base de données SQLite
+func initDatabase() (*sql.DB, error) {
+	// Créer le dossier data s'il n'existe pas
+	if err := os.MkdirAll("./data", 0755); err != nil {
+		return nil, fmt.Errorf("failed to create data directory: %w", err)
+	}
+	
+	// Ouvrir la base de données SQLite
+	db, err := sql.Open("sqlite", "./data/herald.db")
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
+	
+	// Tester la connexion
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+	
+	// Exécuter les migrations
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
+	}
+	
+	log.Println("[DATABASE] SQLite database initialized successfully")
+	return db, nil
+}
+
+// runMigrations exécute les migrations de base de données
+func runMigrations(db *sql.DB) error {
+	// Créer la table de suivi des migrations
+	migrationTrackingSQL := `
+		CREATE TABLE IF NOT EXISTS migrations (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			version TEXT UNIQUE NOT NULL,
+			applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
+	`
+	
+	if _, err := db.Exec(migrationTrackingSQL); err != nil {
+		return fmt.Errorf("failed to create migrations table: %w", err)
+	}
+	
+	// Liste des migrations à appliquer
+	migrations := []struct {
+		version string
+		file    string
+	}{
+		{"001", "./internal/db/migrations/001_users_matches.sql"},
+	}
+	
+	for _, migration := range migrations {
+		// Vérifier si la migration a déjà été appliquée
+		var count int
+		err := db.QueryRow("SELECT COUNT(*) FROM migrations WHERE version = ?", migration.version).Scan(&count)
+		if err != nil {
+			return fmt.Errorf("failed to check migration %s: %w", migration.version, err)
+		}
+		
+		if count > 0 {
+			log.Printf("[MIGRATION] Skipping migration %s (already applied)", migration.version)
+			continue
+		}
+		
+		// Lire le fichier de migration
+		migrationSQL, err := os.ReadFile(migration.file)
+		if err != nil {
+			return fmt.Errorf("failed to read migration file %s: %w", migration.file, err)
+		}
+		
+		log.Printf("[MIGRATION] Applying migration %s", migration.version)
+		
+		// Exécuter la migration dans une transaction
+		tx, err := db.Begin()
+		if err != nil {
+			return fmt.Errorf("failed to begin transaction for migration %s: %w", migration.version, err)
+		}
+		
+		// Exécuter le SQL de migration
+		if _, err := tx.Exec(string(migrationSQL)); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to execute migration %s: %w", migration.version, err)
+		}
+		
+		// Marquer la migration comme appliquée
+		if _, err := tx.Exec("INSERT INTO migrations (version) VALUES (?)", migration.version); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("failed to record migration %s: %w", migration.version, err)
+		}
+		
+		// Valider la transaction
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("failed to commit migration %s: %w", migration.version, err)
+		}
+		
+		log.Printf("[MIGRATION] Successfully applied migration %s", migration.version)
+	}
+	
+	return nil
+}
+
+// initGoogleOAuth initie le flow OAuth Google
+func (s *Server) initGoogleOAuth(c *gin.Context) {
+	if !s.googleOAuth.IsConfigured() {
+		c.JSON(503, gin.H{
+			"error":   "OAuth Google non configuré",
+			"message": "Veuillez configurer GOOGLE_CLIENT_ID et GOOGLE_CLIENT_SECRET",
+			"mock_url": "https://accounts.google.com/oauth/authorize?client_id=mock&redirect_uri=https://herald.lol/auth/google/callback&response_type=code&scope=email+profile",
+		})
+		return
+	}
+
+	state := s.googleOAuth.GenerateState()
+	authURL := s.googleOAuth.GetAuthURL(state)
+
+	// En production, stockez le state de manière sécurisée (Redis, base de données, etc.)
+	// Pour cette démo, on fait confiance au validateur côté callback
+
+	c.JSON(200, gin.H{
+		"auth_url": authURL,
+		"state":    state,
+		"message":  "Redirection vers Google OAuth",
+	})
+}
+
+// googleOAuthCallback gère le callback OAuth Google
+func (s *Server) googleOAuthCallback(c *gin.Context) {
+	code := c.Query("code")
+	state := c.Query("state")
+	errorParam := c.Query("error")
+
+	// Gérer les erreurs OAuth
+	if errorParam != "" {
+		log.Printf("OAuth error: %s", errorParam)
+		c.Redirect(302, "/?oauth_error="+errorParam)
+		return
+	}
+
+	if code == "" {
+		log.Printf("Missing OAuth code")
+		c.Redirect(302, "/?oauth_error=missing_code")
+		return
+	}
+
+	// Valider le state
+	if !s.googleOAuth.ValidateState(state) {
+		log.Printf("Invalid OAuth state: %s", state)
+		c.Redirect(302, "/?oauth_error=invalid_state")
+		return
+	}
+
+	if !s.googleOAuth.IsConfigured() {
+		// Mode mock pour développement
+		c.Redirect(302, "/?oauth_success=mock&user=mock_user&email=user@example.com")
+		return
+	}
+
+	// Échanger le code contre un token
+	ctx := c.Request.Context()
+	tokenResp, err := s.googleOAuth.ExchangeCodeForToken(ctx, code)
+	if err != nil {
+		log.Printf("Failed to exchange code for token: %v", err)
+		c.Redirect(302, "/?oauth_error=token_exchange_failed")
+		return
+	}
+
+	// Récupérer les informations utilisateur
+	userInfo, err := s.googleOAuth.GetUserInfo(ctx, tokenResp.AccessToken)
+	if err != nil {
+		log.Printf("Failed to get user info: %v", err)
+		c.Redirect(302, "/?oauth_error=userinfo_failed")
+		return
+	}
+
+	// En production, vous stockeriez ces informations en session/base de données
+	log.Printf("User authenticated: %s (%s)", userInfo.Name, userInfo.Email)
+
+	// Rediriger vers le frontend avec les informations utilisateur
+	redirectURL := fmt.Sprintf("/?oauth_success=true&user=%s&email=%s&picture=%s",
+		url.QueryEscape(userInfo.Name),
+		url.QueryEscape(userInfo.Email),
+		url.QueryEscape(userInfo.Picture))
+
+	c.Redirect(302, redirectURL)
+}
+
+// Analytics endpoint handlers
+
+// getPeriodAnalytics récupère les analytics pour une période donnée
+func (s *Server) getPeriodAnalytics(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	period := c.Param("period")
+	if period == "" {
+		period = "week" // Valeur par défaut
+	}
+	
+	// Vérifier si la période est valide
+	validPeriods := map[string]bool{
+		"today": true, "week": true, "month": true, "season": true,
+	}
+	if !validPeriods[period] {
+		c.JSON(400, gin.H{"error": "Invalid period. Must be one of: today, week, month, season"})
+		return
+	}
+	
+	stats, err := s.analyticsService.GetPeriodStats(userObj.ID, period)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get period analytics: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    stats,
+	})
+}
+
+// getRecommendations récupère les recommandations IA
+func (s *Server) getRecommendations(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	recommendations, err := s.analyticsService.GetRecommendations(userObj.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get recommendations: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    recommendations,
+	})
+}
+
+// getPerformanceTrends récupère les tendances de performance
+func (s *Server) getPerformanceTrends(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	trends, err := s.analyticsService.GetPerformanceTrends(userObj.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get performance trends: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{
+		"success": true,
+		"data":    trends,
+	})
+}
+
+// refreshAnalytics force le rafraîchissement des analytics
+func (s *Server) refreshAnalytics(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	var request struct {
+		Period string `json:"period"`
+	}
+	
+	if err := c.ShouldBindJSON(&request); err != nil {
+		request.Period = "week" // Valeur par défaut
+	}
+	
+	// Mettre à jour les statistiques
+	err := s.analyticsService.UpdateChampionStats(userObj.ID, request.Period)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to refresh analytics: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "Analytics refreshed successfully",
+	})
+}
+
+// Settings endpoint handlers
+
+// getUserSettings récupère les paramètres de l'utilisateur
+func (s *Server) getUserSettings(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	// Récupérer les settings de l'utilisateur depuis la base de données
+	settings, err := s.getUserSettingsFromDB(userObj.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to get user settings: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, settings)
+}
+
+// updateUserSettings met à jour les paramètres de l'utilisateur
+func (s *Server) updateUserSettings(c *gin.Context) {
+	user, exists := c.Get("user")
+	if !exists {
+		c.JSON(401, gin.H{"error": "User not authenticated"})
+		return
+	}
+	userObj := user.(*models.User)
+	
+	var settings UserSettings
+	if err := c.ShouldBindJSON(&settings); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid settings data: " + err.Error()})
+		return
+	}
+	
+	// Valider les settings
+	if err := s.validateUserSettings(&settings); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid settings: " + err.Error()})
+		return
+	}
+	
+	// Sauvegarder en base de données
+	err := s.saveUserSettings(userObj.ID, &settings)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to save settings: " + err.Error()})
+		return
+	}
+	
+	c.JSON(200, gin.H{
+		"success": true,
+		"message": "Settings updated successfully",
+	})
+}
+
+// UserSettings structure pour les paramètres utilisateur
+type UserSettings struct {
+	IncludeTimeline    bool `json:"include_timeline"`
+	IncludeAllData     bool `json:"include_all_data"`
+	LightMode          bool `json:"light_mode"`
+	AutoSyncEnabled    bool `json:"auto_sync_enabled"`
+	SyncFrequencyHours int  `json:"sync_frequency_hours"`
+}
+
+// getUserSettingsFromDB récupère les settings depuis la base de données
+func (s *Server) getUserSettingsFromDB(userID int) (*UserSettings, error) {
+	query := `
+		SELECT 
+			include_timeline, 
+			include_all_data, 
+			light_mode, 
+			auto_sync_enabled, 
+			sync_frequency_hours
+		FROM user_settings 
+		WHERE user_id = ?
+	`
+	
+	var settings UserSettings
+	err := s.db.QueryRow(query, userID).Scan(
+		&settings.IncludeTimeline,
+		&settings.IncludeAllData,
+		&settings.LightMode,
+		&settings.AutoSyncEnabled,
+		&settings.SyncFrequencyHours,
+	)
+	
+	if err == sql.ErrNoRows {
+		// Créer des settings par défaut si aucun n'existe
+		defaultSettings := &UserSettings{
+			IncludeTimeline:    true,
+			IncludeAllData:     true,
+			LightMode:          true,
+			AutoSyncEnabled:    true,
+			SyncFrequencyHours: 24,
+		}
+		
+		// Sauvegarder les settings par défaut
+		if saveErr := s.saveUserSettings(userID, defaultSettings); saveErr != nil {
+			return nil, fmt.Errorf("failed to create default settings: %w", saveErr)
+		}
+		
+		return defaultSettings, nil
+	}
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user settings: %w", err)
+	}
+	
+	return &settings, nil
+}
+
+// saveUserSettings sauvegarde les settings en base de données
+func (s *Server) saveUserSettings(userID int, settings *UserSettings) error {
+	query := `
+		INSERT INTO user_settings (
+			user_id, 
+			include_timeline, 
+			include_all_data, 
+			light_mode, 
+			auto_sync_enabled, 
+			sync_frequency_hours,
+			updated_at
+		) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+		ON CONFLICT(user_id) DO UPDATE SET
+			include_timeline = excluded.include_timeline,
+			include_all_data = excluded.include_all_data,
+			light_mode = excluded.light_mode,
+			auto_sync_enabled = excluded.auto_sync_enabled,
+			sync_frequency_hours = excluded.sync_frequency_hours,
+			updated_at = datetime('now')
+	`
+	
+	_, err := s.db.Exec(query,
+		userID,
+		settings.IncludeTimeline,
+		settings.IncludeAllData,
+		settings.LightMode,
+		settings.AutoSyncEnabled,
+		settings.SyncFrequencyHours,
+	)
+	
+	if err != nil {
+		return fmt.Errorf("failed to save user settings: %w", err)
+	}
+	
+	return nil
+}
+
+// validateUserSettings valide les paramètres utilisateur
+func (s *Server) validateUserSettings(settings *UserSettings) error {
+	// Valider la fréquence de sync
+	validFrequencies := map[int]bool{
+		1: true, 6: true, 12: true, 24: true, 72: true, 168: true,
+	}
+	
+	if !validFrequencies[settings.SyncFrequencyHours] {
+		return fmt.Errorf("invalid sync frequency: %d hours", settings.SyncFrequencyHours)
+	}
+	
+	return nil
 }

@@ -22,7 +22,7 @@ import {
   Analytics,
   Timeline,
   Speed,
-  Assessment,
+  Insights,
   Settings,
   Refresh,
 } from '@mui/icons-material';
@@ -215,7 +215,7 @@ export const EnhancedDashboard: React.FC<EnhancedDashboardProps> = ({ puuid }) =
 
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Chip
-          icon={<Assessment />}
+          icon={<Insights />}
           label={`PUUID: ${puuid.substring(0, 8)}...`}
           color="primary"
           variant="outlined"

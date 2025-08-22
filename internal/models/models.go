@@ -95,7 +95,7 @@ type SyncJob struct {
 	UserID             int        `json:"user_id" db:"user_id"`
 	JobType            string     `json:"job_type" db:"job_type"`
 	Status             string     `json:"status" db:"status"`
-	StartedAt          time.Time  `json:"started_at" db:"started_at"`
+	StartedAt          *time.Time `json:"started_at,omitempty" db:"started_at"`
 	CompletedAt        *time.Time `json:"completed_at,omitempty" db:"completed_at"`
 	MatchesProcessed   int        `json:"matches_processed" db:"matches_processed"`
 	MatchesNew         int        `json:"matches_new" db:"matches_new"`

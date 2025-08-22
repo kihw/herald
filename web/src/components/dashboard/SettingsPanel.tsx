@@ -206,12 +206,76 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({
 
         {/* Additional Settings */}
         <Typography variant="h6" sx={{ mb: 2 }}>
+          Queue Selection
+        </Typography>
+        <FormGroup sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Choose which game modes to synchronize automatically:
+          </Typography>
+          
+          <Box sx={{ ml: 2 }}>
+            <FormControlLabel
+              control={<Switch defaultChecked />}
+              label="Ranked Solo/Duo (420)"
+            />
+            <FormControlLabel
+              control={<Switch defaultChecked />}
+              label="Ranked Flex (440)"
+            />
+            <FormControlLabel
+              control={<Switch />}
+              label="Normal Draft (400)"
+            />
+            <FormControlLabel
+              control={<Switch />}
+              label="ARAM (450)"
+            />
+          </Box>
+        </FormGroup>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Data Management */}
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Data Management
+        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Manage your stored match data and preferences:
+          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Button variant="outlined" size="small">
+              Export All Data
+            </Button>
+            <Button variant="outlined" size="small" color="warning">
+              Clear Cache
+            </Button>
+            <Button variant="outlined" size="small" color="error">
+              Delete All Data
+            </Button>
+          </Box>
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        {/* Advanced */}
+        <Typography variant="h6" sx={{ mb: 2 }}>
           Advanced
         </Typography>
-        <Alert severity="info">
-          Additional settings will be available in future updates. This includes
-          export formats, data retention policies, and integration options.
+        <Alert severity="info" sx={{ mb: 2 }}>
+          📊 Herald.lol now supports permanent data storage and real-time analytics!
+          Your match history is automatically synchronized and stored securely.
         </Alert>
+        
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="body2" color="text.secondary">
+            • Match data is permanently stored in your personal database
+            • Analytics are generated from your complete match history  
+            • Synchronization respects Riot API rate limits
+            • Your data remains private and secure
+          </Typography>
+        </Box>
       </CardContent>
     </Card>
   );

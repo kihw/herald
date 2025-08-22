@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../utils/api-config';
 import {
   Card,
   CardContent,
@@ -34,7 +35,7 @@ import {
   TrendingFlat,
   Star,
   Warning,
-  Assessment,
+  Analytics,
   Sports,
   Timeline,
 } from '@mui/icons-material';
@@ -144,7 +145,7 @@ export const ChampionsAnalytics: React.FC<ChampionsAnalyticsProps> = ({ puuid })
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API = ((window as any).VITE_API_BASE || 'http://localhost:8004');
+  const API = getApiUrl('');
 
   useEffect(() => {
     fetchChampionsData();
@@ -479,7 +480,7 @@ export const ChampionsAnalytics: React.FC<ChampionsAnalyticsProps> = ({ puuid })
                         {champion.improvement_suggestions.map((suggestion, idx) => (
                           <ListItem key={idx} sx={{ pl: 0 }}>
                             <ListItemIcon>
-                              <Assessment color="primary" fontSize="small" />
+                              <Analytics color="primary" fontSize="small" />
                             </ListItemIcon>
                             <ListItemText
                               primary={suggestion}

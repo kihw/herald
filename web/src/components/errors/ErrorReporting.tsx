@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogActions,
   Alert,
-  AlertTitle,
   Chip,
   Accordion,
   AccordionSummary,
@@ -253,7 +252,7 @@ Navigateur: ${browserInfo}
           </Box>
 
           <Alert severity="error">
-            <AlertTitle>Message d'erreur</AlertTitle>
+            <Typography variant="h6" component="div" sx={{ fontWeight: 'bold' }}>Message d'erreur</Typography>
             {error.message}
           </Alert>
 

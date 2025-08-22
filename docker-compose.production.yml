@@ -6,6 +6,8 @@ services:
       dockerfile: Dockerfile.backend
     container_name: lol-exporter-production
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       - GIN_MODE=release
       - LOG_LEVEL=info
@@ -15,6 +17,11 @@ services:
       - WEBHOOK_TIMEOUT=30s
       - MAX_REQUEST_SIZE=10MB
       - REQUEST_TIMEOUT=30s
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL:-https://herald.lol/auth/google/callback}
+      - RIOT_API_KEY=${RIOT_API_KEY}
+      - PORT=${PORT:-8000}
     expose:
       - "8000"
     networks:
@@ -32,7 +39,7 @@ services:
           memory: 256M
           cpus: "0.5"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,68 +74,10 @@ services:
       - lol-exporter
       - lol-frontend
     volumes:
+      - ./nginx/nginx.production.conf:/etc/nginx/nginx.conf:ro
       - ./logs/nginx:/var/log/nginx
-    command: |
-      sh -c '
-      cat > /etc/nginx/nginx.conf << "EOF"
-      events {
-          worker_connections 1024;
-      }
-      http {
-          include /etc/nginx/mime.types;
-          default_type application/octet-stream;
-          
-          upstream backend {
-              server lol-exporter-production:8000;
-          }
-          upstream frontend {
-              server lol-frontend-production:80;
-          }
-          
-          server {
-              listen 80;
-              server_name herald.lol www.herald.lol;
-              
-              # API routes vers backend Go
-              location /api/ {
-                  proxy_pass http://backend;
-                  proxy_set_header Host $$host;
-                  proxy_set_header X-Real-IP $$remote_addr;
-                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $$scheme;
-                  
-                  # CORS headers
-                  add_header Access-Control-Allow-Origin "*" always;
-                  add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
-                  add_header Access-Control-Allow-Headers "Origin, Content-Type, Authorization, X-Requested-With" always;
-                  
-                  if ($$request_method = OPTIONS) {
-                      return 204;
-                  }
-              }
-              
-              # Tout le reste vers frontend React
-              location / {
-                  proxy_pass http://frontend;
-                  proxy_set_header Host $$host;
-                  proxy_set_header X-Real-IP $$remote_addr;
-                  proxy_set_header X-Forwarded-For $$proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $$scheme;
-                  
-                  # Headers pour SPA
-                  proxy_intercept_errors on;
-                  error_page 404 = @fallback;
-              }
-              
-              # Fallback pour React Router
-              location @fallback {
-                  proxy_pass http://frontend/;
-              }
-          }
-      }
-      EOF
-      nginx -g "daemon off;"
-      '
+      - ./ssl:/etc/ssl:ro
+      - ./letsencrypt-webroot:/var/www/letsencrypt:ro
 
 networks:
   lol-production:

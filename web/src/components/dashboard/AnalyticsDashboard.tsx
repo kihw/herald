@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getApiUrl } from '../../utils/api-config';
 import {
   Container,
   Typography,
@@ -32,7 +33,7 @@ import {
   TrendingUp,
   TrendingDown,
   TrendingFlat,
-  Assessment,
+  Dashboard,
   Refresh,
   Insights,
   Timeline,
@@ -114,8 +115,7 @@ const ROLE_NAMES: Record<string, string> = {
 };
 
 const AnalyticsDashboard: React.FC = () => {
-  const { state } = useAuth();
-  const { user } = state;
+  const { user, isAuthenticated, error: authError } = useAuth();
   const [tabValue, setTabValue] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   
@@ -141,7 +141,7 @@ const AnalyticsDashboard: React.FC = () => {
     severity: 'success' as 'success' | 'error' | 'warning' | 'info',
   });
 
-  const API = (import.meta.env?.VITE_API_BASE || 'http://localhost:8004');
+  const API = getApiUrl('');
 
   useEffect(() => {
     if (user) {
@@ -339,7 +339,7 @@ const AnalyticsDashboard: React.FC = () => {
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
-          <Tab label="Vue d'ensemble" icon={<Assessment />} />
+          <Tab label="Vue d'ensemble" icon={<Dashboard />} />
           <Tab label="Analyse des Champions" icon={<EmojiEvents />} />
           <Tab label="MMR & Progression" icon={<Timeline />} />
           <Tab label="Recommandations IA" icon={<Psychology />} />
@@ -534,7 +534,7 @@ const AnalyticsDashboard: React.FC = () => {
                       {periodStats.suggestions.map((suggestion, index) => (
                         <ListItem key={index}>
                           <ListItemIcon>
-                            <Assessment color="primary" fontSize="small" />
+                            <Dashboard color="primary" fontSize="small" />
                           </ListItemIcon>
                           <ListItemText primary={suggestion} />
                         </ListItem>
@@ -621,7 +621,7 @@ const AnalyticsDashboard: React.FC = () => {
                         {rec.action_items.map((action, actionIndex) => (
                           <ListItem key={actionIndex} sx={{ pl: 0 }}>
                             <ListItemIcon>
-                              <Assessment color="primary" fontSize="small" />
+                              <Dashboard color="primary" fontSize="small" />
                             </ListItemIcon>
                             <ListItemText 
                               primary={action}

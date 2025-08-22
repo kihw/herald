@@ -66,6 +66,11 @@ export class DataProcessor {
    * Process raw match data into optimized format
    */
   static processMatches(rawData: any[]): OptimizedMatch[] {
+    // Guard contre arrays vides
+    if (!rawData || rawData.length === 0) {
+      return [];
+    }
+    
     const cacheKey = `processed_matches_${rawData.length}_${rawData[0]?.matchId || 'empty'}`;
     
     return this.getCached(cacheKey, () => {
@@ -97,6 +102,11 @@ export class DataProcessor {
    * Compute champion statistics with efficient grouping
    */
   static computeChampionStats(matches: OptimizedMatch[]): ChampionStats[] {
+    // Guard contre arrays vides
+    if (!matches || matches.length === 0) {
+      return [];
+    }
+    
     const cacheKey = `champion_stats_${matches.length}_${matches[0]?.date || 0}`;
     
     return this.getCached(cacheKey, () => {
@@ -153,6 +163,17 @@ export class DataProcessor {
    * Generate performance insights using AI-like analysis
    */
   static generateInsights(matches: OptimizedMatch[], championStats: ChampionStats[]): PerformanceInsights {
+    // Guard contre arrays vides
+    if (!matches || matches.length === 0 || !championStats || championStats.length === 0) {
+      return {
+        recentTrend: 'stable',
+        bestChampions: [],
+        recommendedChampions: [],
+        weakPoints: ['Insufficient data for analysis'],
+        strengths: []
+      };
+    }
+    
     const cacheKey = `insights_${matches.length}_${championStats.length}`;
     
     return this.getCached(cacheKey, () => {
@@ -222,6 +243,15 @@ export class DataProcessor {
    * Get performance summary for time periods
    */
   static getPerformanceSummary(matches: OptimizedMatch[]) {
+    // Guard contre arrays vides
+    if (!matches || matches.length === 0) {
+      return {
+        last7Days: { games: 0, wins: 0, winRate: 0, avgKDA: 0 },
+        last30Days: { games: 0, wins: 0, winRate: 0, avgKDA: 0 },
+        last90Days: { games: 0, wins: 0, winRate: 0, avgKDA: 0 }
+      };
+    }
+    
     const now = Date.now();
     const day = 24 * 60 * 60 * 1000;
     
