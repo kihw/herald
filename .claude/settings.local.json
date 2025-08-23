@@ -1,85 +1,77 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(node:*)",
-      "Bash(npm:*)",
-      "Bash(git init:*)",
-      "Bash(rm:*)",
-      "Bash(touch:*)",
-      "Bash(chmod:*)",
-      "Bash(docker build:*)",
-      "Bash(docker-compose:*)",
-      "Bash(curl:*)",
-      "Bash(docker exec:*)",
-      "Bash(winpty docker exec -it lol_match_exporter-lol-exporter-1 ls -la /app/web/dist/)",
-      "Bash(cp:*)",
-      "Bash(python:*)",
-      "Bash(taskkill:*)",
-      "Bash(go build:*)",
-      "Bash(.analytics-server.exe)",
-      "Bash(./analytics-server.exe)",
-      "Bash(./analytics-server-test.exe)",
-      "Bash(PORT=8002 ./analytics-server-test.exe)",
-      "Bash(mkdir:*)",
-      "Bash(go test:*)",
-      "Bash(go get:*)",
-      "Bash(go run:*)",
-      "Bash(mv:*)",
-      "Bash(PORT=8002 ./analytics-server-optimized.exe)",
-      "Bash(make:*)",
-      "Bash(powershell:*)",
-      "Bash(PORT=8002 ./analytics-server.exe)",
-      "Bash(go:*)",
-      "Bash(GIN_MODE=release PORT=8003 ./analytics-server-production.exe)",
-      "Bash(time curl:*)",
-      "Bash(docker:*)",
-      "Bash(winpty docker run --rm lol_match_exporter-analytics-server:latest ls -la /app)",
-      "Bash(export RIOT_API_KEY=RGAPI-test-key)",
-      "Bash(/dev/null)",
-      "Bash(PORT=8004 ./analytics-server.exe)",
-      "Bash(PORT=8004 go run analytics_server_standalone.go)",
-      "WebSearch",
-      "Bash(PORT=8004 ./real-analytics-server.exe)",
-      "Bash(PORT=8004 ./real-server.exe)",
-      "Bash(CGO_ENABLED=1 go build -o ../../real-server.exe .)",
-      "Bash(start http://localhost:5174)",
-      "Bash(CGO_ENABLED=0 go build -o real-server.exe .)",
-      "Bash(PORT=8001 ./analytics-server.exe)",
-      "Bash(find:*)",
-      "Bash(tar:*)",
-      "Bash(scp:*)",
-      "Bash(nginx:*)",
-      "Bash(openssl req:*)",
-      "Bash(nslookup:*)",
-      "Bash(dig:*)",
-      "Bash(ss:*)",
-      "Bash(host:*)",
-      "Bash(grep:*)",
-      "Bash(sudo apt:*)",
-      "Bash(sudo apt install:*)",
-      "Bash(sudo certbot certonly:*)",
-      "Bash(/home/debian/herald/scripts/monitor.sh:*)",
-      "Bash(sudo chown:*)",
-      "Bash(/home/debian/herald/test-complete.sh:*)",
-      "Bash(CGO_ENABLED=1 go build -o herald-server .)",
-      "Bash(whereis:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(./test-complete.sh:*)",
-      "Bash(PORT=8004 ./herald-server)",
-      "Bash(PORT=8004 ./herald.exe)",
-      "Bash(sed:*)",
-      "Bash(true)",
-      "Bash(/usr/local/go/bin/go:*)",
-      "Bash(apt list:*)",
-      "Bash(npx tsc:*)",
-      "WebFetch(domain:herald.lol)",
-      "Bash(openssl:*)"
+  "_comment": "Herald.lol Local Development Settings",
+  "_description": "Local overrides for Herald.lol gaming platform development. This file should NOT be committed to version control.",
+  
+  "hooks": {
+    "_comment_hooks": "Local development hooks can be added here to override or extend production hooks",
+    
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '🎮 Herald.lol Local Development Mode Active'",
+            "timeout": 5
+          }
+        ]
+      }
     ],
-    "deny": [],
-    "ask": [],
-    "additionalDirectories": [
-      "C:\\c\\Users\\kihwo\\Documents\\code\\lol_match_exporter",
-      "C:\\c\\Users\\kihwo\\Documents\\code"
+    
+    "PreToolUse": [
+      {
+        "_comment": "Local development validation - less strict than production",
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Local gaming development - validation relaxed'",
+            "timeout": 5
+          }
+        ]
+      }
     ]
-  }
+  },
+  
+  "_local_settings_examples": {
+    "_comment": "Examples of local settings you might want to configure",
+    
+    "development_mode": {
+      "_description": "Enable development-specific features",
+      "verbose_logging": true,
+      "skip_performance_checks": true,
+      "mock_riot_api": false
+    },
+    
+    "gaming_platform_overrides": {
+      "_description": "Local overrides for Herald.lol gaming platform",
+      "enable_debug_analytics": true,
+      "local_database_url": "postgresql://localhost:5432/herald_dev",
+      "local_redis_url": "redis://localhost:6379",
+      "riot_api_dev_key": "RGAPI-your-dev-key-here"
+    },
+    
+    "performance_targets_local": {
+      "_description": "Relaxed performance targets for local development",
+      "analytics_response_time": "10s",
+      "dashboard_load_time": "5s",
+      "concurrent_users_target": "100"
+    }
+  },
+  
+  "_instructions": [
+    "This file is for LOCAL development settings only",
+    "Add your personal development preferences here",
+    "Override production hooks for local development needs",
+    "Configure local database/API endpoints",
+    "Set development-specific performance targets",
+    "NEVER commit this file - it's in .gitignore"
+  ],
+  
+  "_gaming_dev_tips": [
+    "Use mock Riot API data for faster local development",
+    "Enable verbose logging for gaming analytics debugging",
+    "Configure local database with gaming test data",
+    "Set relaxed performance targets for development",
+    "Enable gaming platform debug features"
+  ]
 }
