@@ -1,0 +1,336 @@
+# Herald.lol Grafana Configuration - Gaming Analytics Dashboards
+
+# Admin credentials
+adminUser: admin
+adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
+
+# Grafana configuration
+grafana.ini:
+  server:
+    domain: grafana.herald.lol
+    root_url: https://grafana.herald.lol
+    enforce_domain: true
+  
+  analytics:
+    reporting_enabled: false
+    check_for_updates: false
+  
+  auth:
+    disable_login_form: false
+    oauth_auto_login: false
+  
+  auth.generic_oauth:
+    enabled: true
+    name: Herald OAuth
+    client_id: "${OAUTH_CLIENT_ID}"
+    client_secret: "${OAUTH_CLIENT_SECRET}"
+    scopes: openid profile email
+    auth_url: https://auth.herald.lol/oauth/authorize
+    token_url: https://auth.herald.lol/oauth/token
+    api_url: https://auth.herald.lol/oauth/userinfo
+    allowed_domains: herald.lol
+    role_attribute_path: contains(groups[*], 'admin') && 'Admin' || 'Viewer'
+  
+  security:
+    admin_user: admin
+    admin_password: "${GRAFANA_ADMIN_PASSWORD}"
+    secret_key: "${GRAFANA_SECRET_KEY}"
+    disable_gravatar: false
+    data_source_proxy_whitelist: prometheus:9090
+  
+  users:
+    allow_sign_up: false
+    allow_org_create: false
+    auto_assign_org: true
+    auto_assign_org_role: Viewer
+  
+  database:
+    type: postgres
+    host: postgresql.herald.svc.cluster.local:5432
+    name: grafana
+    user: grafana
+    password: "${DB_PASSWORD}"
+    ssl_mode: require
+  
+  # Gaming-specific settings
+  unified_alerting:
+    enabled: true
+    execute_alerts: true
+  
+  feature_toggles:
+    enable: traceToMetrics
+
+# Data sources
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      # Prometheus for metrics
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server:9090
+        access: proxy
+        isDefault: true
+        jsonData:
+          timeInterval: "15s"
+          queryTimeout: "60s"
+          httpMethod: POST
+      
+      # Loki for logs
+      - name: Loki
+        type: loki
+        url: http://loki:3100
+        access: proxy
+        jsonData:
+          maxLines: 1000
+      
+      # Jaeger for tracing
+      - name: Jaeger
+        type: jaeger
+        url: http://jaeger-query:16686
+        access: proxy
+      
+      # PostgreSQL for gaming data
+      - name: Herald-DB
+        type: postgres
+        url: postgresql.herald.svc.cluster.local:5432
+        database: herald
+        user: grafana_reader
+        secureJsonData:
+          password: "${POSTGRES_PASSWORD}"
+        jsonData:
+          sslmode: require
+          postgresVersion: 1500
+          timescaledb: false
+      
+      # InfluxDB for time-series gaming metrics
+      - name: InfluxDB
+        type: influxdb
+        url: http://influxdb:8086
+        database: herald_metrics
+        user: grafana
+        secureJsonData:
+          password: "${INFLUXDB_PASSWORD}"
+
+# Dashboard provisioning
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'herald-dashboards'
+        orgId: 1
+        folder: 'Herald.lol'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        allowUiUpdates: true
+        options:
+          path: /var/lib/grafana/dashboards/herald
+      
+      - name: 'gaming-analytics'
+        orgId: 1
+        folder: 'Gaming Analytics'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards/gaming
+      
+      - name: 'performance'
+        orgId: 1
+        folder: 'Performance'
+        type: file
+        disableDeletion: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards/performance
+
+# Pre-configured dashboards
+dashboards:
+  herald-dashboards:
+    herald-overview:
+      json: |
+        {
+          "dashboard": {
+            "title": "Herald.lol Platform Overview",
+            "tags": ["herald", "overview", "gaming"],
+            "timezone": "browser",
+            "panels": [
+              {
+                "title": "Active Users",
+                "targets": [
+                  {
+                    "expr": "sum(herald_active_users)",
+                    "legendFormat": "Active Users"
+                  }
+                ]
+              },
+              {
+                "title": "API Response Time",
+                "targets": [
+                  {
+                    "expr": "histogram_quantile(0.95, herald_api_duration_seconds_bucket)",
+                    "legendFormat": "p95 Response Time"
+                  }
+                ]
+              },
+              {
+                "title": "Gaming Analytics Processing",
+                "targets": [
+                  {
+                    "expr": "rate(herald_analytics_processed_total[5m])",
+                    "legendFormat": "Analytics/sec"
+                  }
+                ]
+              },
+              {
+                "title": "Riot API Rate Limit",
+                "targets": [
+                  {
+                    "expr": "herald_riot_api_rate_limit_remaining",
+                    "legendFormat": "Remaining Requests"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+    
+    gaming-metrics:
+      json: |
+        {
+          "dashboard": {
+            "title": "Gaming Performance Metrics",
+            "tags": ["gaming", "performance", "lol"],
+            "panels": [
+              {
+                "title": "Average KDA by Rank",
+                "targets": [
+                  {
+                    "expr": "avg by (rank) (herald_player_kda)",
+                    "legendFormat": "{{rank}}"
+                  }
+                ]
+              },
+              {
+                "title": "CS/min Distribution",
+                "targets": [
+                  {
+                    "expr": "histogram_quantile(0.5, herald_cs_per_minute_bucket)",
+                    "legendFormat": "Median CS/min"
+                  }
+                ]
+              },
+              {
+                "title": "Vision Score Trends",
+                "targets": [
+                  {
+                    "expr": "avg(herald_vision_score)",
+                    "legendFormat": "Average Vision Score"
+                  }
+                ]
+              },
+              {
+                "title": "Champion Win Rates",
+                "targets": [
+                  {
+                    "expr": "topk(10, herald_champion_win_rate)",
+                    "legendFormat": "{{champion}}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+
+# Resources
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Persistence
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClassName: gp3
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+
+# Ingress configuration
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+  hosts:
+    - grafana.herald.lol
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.herald.lol
+
+# RBAC
+rbac:
+  create: true
+  pspEnabled: false
+
+# Service Account
+serviceAccount:
+  create: true
+  name: grafana
+
+# Sidecar for dashboard provisioning
+sidecar:
+  dashboards:
+    enabled: true
+    label: herald_dashboard
+    folder: /var/lib/grafana/dashboards
+    searchNamespace: ALL
+  datasources:
+    enabled: true
+    label: herald_datasource
+
+# Plugins
+plugins:
+  - grafana-piechart-panel
+  - grafana-worldmap-panel
+  - grafana-clock-panel
+  - redis-datasource
+  - postgres-datasource
+
+# Environment variables
+env:
+  GF_INSTALL_PLUGINS: grafana-piechart-panel,grafana-worldmap-panel
+
+# Node selector for gaming workloads
+nodeSelector:
+  workload: monitoring
+
+# Tolerations
+tolerations:
+  - key: "monitoring"
+    operator: "Equal"
+    value: "true"
+    effect: "NoSchedule"
+
+# Anti-affinity for HA
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - grafana
+          topologyKey: kubernetes.io/hostname

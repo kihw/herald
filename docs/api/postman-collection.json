@@ -1,0 +1,959 @@
+{
+  "info": {
+    "name": "Herald.lol Gaming Analytics API",
+    "description": "Comprehensive API collection for Herald.lol Gaming Analytics Platform - League of Legends & TFT analytics, player statistics, team management, and gaming insights.",
+    "version": "3.1.0",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.herald.lol/v3",
+      "type": "string"
+    },
+    {
+      "key": "stagingUrl",
+      "value": "https://staging-api.herald.lol/v3",
+      "type": "string"
+    },
+    {
+      "key": "bearerToken",
+      "value": "",
+      "type": "string",
+      "description": "JWT Bearer token for user authentication"
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "string",
+      "description": "API key for server-to-server authentication"
+    },
+    {
+      "key": "region",
+      "value": "NA",
+      "type": "string",
+      "description": "League of Legends region (NA, EUW, KR, etc.)"
+    },
+    {
+      "key": "summonerName",
+      "value": "HeraldChampion",
+      "type": "string",
+      "description": "League of Legends summoner name"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{bearerToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "System",
+      "description": "System health and status endpoints",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Check API health status - no authentication required"
+          },
+          "response": [
+            {
+              "name": "Healthy Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/health",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["health"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"status\": \"healthy\",\n  \"timestamp\": \"2024-01-15T10:30:00Z\",\n  \"version\": \"3.1.0\",\n  \"gaming_platform\": \"herald-lol\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "description": "User authentication and authorization",
+      "item": [
+        {
+          "name": "User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('bearerToken', response.access_token);",
+                  "    pm.test('Login successful', () => {",
+                  "        pm.expect(response.access_token).to.exist;",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"demo@herald.lol\",\n  \"password\": \"demoPassword123\",\n  \"remember_me\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Authenticate user and receive JWT token"
+          },
+          "response": [
+            {
+              "name": "Successful Login",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"demo@herald.lol\",\n  \"password\": \"demoPassword123\",\n  \"remember_me\": true\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["auth", "login"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refresh_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"expires_in\": 900,\n  \"user\": {\n    \"id\": \"user_123\",\n    \"username\": \"herald_gamer\",\n    \"email\": \"demo@herald.lol\",\n    \"gaming_profile\": {\n      \"summoner_name\": \"HeraldChampion\",\n      \"region\": \"NA\",\n      \"tier\": \"GOLD\",\n      \"rank\": \"II\"\n    },\n    \"subscription_tier\": \"premium\",\n    \"gaming_platform\": \"herald-lol\"\n  },\n  \"gaming_platform\": \"herald-lol\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "User Registration",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"new_herald_gamer\",\n  \"email\": \"newuser@herald.lol\",\n  \"password\": \"securePassword123\",\n  \"summoner_name\": \"NewHeraldChamp\",\n  \"region\": \"NA\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register new gaming account"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gaming Analytics",
+      "description": "Core gaming analytics functionality",
+      "item": [
+        {
+          "name": "Get Summoner Analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Response is successful', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200]);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    ",
+                  "    pm.test('Analytics data structure is valid', () => {",
+                  "        pm.expect(response.analytics).to.exist;",
+                  "        pm.expect(response.analytics.data).to.exist;",
+                  "        pm.expect(response.analytics.data.kda).to.exist;",
+                  "        pm.expect(response.analytics.data.cs_per_minute).to.exist;",
+                  "    });",
+                  "    ",
+                  "    pm.test('Gaming insights are provided', () => {",
+                  "        pm.expect(response.analytics.gaming_insights).to.be.an('array');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/analytics/summoner/{{region}}/{{summonerName}}?timeRange=30d&gameMode=RANKED_SOLO_5x5",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "analytics", "summoner", "{{region}}", "{{summonerName}}"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "30d",
+                  "description": "Analysis time range"
+                },
+                {
+                  "key": "gameMode",
+                  "value": "RANKED_SOLO_5x5",
+                  "description": "Filter by game mode"
+                }
+              ]
+            },
+            "description": "Get comprehensive gaming analytics for a summoner including KDA, CS/min, Vision Score, Damage Share, and Gold Efficiency"
+          },
+          "response": [
+            {
+              "name": "Successful Analytics Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Gaming-API-Key",
+                    "value": "{{apiKey}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/gaming/analytics/summoner/NA/HeraldChampion?timeRange=30d",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["gaming", "analytics", "summoner", "NA", "HeraldChampion"],
+                  "query": [
+                    {
+                      "key": "timeRange",
+                      "value": "30d"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                },
+                {
+                  "key": "X-Gaming-Rate-Limit",
+                  "value": "300"
+                },
+                {
+                  "key": "X-Gaming-Rate-Remaining",
+                  "value": "287"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"summoner_info\": {\n    \"summoner_name\": \"HeraldChampion\",\n    \"level\": 147,\n    \"region\": \"NA\",\n    \"tier\": \"GOLD\",\n    \"rank\": \"II\",\n    \"lp\": 73\n  },\n  \"analytics\": {\n    \"data\": {\n      \"kda\": {\n        \"kills\": 7.2,\n        \"deaths\": 5.1,\n        \"assists\": 9.4,\n        \"ratio\": 3.25,\n        \"kill_participation\": 0.68,\n        \"trends\": {\n          \"7d_change\": 0.15,\n          \"30d_change\": 0.23\n        }\n      },\n      \"cs_per_minute\": 6.8,\n      \"vision_score\": 42.3,\n      \"damage_share\": 0.28,\n      \"gold_efficiency\": 1.15,\n      \"match_count\": 67,\n      \"win_rate\": 0.642\n    },\n    \"metadata\": {\n      \"generated_at\": \"2024-01-15T10:30:00Z\",\n      \"data_freshness\": \"2 hours\",\n      \"sample_size\": 67,\n      \"confidence_score\": 0.89\n    },\n    \"gaming_insights\": [\n      {\n        \"type\": \"improvement\",\n        \"message\": \"Your CS/min has improved by 12% this week\",\n        \"impact\": \"high\",\n        \"action_items\": [\n          \"Continue focusing on last-hitting in early game\",\n          \"Practice farming while harassing opponent\"\n        ]\n      },\n      {\n        \"type\": \"strength\",\n        \"message\": \"Excellent kill participation rate\",\n        \"impact\": \"medium\",\n        \"action_items\": [\n          \"Maintain aggressive team fight presence\"\n        ]\n      }\n    ]\n  },\n  \"gaming_platform\": \"herald-lol\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Export Summoner Analytics",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"format\": \"json\",\n  \"time_range\": \"30d\",\n  \"include_matches\": true,\n  \"include_timeline\": false,\n  \"mfa_token\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gaming/analytics/summoner/{{region}}/{{summonerName}}/export",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "analytics", "summoner", "{{region}}", "{{summonerName}}", "export"]
+            },
+            "description": "Export comprehensive summoner analytics data. Requires MFA token for data protection."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Champion Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/analytics/summoner/{{region}}/{{summonerName}}/champions/Jinx?timeRange=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "analytics", "summoner", "{{region}}", "{{summonerName}}", "champions", "Jinx"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "30d"
+                }
+              ]
+            },
+            "description": "Get champion-specific analytics including builds, skill orders, and performance metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Performance Trends",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/analytics/summoner/{{region}}/{{summonerName}}/trends?timeRange=90d&metrics=kda,cs_per_minute,vision_score",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "analytics", "summoner", "{{region}}", "{{summonerName}}", "trends"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "90d"
+                },
+                {
+                  "key": "metrics",
+                  "value": "kda,cs_per_minute,vision_score"
+                }
+              ]
+            },
+            "description": "Get performance trends over time for specific gaming metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Compare Performance",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/analytics/summoner/{{region}}/{{summonerName}}/compare?compareTo=rank_average&rank=GOLD&tier=II",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "analytics", "summoner", "{{region}}", "{{summonerName}}", "compare"],
+              "query": [
+                {
+                  "key": "compareTo",
+                  "value": "rank_average"
+                },
+                {
+                  "key": "rank",
+                  "value": "GOLD"
+                },
+                {
+                  "key": "tier",
+                  "value": "II"
+                }
+              ]
+            },
+            "description": "Compare player performance against rank average, region average, or global average"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Match Data",
+      "description": "Match details and statistics",
+      "item": [
+        {
+          "name": "Get Match Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/matches/{{region}}/NA1_4567890123?include_timeline=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "matches", "{{region}}", "NA1_4567890123"],
+              "query": [
+                {
+                  "key": "include_timeline",
+                  "value": "true",
+                  "description": "Include detailed timeline events"
+                }
+              ]
+            },
+            "description": "Get comprehensive match data including participant stats, team performance, and timeline events"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Recent Matches",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/matches/{{region}}/summoner/{{summonerName}}/recent?limit=10&gameMode=RANKED_SOLO_5x5",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "matches", "{{region}}", "summoner", "{{summonerName}}", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "gameMode",
+                  "value": "RANKED_SOLO_5x5"
+                }
+              ]
+            },
+            "description": "Get recent matches for a summoner with optional filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Live Match",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/matches/{{region}}/summoner/{{summonerName}}/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "matches", "{{region}}", "summoner", "{{summonerName}}", "live"]
+            },
+            "description": "Get current live match data if the summoner is in game"
+          },
+          "response": []
+        },
+        {
+          "name": "Analyze Match",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"player_focus\": \"{{summonerName}}\",\n  \"analysis_type\": \"comprehensive\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gaming/matches/{{region}}/NA1_4567890123/analyze",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "matches", "{{region}}", "NA1_4567890123", "analyze"]
+            },
+            "description": "Get detailed AI-powered match analysis with insights and recommendations"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Team Management",
+      "description": "Gaming team creation and management",
+      "item": [
+        {
+          "name": "List Teams",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/teams?region={{region}}&tier=amateur&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "teams"],
+              "query": [
+                {
+                  "key": "region",
+                  "value": "{{region}}"
+                },
+                {
+                  "key": "tier",
+                  "value": "amateur"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get list of gaming teams with optional filtering by region and tier"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Team",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Herald Champions\",\n  \"tag\": \"HC\",\n  \"region\": \"{{region}}\",\n  \"game_type\": \"LoL\",\n  \"tier\": \"amateur\",\n  \"description\": \"Competitive League of Legends team focused on improvement and teamwork\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gaming/teams",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "teams"]
+            },
+            "description": "Create a new gaming team. Requires team management permissions."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Team Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/teams/team_herald_champions",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "teams", "team_herald_champions"]
+            },
+            "description": "Get detailed information about a specific team including members and statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Team Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/teams/team_herald_champions/analytics?timeRange=30d&includeIndividualStats=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "teams", "team_herald_champions", "analytics"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "30d"
+                },
+                {
+                  "key": "includeIndividualStats",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Get comprehensive team analytics including synergy analysis and performance metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Add Team Member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summoner_name\": \"{{summonerName}}\",\n  \"role\": \"adc\",\n  \"position\": \"player\",\n  \"main_champions\": [\"Jinx\", \"Ezreal\", \"Kai'Sa\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/gaming/teams/team_herald_champions/members",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "teams", "team_herald_champions", "members"]
+            },
+            "description": "Add a new member to the gaming team"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Account Management",
+      "description": "User account and subscription management",
+      "item": [
+        {
+          "name": "Get User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/account/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["account", "profile"]
+            },
+            "description": "Get current user profile information"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Subscription Info",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/account/subscription",
+              "host": ["{{baseUrl}}"],
+              "path": ["account", "subscription"]
+            },
+            "description": "Get current subscription tier, usage information, and rate limits"
+          },
+          "response": [
+            {
+              "name": "Subscription Info Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-Gaming-API-Key",
+                    "value": "{{apiKey}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/account/subscription",
+                  "host": ["{{baseUrl}}"],
+                  "path": ["account", "subscription"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"subscription\": {\n    \"tier\": \"premium\",\n    \"status\": \"active\",\n    \"expires_at\": \"2024-02-15T10:30:00Z\",\n    \"features\": [\n      \"Advanced Analytics\",\n      \"Data Export\",\n      \"Team Management\",\n      \"Priority Support\"\n    ],\n    \"rate_limits\": {\n      \"requests_per_minute\": 300,\n      \"analytics_per_minute\": 100,\n      \"export_per_day\": 5\n    },\n    \"usage\": {\n      \"current_period_requests\": 1247,\n      \"current_period_analytics\": 89,\n      \"current_period_exports\": 2\n    }\n  },\n  \"gaming_platform\": \"herald-lol\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Gaming Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"summoner_name\": \"{{summonerName}}\",\n  \"region\": \"{{region}}\",\n  \"main_role\": \"adc\",\n  \"favorite_champions\": [\"Jinx\", \"Ezreal\", \"Kai'Sa\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/account/gaming-profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["account", "gaming-profile"]
+            },
+            "description": "Update user gaming profile information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Gaming Insights",
+      "description": "AI-powered gaming insights and recommendations",
+      "item": [
+        {
+          "name": "Get Gaming Insights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/insights/summoner/{{region}}/{{summonerName}}?timeRange=30d&analysisDepth=detailed",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "insights", "summoner", "{{region}}", "{{summonerName}}"],
+              "query": [
+                {
+                  "key": "timeRange",
+                  "value": "30d"
+                },
+                {
+                  "key": "analysisDepth",
+                  "value": "detailed"
+                }
+              ]
+            },
+            "description": "Get AI-powered gaming insights and improvement recommendations"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Coaching Recommendations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/gaming/insights/summoner/{{region}}/{{summonerName}}/coaching?focusAreas=laning,teamfight&skillLevel=intermediate",
+              "host": ["{{baseUrl}}"],
+              "path": ["gaming", "insights", "summoner", "{{region}}", "{{summonerName}}", "coaching"],
+              "query": [
+                {
+                  "key": "focusAreas",
+                  "value": "laning,teamfight"
+                },
+                {
+                  "key": "skillLevel",
+                  "value": "intermediate"
+                }
+              ]
+            },
+            "description": "Get personalized coaching recommendations and practice drills"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Riot API Integration",
+      "description": "Direct Riot Games API integration with rate limit management",
+      "item": [
+        {
+          "name": "Get Summoner by Name",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/riot/summoner/{{region}}/by-name/{{summonerName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["riot", "summoner", "{{region}}", "by-name", "{{summonerName}}"]
+            },
+            "description": "Get summoner information via Riot API proxy with intelligent rate limiting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Ranked Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Gaming-API-Key",
+                "value": "{{apiKey}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/riot/league/{{region}}/by-summoner/{{summonerName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["riot", "league", "{{region}}", "by-summoner", "{{summonerName}}"]
+            },
+            "description": "Get ranked statistics via Riot API proxy"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set dynamic timestamps",
+          "pm.globals.set('timestamp', new Date().toISOString());",
+          "",
+          "// Auto-set API key from environment if available",
+          "if (pm.environment.get('HERALD_API_KEY')) {",
+          "    pm.collectionVariables.set('apiKey', pm.environment.get('HERALD_API_KEY'));",
+          "}",
+          "",
+          "// Auto-set bearer token from environment if available",
+          "if (pm.environment.get('HERALD_BEARER_TOKEN')) {",
+          "    pm.collectionVariables.set('bearerToken', pm.environment.get('HERALD_BEARER_TOKEN'));",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global response time test",
+          "pm.test('Response time is acceptable', () => {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000); // 5 seconds max",
+          "});",
+          "",
+          "// Global rate limit header test",
+          "if (pm.response.headers.get('X-Gaming-Rate-Limit')) {",
+          "    pm.test('Rate limit headers are present', () => {",
+          "        pm.expect(pm.response.headers.get('X-Gaming-Rate-Limit')).to.exist;",
+          "        pm.expect(pm.response.headers.get('X-Gaming-Rate-Remaining')).to.exist;",
+          "    });",
+          "}",
+          "",
+          "// Global error handling",
+          "if (pm.response.code >= 400) {",
+          "    pm.test('Error response has gaming platform identifier', () => {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.gaming_platform).to.eql('herald-lol');",
+          "    });",
+          "}"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "timeframe": "30d",
+  "kda_trend": {
+    "data_points": [
+      { "date": "2025-08-16", "kda": 2.1, "kills": 7.5, "deaths": 4.2, "assists": 11.2 },
+      { "date": "2025-08-17", "kda": 2.3, "kills": 8.1, "deaths": 4.0, "assists": 11.8 },
+      { "date": "2025-08-18", "kda": 2.0, "kills": 7.2, "deaths": 4.5, "assists": 10.8 },
+      { "date": "2025-08-19", "kda": 2.6, "kills": 9.1, "deaths": 3.8, "assists": 12.5 },
+      { "date": "2025-08-20", "kda": 2.4, "kills": 8.3, "deaths": 4.1, "assists": 11.9 },
+      { "date": "2025-08-21", "kda": 2.7, "kills": 9.5, "deaths": 3.5, "assists": 12.8 },
+      { "date": "2025-08-22", "kda": 2.2, "kills": 7.8, "deaths": 4.3, "assists": 11.6 },
+      { "date": "2025-08-23", "kda": 2.5, "kills": 8.7, "deaths": 3.9, "assists": 12.2 }
+    ],
+    "average": 2.4,
+    "trend": "improving"
+  },
+  "cs_per_minute": {
+    "data_points": [
+      { "date": "2025-08-16", "cs_min": 7.2 },
+      { "date": "2025-08-17", "cs_min": 7.5 },
+      { "date": "2025-08-18", "cs_min": 7.1 },
+      { "date": "2025-08-19", "cs_min": 7.8 },
+      { "date": "2025-08-20", "cs_min": 7.6 },
+      { "date": "2025-08-21", "cs_min": 8.1 },
+      { "date": "2025-08-22", "cs_min": 7.9 },
+      { "date": "2025-08-23", "cs_min": 8.0 }
+    ],
+    "average": 7.8,
+    "trend": "improving",
+    "comparison": {
+      "rank_average": 7.2,
+      "percentile": 78
+    }
+  },
+  "vision_score": {
+    "data_points": [
+      { "date": "2025-08-16", "vision": 32.5 },
+      { "date": "2025-08-17", "vision": 35.2 },
+      { "date": "2025-08-18", "vision": 31.8 },
+      { "date": "2025-08-19", "vision": 38.4 },
+      { "date": "2025-08-20", "vision": 36.7 },
+      { "date": "2025-08-21", "vision": 41.2 },
+      { "date": "2025-08-22", "vision": 39.8 },
+      { "date": "2025-08-23", "vision": 40.1 }
+    ],
+    "average": 38.5,
+    "trend": "improving",
+    "comparison": {
+      "role_average": 28.3,
+      "percentile": 85
+    }
+  },
+  "damage_share": {
+    "data_points": [
+      { "date": "2025-08-16", "damage_percent": 26.4 },
+      { "date": "2025-08-17", "damage_percent": 28.9 },
+      { "date": "2025-08-18", "damage_percent": 25.7 },
+      { "date": "2025-08-19", "damage_percent": 31.2 },
+      { "date": "2025-08-20", "damage_percent": 29.5 },
+      { "date": "2025-08-21", "damage_percent": 32.1 },
+      { "date": "2025-08-22", "damage_percent": 30.8 },
+      { "date": "2025-08-23", "damage_percent": 29.9 }
+    ],
+    "average": 28.7,
+    "trend": "stable",
+    "comparison": {
+      "role_average": 27.5,
+      "percentile": 72
+    }
+  },
+  "champion_performance": [
+    {
+      "champion": "Jinx",
+      "matches": 89,
+      "win_rate": 67.4,
+      "kda": 2.6,
+      "avg_kda": { "kills": 9.1, "deaths": 3.8, "assists": 11.2 },
+      "cs_per_min": 8.1,
+      "damage_share": 31.2,
+      "grade": "A",
+      "mastery_level": 7,
+      "mastery_points": 245678
+    },
+    {
+      "champion": "Caitlyn", 
+      "matches": 34,
+      "win_rate": 73.5,
+      "kda": 2.8,
+      "avg_kda": { "kills": 8.5, "deaths": 3.2, "assists": 10.8 },
+      "cs_per_min": 7.9,
+      "damage_share": 29.8,
+      "grade": "A+",
+      "mastery_level": 6,
+      "mastery_points": 187432
+    },
+    {
+      "champion": "Ashe",
+      "matches": 27,
+      "win_rate": 55.6,
+      "kda": 2.1,
+      "avg_kda": { "kills": 7.2, "deaths": 4.1, "assists": 13.5 },
+      "cs_per_min": 7.4,
+      "damage_share": 26.4,
+      "grade": "B+",
+      "mastery_level": 5,
+      "mastery_points": 98765
+    }
+  ],
+  "improvement_recommendations": [
+    {
+      "category": "Farming",
+      "priority": "high",
+      "suggestion": "Focus on CS efficiency after 15 minutes - you're missing 12% more minions in late game compared to early game",
+      "impact": "Potential +300 gold per game"
+    },
+    {
+      "category": "Vision Control", 
+      "priority": "medium",
+      "suggestion": "Your vision score is excellent for ADC role, keep it up! Consider upgrading trinket earlier",
+      "impact": "Maintain current advantage"
+    },
+    {
+      "category": "Champion Pool",
+      "priority": "low", 
+      "suggestion": "Consider expanding beyond Jinx/Caitlyn - your Ashe performance could improve with more practice",
+      "impact": "Increased flexibility in drafts"
+    }
+  ],
+  "rank_progression": {
+    "current": { "tier": "GOLD", "rank": "II", "lp": 67 },
+    "predicted": { "tier": "GOLD", "rank": "I", "confidence": 78 },
+    "trajectory": "positive",
+    "estimated_games_to_promotion": 12
+  },
+  "last_updated": "2025-08-23T05:50:00Z"
+}

@@ -1,0 +1,1271 @@
+openapi: 3.0.3
+info:
+  title: Herald.lol Gaming Analytics API
+  description: |
+    # Herald.lol Gaming Analytics Platform API
+    
+    The Herald.lol API provides comprehensive access to League of Legends and Teamfight Tactics analytics, 
+    player data, team management, and gaming insights. Built for developers, analysts, and gaming applications.
+    
+    ## Features
+    
+    - **Gaming Analytics**: KDA analysis, CS/min tracking, Vision Score, Damage Share, Gold Efficiency
+    - **Riot API Integration**: Seamless access to Riot Games data with rate limit management
+    - **Team Management**: Team creation, player management, performance tracking
+    - **Real-time Data**: Live match analysis and gaming statistics
+    - **Multi-region Support**: Global LoL regions (NA, EUW, KR, JP, etc.)
+    
+    ## Performance Targets
+    
+    - **Analysis Speed**: <5 seconds for gaming analytics
+    - **UI Response**: <2 seconds for dashboard loading
+    - **Uptime**: 99.9% platform availability
+    - **Scalability**: Support for 1M+ concurrent users
+    
+    ## Authentication
+    
+    Herald.lol uses multiple authentication methods:
+    
+    - **Bearer Tokens**: JWT tokens for user authentication
+    - **API Keys**: For server-to-server integration
+    - **OAuth 2.0**: Social login integration
+    - **MFA**: Multi-factor authentication for sensitive operations
+    
+    ## Rate Limiting
+    
+    Rate limits are enforced per subscription tier:
+    
+    - **Free**: 60 requests/minute
+    - **Premium**: 300 requests/minute
+    - **Pro**: 1,200 requests/minute  
+    - **Enterprise**: 6,000 requests/minute
+    
+    Gaming-specific limits apply to analytics and Riot API endpoints.
+    
+    ## Support
+    
+    - **Documentation**: https://docs.herald.lol
+    - **Status Page**: https://status.herald.lol
+    - **Support**: support@herald.lol
+    
+  version: 3.1.0
+  contact:
+    name: Herald.lol API Support
+    url: https://herald.lol/support
+    email: api-support@herald.lol
+  license:
+    name: Herald.lol Terms of Service
+    url: https://herald.lol/terms
+  termsOfService: https://herald.lol/terms
+
+servers:
+  - url: https://api.herald.lol/v3
+    description: Production API server
+  - url: https://staging-api.herald.lol/v3
+    description: Staging API server
+  - url: https://dev-api.herald.lol/v3
+    description: Development API server
+
+# Security schemes
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token for user authentication
+    
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Gaming-API-Key
+      description: API key for server-to-server authentication
+    
+    OAuth2:
+      type: oauth2
+      description: OAuth2 authentication with multiple providers
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.herald.lol/auth/oauth/authorize
+          tokenUrl: https://api.herald.lol/auth/oauth/token
+          scopes:
+            read: Read access to gaming data
+            write: Write access to gaming data
+            admin: Administrative access
+            analytics: Access to advanced analytics
+
+  # Common schemas
+  schemas:
+    # Error response schema
+    Error:
+      type: object
+      required:
+        - error
+        - gaming_platform
+      properties:
+        error:
+          type: string
+          description: Error message
+        details:
+          type: string
+          description: Detailed error information
+        code:
+          type: string
+          description: Error code
+        gaming_platform:
+          type: string
+          enum: [herald-lol]
+        timestamp:
+          type: string
+          format: date-time
+        request_id:
+          type: string
+          description: Unique request identifier
+
+    # Gaming user schema
+    GamingUser:
+      type: object
+      required:
+        - id
+        - username
+        - gaming_platform
+      properties:
+        id:
+          type: string
+          description: Unique user identifier
+        username:
+          type: string
+          description: Gaming username
+        display_name:
+          type: string
+          description: Display name
+        email:
+          type: string
+          format: email
+        gaming_profile:
+          $ref: '#/components/schemas/GamingProfile'
+        subscription_tier:
+          type: string
+          enum: [free, premium, pro, enterprise]
+        created_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+        gaming_platform:
+          type: string
+          enum: [herald-lol]
+
+    # Gaming profile schema
+    GamingProfile:
+      type: object
+      properties:
+        summoner_name:
+          type: string
+          description: League of Legends summoner name
+        summoner_level:
+          type: integer
+          description: Summoner level
+        region:
+          type: string
+          enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+          description: Gaming region
+        tier:
+          type: string
+          enum: [IRON, BRONZE, SILVER, GOLD, PLATINUM, DIAMOND, MASTER, GRANDMASTER, CHALLENGER]
+        rank:
+          type: string
+          enum: [IV, III, II, I]
+        league_points:
+          type: integer
+          description: Current LP
+        main_role:
+          type: string
+          enum: [top, jungle, mid, adc, support]
+        favorite_champions:
+          type: array
+          items:
+            type: string
+        total_games:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    # Gaming statistics schema
+    GamingStats:
+      type: object
+      properties:
+        kda:
+          type: object
+          properties:
+            kills:
+              type: number
+              format: float
+            deaths:
+              type: number
+              format: float
+            assists:
+              type: number
+              format: float
+            ratio:
+              type: number
+              format: float
+        cs_per_minute:
+          type: number
+          format: float
+          description: Creep score per minute
+        vision_score:
+          type: number
+          format: float
+          description: Vision control metric
+        damage_share:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Percentage of team damage
+        gold_efficiency:
+          type: number
+          format: float
+          description: Gold efficiency metric
+        match_count:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    # Match data schema
+    MatchData:
+      type: object
+      properties:
+        match_id:
+          type: string
+          description: Unique match identifier
+        game_duration:
+          type: integer
+          description: Game duration in seconds
+        game_mode:
+          type: string
+          enum: [CLASSIC, ARAM, TFT, RANKED_SOLO_5x5, RANKED_FLEX_SR]
+        queue_type:
+          type: string
+        region:
+          type: string
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Participant'
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamStats'
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimelineEvent'
+        created_at:
+          type: string
+          format: date-time
+
+    # Participant schema
+    Participant:
+      type: object
+      properties:
+        summoner_id:
+          type: string
+        summoner_name:
+          type: string
+        champion_name:
+          type: string
+        champion_level:
+          type: integer
+        role:
+          type: string
+          enum: [top, jungle, mid, adc, support]
+        team_id:
+          type: integer
+          enum: [100, 200]
+        stats:
+          $ref: '#/components/schemas/ParticipantStats'
+        items:
+          type: array
+          items:
+            type: integer
+        spells:
+          type: array
+          items:
+            type: integer
+
+    # Participant statistics
+    ParticipantStats:
+      type: object
+      properties:
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        total_damage_dealt:
+          type: integer
+        total_damage_taken:
+          type: integer
+        gold_earned:
+          type: integer
+        cs_total:
+          type: integer
+        vision_score:
+          type: integer
+        wards_placed:
+          type: integer
+        wards_killed:
+          type: integer
+        first_blood:
+          type: boolean
+        double_kills:
+          type: integer
+        triple_kills:
+          type: integer
+        quadra_kills:
+          type: integer
+        penta_kills:
+          type: integer
+
+    # Team statistics
+    TeamStats:
+      type: object
+      properties:
+        team_id:
+          type: integer
+          enum: [100, 200]
+        win:
+          type: boolean
+        first_blood:
+          type: boolean
+        first_tower:
+          type: boolean
+        first_dragon:
+          type: boolean
+        first_baron:
+          type: boolean
+        tower_kills:
+          type: integer
+        dragon_kills:
+          type: integer
+        baron_kills:
+          type: integer
+        total_gold:
+          type: integer
+        total_kills:
+          type: integer
+
+    # Timeline event
+    TimelineEvent:
+      type: object
+      properties:
+        timestamp:
+          type: integer
+          description: Event timestamp in milliseconds
+        event_type:
+          type: string
+          enum: [CHAMPION_KILL, BUILDING_KILL, MONSTER_KILL, ITEM_PURCHASED, WARD_PLACED]
+        participant_id:
+          type: integer
+        position:
+          type: object
+          properties:
+            x:
+              type: integer
+            y:
+              type: integer
+        killer_id:
+          type: integer
+        victim_id:
+          type: integer
+        assisting_participant_ids:
+          type: array
+          items:
+            type: integer
+
+    # Gaming team schema
+    GamingTeam:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique team identifier
+        name:
+          type: string
+          description: Team name
+        display_name:
+          type: string
+        tag:
+          type: string
+          description: Team tag (3-5 characters)
+        region:
+          type: string
+          enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+        game_type:
+          type: string
+          enum: [LoL, TFT]
+        tier:
+          type: string
+          enum: [amateur, semi_pro, professional]
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamMember'
+        stats:
+          $ref: '#/components/schemas/TeamStats'
+        achievements:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # Team member schema
+    TeamMember:
+      type: object
+      properties:
+        user_id:
+          type: string
+        summoner_name:
+          type: string
+        role:
+          type: string
+          enum: [top, jungle, mid, adc, support, coach, analyst, manager]
+        position:
+          type: string
+          enum: [captain, player, substitute, staff]
+        main_champions:
+          type: array
+          items:
+            type: string
+        joined_at:
+          type: string
+          format: date-time
+        games_played:
+          type: integer
+        wins:
+          type: integer
+
+    # Analytics response schema
+    AnalyticsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          description: Analytics data
+        metadata:
+          type: object
+          properties:
+            generated_at:
+              type: string
+              format: date-time
+            data_freshness:
+              type: string
+              description: How recent the data is
+            sample_size:
+              type: integer
+            confidence_score:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+        gaming_insights:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [improvement, strength, weakness, trend]
+              message:
+                type: string
+              impact:
+                type: string
+                enum: [high, medium, low]
+              action_items:
+                type: array
+                items:
+                  type: string
+        gaming_platform:
+          type: string
+          enum: [herald-lol]
+
+    # Subscription info
+    SubscriptionInfo:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [free, premium, pro, enterprise]
+        status:
+          type: string
+          enum: [active, expired, suspended]
+        expires_at:
+          type: string
+          format: date-time
+        features:
+          type: array
+          items:
+            type: string
+        rate_limits:
+          type: object
+          properties:
+            requests_per_minute:
+              type: integer
+            analytics_per_minute:
+              type: integer
+            export_per_day:
+              type: integer
+        usage:
+          type: object
+          properties:
+            current_period_requests:
+              type: integer
+            current_period_analytics:
+              type: integer
+            current_period_exports:
+              type: integer
+
+  # Common parameters
+  parameters:
+    Region:
+      name: region
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+      description: League of Legends region
+    
+    SummonerName:
+      name: summonerName
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 3
+        maxLength: 16
+      description: League of Legends summoner name
+    
+    MatchId:
+      name: matchId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Unique match identifier
+    
+    TeamId:
+      name: teamId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Team identifier
+    
+    TimeRange:
+      name: timeRange
+      in: query
+      schema:
+        type: string
+        enum: [1d, 7d, 30d, 90d, 1y]
+        default: 30d
+      description: Time range for analytics data
+    
+    GameMode:
+      name: gameMode
+      in: query
+      schema:
+        type: string
+        enum: [CLASSIC, ARAM, RANKED_SOLO_5x5, RANKED_FLEX_SR, TFT]
+      description: Filter by game mode
+    
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items to return
+    
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of items to skip
+
+  # Common responses
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Invalid gaming parameters provided"
+            details: "Summoner name must be between 3-16 characters"
+            gaming_platform: "herald-lol"
+    
+    Unauthorized:
+      description: Unauthorized - authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Gaming API authentication required"
+            details: "Please provide a valid Bearer token or API key"
+            gaming_platform: "herald-lol"
+    
+    Forbidden:
+      description: Forbidden - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Insufficient gaming permissions"
+            details: "Premium subscription required for advanced analytics"
+            gaming_platform: "herald-lol"
+    
+    NotFound:
+      description: Not found - resource doesn't exist
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Gaming data not found"
+            details: "Summoner not found in specified region"
+            gaming_platform: "herald-lol"
+    
+    RateLimited:
+      description: Rate limit exceeded
+      headers:
+        X-Gaming-Rate-Limit:
+          schema:
+            type: integer
+          description: Rate limit per minute
+        X-Gaming-Rate-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests
+        X-Gaming-Rate-Reset:
+          schema:
+            type: integer
+          description: Reset time (Unix timestamp)
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Gaming API rate limit exceeded"
+            limit: 60
+            remaining: 0
+            tier: "free"
+            gaming_platform: "herald-lol"
+    
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "Gaming platform temporarily unavailable"
+            details: "Our engineers are working to resolve the issue"
+            gaming_platform: "herald-lol"
+
+# API Endpoints
+paths:
+  # Health and status endpoints
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check
+      description: Check API health status
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+              example:
+                status: healthy
+                timestamp: "2024-01-15T10:30:00Z"
+                version: "3.1.0"
+                gaming_platform: "herald-lol"
+
+  # Authentication endpoints
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      description: Authenticate user and return JWT token
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                remember_me:
+                  type: boolean
+                  default: false
+            example:
+              email: "gamer@herald.lol"
+              password: "securePassword123"
+              remember_me: true
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token
+                  refresh_token:
+                    type: string
+                    description: JWT refresh token
+                  expires_in:
+                    type: integer
+                    description: Token expiration in seconds
+                  user:
+                    $ref: '#/components/schemas/GamingUser'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: User registration
+      description: Register new gaming account
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - email
+                - password
+                - summoner_name
+                - region
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 20
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                summoner_name:
+                  type: string
+                  minLength: 3
+                  maxLength: 16
+                region:
+                  type: string
+                  enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+            example:
+              username: "herald_gamer"
+              email: "gamer@herald.lol"
+              password: "securePassword123"
+              summoner_name: "HeraldChampion"
+              region: "NA"
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/GamingUser'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # Gaming Analytics Endpoints
+  /gaming/analytics/summoner/{region}/{summonerName}:
+    get:
+      tags:
+        - Gaming Analytics
+      summary: Get summoner analytics
+      description: |
+        Comprehensive gaming analytics for a League of Legends summoner including:
+        - KDA analysis and trends
+        - CS/min performance metrics
+        - Vision Score tracking
+        - Damage share analysis
+        - Gold efficiency metrics
+        - Champion performance breakdown
+        - Recent match analysis
+        
+        **Performance**: Results typically return in <5 seconds
+      operationId: getSummonerAnalytics
+      parameters:
+        - $ref: '#/components/parameters/Region'
+        - $ref: '#/components/parameters/SummonerName'
+        - $ref: '#/components/parameters/TimeRange'
+        - $ref: '#/components/parameters/GameMode'
+      responses:
+        '200':
+          description: Summoner analytics data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summoner_info:
+                    type: object
+                    properties:
+                      summoner_name:
+                        type: string
+                      level:
+                        type: integer
+                      region:
+                        type: string
+                      tier:
+                        type: string
+                      rank:
+                        type: string
+                      lp:
+                        type: integer
+                  analytics:
+                    $ref: '#/components/schemas/AnalyticsResponse'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+              examples:
+                successful_analytics:
+                  summary: Successful analytics response
+                  value:
+                    summoner_info:
+                      summoner_name: "HeraldChampion"
+                      level: 147
+                      region: "NA"
+                      tier: "GOLD"
+                      rank: "II"
+                      lp: 73
+                    analytics:
+                      data:
+                        kda:
+                          kills: 7.2
+                          deaths: 5.1
+                          assists: 9.4
+                          ratio: 3.25
+                        cs_per_minute: 6.8
+                        vision_score: 42.3
+                        damage_share: 0.28
+                        gold_efficiency: 1.15
+                      gaming_insights:
+                        - type: "improvement"
+                          message: "Your CS/min has improved by 12% this week"
+                          impact: "high"
+                          action_items: ["Focus on last-hitting in early game"]
+                      gaming_platform: "herald-lol"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /gaming/analytics/summoner/{region}/{summonerName}/export:
+    post:
+      tags:
+        - Gaming Analytics
+      summary: Export summoner analytics
+      description: |
+        Export comprehensive summoner analytics data in various formats.
+        
+        **Rate Limits**: 
+        - Free: 1 export/day
+        - Premium: 5 exports/day
+        - Pro: 25 exports/day
+        - Enterprise: Unlimited
+        
+        **MFA Required**: This endpoint requires multi-factor authentication for data protection.
+      operationId: exportSummonerAnalytics
+      parameters:
+        - $ref: '#/components/parameters/Region'
+        - $ref: '#/components/parameters/SummonerName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format:
+                  type: string
+                  enum: [json, csv, xlsx, pdf]
+                  default: json
+                time_range:
+                  type: string
+                  enum: [1d, 7d, 30d, 90d, 1y]
+                  default: 30d
+                include_matches:
+                  type: boolean
+                  default: true
+                include_timeline:
+                  type: boolean
+                  default: false
+                mfa_token:
+                  type: string
+                  description: MFA authentication token
+            example:
+              format: "json"
+              time_range: "30d"
+              include_matches: true
+              include_timeline: false
+              mfa_token: "123456"
+      responses:
+        '200':
+          description: Export successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_id:
+                    type: string
+                  download_url:
+                    type: string
+                  expires_at:
+                    type: string
+                    format: date-time
+                  format:
+                    type: string
+                  size_bytes:
+                    type: integer
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '401':
+          description: MFA token required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                  mfa_required:
+                    type: boolean
+                  mfa_methods:
+                    type: array
+                    items:
+                      type: string
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  # Match data endpoints
+  /gaming/matches/{region}/{matchId}:
+    get:
+      tags:
+        - Match Data
+      summary: Get match details
+      description: |
+        Retrieve comprehensive match data including:
+        - All participant statistics
+        - Team performance metrics
+        - Timeline events and objectives
+        - Item builds and skill orders
+        - Damage and healing breakdowns
+      operationId: getMatch
+      parameters:
+        - $ref: '#/components/parameters/Region'
+        - $ref: '#/components/parameters/MatchId'
+        - name: include_timeline
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include detailed timeline events
+      responses:
+        '200':
+          description: Match data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  match:
+                    $ref: '#/components/schemas/MatchData'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  # Team management endpoints
+  /gaming/teams:
+    get:
+      tags:
+        - Team Management
+      summary: List teams
+      description: Get list of gaming teams with optional filtering
+      operationId: getTeams
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+            enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+          description: Filter by region
+        - name: tier
+          in: query
+          schema:
+            type: string
+            enum: [amateur, semi_pro, professional]
+          description: Filter by competitive tier
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  teams:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GamingTeam'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+    
+    post:
+      tags:
+        - Team Management
+      summary: Create new team
+      description: |
+        Create a new gaming team. Requires team management permissions.
+        
+        **Rate Limits**: 5 team creations per day for Pro tier, 1 per day for Premium
+      operationId: createTeam
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - tag
+                - region
+                - game_type
+              properties:
+                name:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                tag:
+                  type: string
+                  minLength: 2
+                  maxLength: 5
+                region:
+                  type: string
+                  enum: [NA, EUW, EUNE, KR, JP, BR, LAN, LAS, OCE, RU, TR]
+                game_type:
+                  type: string
+                  enum: [LoL, TFT]
+                tier:
+                  type: string
+                  enum: [amateur, semi_pro, professional]
+                  default: amateur
+                description:
+                  type: string
+                  maxLength: 500
+            example:
+              name: "Herald Champions"
+              tag: "HC"
+              region: "NA"
+              game_type: "LoL"
+              tier: "amateur"
+              description: "Competitive League of Legends team"
+      responses:
+        '201':
+          description: Team created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  team:
+                    $ref: '#/components/schemas/GamingTeam'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /gaming/teams/{teamId}:
+    get:
+      tags:
+        - Team Management
+      summary: Get team details
+      description: Retrieve detailed information about a specific team
+      operationId: getTeam
+      parameters:
+        - $ref: '#/components/parameters/TeamId'
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  team:
+                    $ref: '#/components/schemas/GamingTeam'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Subscription and account endpoints  
+  /account/subscription:
+    get:
+      tags:
+        - Account
+      summary: Get subscription info
+      description: Retrieve current subscription tier and usage information
+      operationId: getSubscription
+      responses:
+        '200':
+          description: Subscription information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscription:
+                    $ref: '#/components/schemas/SubscriptionInfo'
+                  gaming_platform:
+                    type: string
+                    enum: [herald-lol]
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+# Tags for grouping endpoints
+tags:
+  - name: System
+    description: System health and status endpoints
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Gaming Analytics
+    description: League of Legends and TFT analytics
+  - name: Match Data
+    description: Match details and statistics
+  - name: Team Management
+    description: Gaming team creation and management
+  - name: Account
+    description: User account and subscription management
+
+# API-wide external documentation
+externalDocs:
+  description: Herald.lol Developer Documentation
+  url: https://docs.herald.lol

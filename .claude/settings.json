@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/load-context.sh",
+            "command": ".claude/hooks/load-context.sh",
             "timeout": 30
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-stack.py",
+            "command": ".claude/hooks/validate-stack.py",
             "timeout": 15
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command", 
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/pre-task-gaming.sh",
+            "command": ".claude/hooks/pre-task-gaming.sh",
             "timeout": 10
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/gaming-lint.sh",
+            "command": ".claude/hooks/gaming-lint.sh",
             "timeout": 45
           }
         ]
@@ -49,7 +49,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/test-suite.sh",
+            "command": ".claude/hooks/test-suite.sh",
             "timeout": 120
           }
         ]
@@ -59,7 +59,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/post-bash-gaming.sh",
+            "command": ".claude/hooks/post-bash-gaming.sh",
             "timeout": 20
           }
         ]
@@ -70,7 +70,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/deploy-check.sh",
+            "command": ".claude/hooks/deploy-check.sh",
             "timeout": 60
           }
         ]
@@ -81,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/prompt-gaming-context.py",
+            "command": ".claude/hooks/prompt-gaming-context.py",
             "timeout": 10
           }
         ]

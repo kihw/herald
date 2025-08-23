@@ -1,0 +1,46 @@
+{
+  "data": {
+    "currentCSPerMin": 7.2,
+    "previousCSPerMin": 6.8,
+    "trend": "improving",
+    "benchmarks": {
+      "iron": 4.0,
+      "bronze": 5.2,
+      "silver": 6.1,
+      "gold": 6.8,
+      "platinum": 7.5,
+      "diamond": 8.2,
+      "master": 9.1,
+      "challenger": 10.2
+    },
+    "efficiency": 85,
+    "roleAverage": 6.9,
+    "rankAverage": 6.8,
+    "proAverage": 9.8,
+    "percentile": 72,
+    "farmingPhases": {
+      "early": {
+        "minutes": "0-10",
+        "csPerMin": 6.8,
+        "efficiency": 82
+      },
+      "mid": {
+        "minutes": "10-20", 
+        "csPerMin": 7.4,
+        "efficiency": 88
+      },
+      "late": {
+        "minutes": "20+",
+        "csPerMin": 7.8,
+        "efficiency": 91
+      }
+    },
+    "recommendations": [
+      "Focus on last-hitting under tower",
+      "Improve wave management in mid game",
+      "Prioritize cannon minions",
+      "Practice farming during team fights"
+    ]
+  },
+  "confidence": 0.88
+}

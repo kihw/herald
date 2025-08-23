@@ -1,0 +1,137 @@
+{
+  "matches": [
+    {
+      "id": "match-1",
+      "game_id": "EUW1_6234567890",
+      "champion": "Jinx",
+      "result": "Victory",
+      "kda": {
+        "kills": 12,
+        "deaths": 3,
+        "assists": 8
+      },
+      "duration": "28m 45s",
+      "cs": 245,
+      "gold": 14567,
+      "damage_dealt": 32450,
+      "vision_score": 42,
+      "game_mode": "RANKED_SOLO_5x5",
+      "queue": "Ranked Solo/Duo",
+      "played_at": "2025-08-23T04:30:00Z",
+      "items": [3006, 3031, 3046, 3094, 3139, 3111],
+      "summoner_spells": ["Flash", "Heal"],
+      "runes": {
+        "primary": "Precision",
+        "secondary": "Domination"
+      }
+    },
+    {
+      "id": "match-2", 
+      "game_id": "EUW1_6234567891",
+      "champion": "Caitlyn",
+      "result": "Defeat",
+      "kda": {
+        "kills": 6,
+        "deaths": 7,
+        "assists": 4
+      },
+      "duration": "35m 12s",
+      "cs": 287,
+      "gold": 15432,
+      "damage_dealt": 28760,
+      "vision_score": 35,
+      "game_mode": "RANKED_SOLO_5x5",
+      "queue": "Ranked Solo/Duo", 
+      "played_at": "2025-08-23T02:15:00Z",
+      "items": [3006, 3031, 3094, 3139, 3046, 3111],
+      "summoner_spells": ["Flash", "Heal"],
+      "runes": {
+        "primary": "Precision",
+        "secondary": "Sorcery"
+      }
+    },
+    {
+      "id": "match-3",
+      "game_id": "EUW1_6234567892", 
+      "champion": "Jinx",
+      "result": "Victory",
+      "kda": {
+        "kills": 15,
+        "deaths": 2,
+        "assists": 12
+      },
+      "duration": "32m 18s",
+      "cs": 256,
+      "gold": 16789,
+      "damage_dealt": 38920,
+      "vision_score": 39,
+      "game_mode": "RANKED_SOLO_5x5",
+      "queue": "Ranked Solo/Duo",
+      "played_at": "2025-08-22T23:45:00Z",
+      "items": [3006, 3031, 3046, 3094, 3139, 3111],
+      "summoner_spells": ["Flash", "Heal"],
+      "runes": {
+        "primary": "Precision", 
+        "secondary": "Domination"
+      }
+    },
+    {
+      "id": "match-4",
+      "game_id": "EUW1_6234567893",
+      "champion": "Ashe",
+      "result": "Victory", 
+      "kda": {
+        "kills": 9,
+        "deaths": 5,
+        "assists": 16
+      },
+      "duration": "41m 03s",
+      "cs": 312,
+      "gold": 17234,
+      "damage_dealt": 31560,
+      "vision_score": 45,
+      "game_mode": "RANKED_SOLO_5x5",
+      "queue": "Ranked Solo/Duo",
+      "played_at": "2025-08-22T21:20:00Z",
+      "items": [3006, 3031, 3094, 3046, 3139, 3111],
+      "summoner_spells": ["Flash", "Heal"],
+      "runes": {
+        "primary": "Precision",
+        "secondary": "Inspiration"
+      }
+    },
+    {
+      "id": "match-5",
+      "game_id": "EUW1_6234567894",
+      "champion": "Jinx",
+      "result": "Defeat",
+      "kda": {
+        "kills": 4,
+        "deaths": 8,
+        "assists": 6
+      },
+      "duration": "26m 55s",
+      "cs": 198,
+      "gold": 11234,
+      "damage_dealt": 22340,
+      "vision_score": 28,
+      "game_mode": "RANKED_SOLO_5x5", 
+      "queue": "Ranked Solo/Duo",
+      "played_at": "2025-08-22T19:10:00Z",
+      "items": [3006, 3031, 3046, 1036, 1042, 3111],
+      "summoner_spells": ["Flash", "Heal"],
+      "runes": {
+        "primary": "Precision",
+        "secondary": "Domination"
+      }
+    }
+  ],
+  "total_matches": 150,
+  "pagination": {
+    "current_page": 1,
+    "total_pages": 30,
+    "per_page": 5,
+    "has_next": true,
+    "has_previous": false
+  }
+}

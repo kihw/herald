@@ -5,7 +5,7 @@
 echo "🎮 Loading Herald.lol Gaming Analytics Platform Context..."
 
 # Check if we're in a Herald.lol project
-if [ ! -f "go.mod" ] && [ ! -f "package.json" ]; then
+if [ ! -f "backend/go.mod" ] && [ ! -f "frontend/package.json" ] && [ ! -f "go.mod" ] && [ ! -f "package.json" ]; then
     echo "📁 Herald.lol project structure not detected"
     exit 0
 fi

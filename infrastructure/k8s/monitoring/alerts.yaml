@@ -1,0 +1,279 @@
+# Herald.lol Prometheus Alert Rules - Gaming Platform Monitoring
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alerts
+  namespace: monitoring
+data:
+  herald-alerts.yml: |
+    groups:
+      # Gaming Performance Alerts
+      - name: gaming_performance
+        interval: 30s
+        rules:
+          - alert: AnalyticsProcessingTooSlow
+            expr: histogram_quantile(0.95, herald_analytics_duration_seconds_bucket) > 5
+            for: 5m
+            labels:
+              severity: critical
+              platform: gaming
+              category: performance
+            annotations:
+              summary: "Gaming analytics processing exceeds 5s target"
+              description: "Post-game analysis is taking {{ $value }}s (target: <5s) for {{ $labels.instance }}"
+          
+          - alert: DashboardLoadTimeSlow
+            expr: histogram_quantile(0.95, herald_dashboard_load_seconds_bucket) > 2
+            for: 5m
+            labels:
+              severity: warning
+              platform: gaming
+              category: performance
+            annotations:
+              summary: "Dashboard load time exceeds 2s target"
+              description: "Dashboard loading is taking {{ $value }}s (target: <2s)"
+          
+          - alert: APIResponseTimeSlow
+            expr: histogram_quantile(0.95, herald_api_duration_seconds_bucket) > 1
+            for: 5m
+            labels:
+              severity: warning
+              category: performance
+            annotations:
+              summary: "API response time exceeds 1s"
+              description: "API endpoint {{ $labels.endpoint }} is responding in {{ $value }}s"
+      
+      # Riot API Integration Alerts
+      - name: riot_api
+        interval: 30s
+        rules:
+          - alert: RiotAPIRateLimitApproaching
+            expr: herald_riot_api_rate_limit_remaining < 20
+            for: 1m
+            labels:
+              severity: warning
+              service: riot-api
+            annotations:
+              summary: "Riot API rate limit approaching"
+              description: "Only {{ $value }} requests remaining in current window for region {{ $labels.region }}"
+          
+          - alert: RiotAPIRateLimitExceeded
+            expr: herald_riot_api_rate_limit_exceeded > 0
+            for: 1m
+            labels:
+              severity: critical
+              service: riot-api
+            annotations:
+              summary: "Riot API rate limit exceeded"
+              description: "Rate limit exceeded for region {{ $labels.region }}. Service degradation expected."
+          
+          - alert: RiotAPIHighErrorRate
+            expr: rate(herald_riot_api_errors_total[5m]) > 0.1
+            for: 5m
+            labels:
+              severity: warning
+              service: riot-api
+            annotations:
+              summary: "High Riot API error rate"
+              description: "Riot API error rate is {{ $value | humanizePercentage }} for {{ $labels.endpoint }}"
+      
+      # User Experience Alerts
+      - name: user_experience
+        interval: 30s
+        rules:
+          - alert: HighConcurrentUsers
+            expr: herald_concurrent_users > 900000
+            for: 5m
+            labels:
+              severity: warning
+              category: capacity
+            annotations:
+              summary: "Approaching 1M concurrent users limit"
+              description: "Currently {{ $value }} concurrent users (limit: 1M)"
+          
+          - alert: UserLoginFailureRate
+            expr: rate(herald_login_failures_total[5m]) / rate(herald_login_attempts_total[5m]) > 0.1
+            for: 5m
+            labels:
+              severity: warning
+              category: auth
+            annotations:
+              summary: "High login failure rate"
+              description: "Login failure rate is {{ $value | humanizePercentage }}"
+          
+          - alert: MatchDataSyncDelay
+            expr: herald_match_sync_delay_seconds > 300
+            for: 10m
+            labels:
+              severity: warning
+              category: data
+            annotations:
+              summary: "Match data sync delayed"
+              description: "Match data sync is {{ $value }}s behind for region {{ $labels.region }}"
+      
+      # Infrastructure Alerts
+      - name: infrastructure
+        interval: 30s
+        rules:
+          - alert: HighMemoryUsage
+            expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+            for: 10m
+            labels:
+              severity: warning
+              category: infrastructure
+            annotations:
+              summary: "High memory usage on {{ $labels.instance }}"
+              description: "Memory usage is {{ $value | humanizePercentage }}"
+          
+          - alert: HighCPUUsage
+            expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+            for: 10m
+            labels:
+              severity: warning
+              category: infrastructure
+            annotations:
+              summary: "High CPU usage on {{ $labels.instance }}"
+              description: "CPU usage is {{ $value }}%"
+          
+          - alert: PodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[15m]) > 0.5
+            for: 5m
+            labels:
+              severity: critical
+              category: infrastructure
+            annotations:
+              summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} is crash looping"
+              description: "Pod has restarted {{ $value }} times in the last 15 minutes"
+          
+          - alert: PersistentVolumeSpaceLow
+            expr: kubelet_volume_stats_available_bytes / kubelet_volume_stats_capacity_bytes < 0.1
+            for: 5m
+            labels:
+              severity: warning
+              category: infrastructure
+            annotations:
+              summary: "PV space low for {{ $labels.persistentvolumeclaim }}"
+              description: "Only {{ $value | humanizePercentage }} space remaining"
+      
+      # Database Alerts
+      - name: database
+        interval: 30s
+        rules:
+          - alert: PostgreSQLDown
+            expr: up{job="postgresql"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              category: database
+            annotations:
+              summary: "PostgreSQL is down"
+              description: "PostgreSQL instance {{ $labels.instance }} is not responding"
+          
+          - alert: PostgreSQLHighConnections
+            expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+            for: 5m
+            labels:
+              severity: warning
+              category: database
+            annotations:
+              summary: "PostgreSQL connection pool near limit"
+              description: "Using {{ $value | humanizePercentage }} of max connections"
+          
+          - alert: PostgreSQLSlowQueries
+            expr: rate(pg_stat_database_blks_hit[5m]) < 0.9
+            for: 10m
+            labels:
+              severity: warning
+              category: database
+            annotations:
+              summary: "PostgreSQL cache hit ratio low"
+              description: "Cache hit ratio is {{ $value | humanizePercentage }}"
+          
+          - alert: RedisDown
+            expr: up{job="redis"} == 0
+            for: 1m
+            labels:
+              severity: critical
+              category: database
+            annotations:
+              summary: "Redis is down"
+              description: "Redis instance {{ $labels.instance }} is not responding"
+          
+          - alert: RedisHighMemory
+            expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+            for: 5m
+            labels:
+              severity: warning
+              category: database
+            annotations:
+              summary: "Redis memory usage high"
+              description: "Redis using {{ $value | humanizePercentage }} of max memory"
+      
+      # Security Alerts
+      - name: security
+        interval: 30s
+        rules:
+          - alert: UnauthorizedAPIAccess
+            expr: rate(herald_unauthorized_requests_total[5m]) > 10
+            for: 5m
+            labels:
+              severity: warning
+              category: security
+            annotations:
+              summary: "High rate of unauthorized API requests"
+              description: "{{ $value }} unauthorized requests per second from {{ $labels.source_ip }}"
+          
+          - alert: SuspiciousActivity
+            expr: rate(herald_suspicious_activity_total[5m]) > 5
+            for: 5m
+            labels:
+              severity: critical
+              category: security
+            annotations:
+              summary: "Suspicious activity detected"
+              description: "Suspicious pattern detected: {{ $labels.pattern }} from {{ $labels.source }}"
+          
+          - alert: SSLCertificateExpiringSoon
+            expr: probe_ssl_earliest_cert_expiry - time() < 7 * 86400
+            for: 1h
+            labels:
+              severity: warning
+              category: security
+            annotations:
+              summary: "SSL certificate expiring soon"
+              description: "Certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}"
+      
+      # Business Metrics Alerts
+      - name: business_metrics
+        interval: 60s
+        rules:
+          - alert: DailyActiveUsersDropped
+            expr: herald_daily_active_users < 10000
+            for: 1h
+            labels:
+              severity: warning
+              category: business
+            annotations:
+              summary: "Daily active users below threshold"
+              description: "DAU is {{ $value }} (threshold: 10000)"
+          
+          - alert: RevenueDropped
+            expr: rate(herald_revenue_total[1h]) < 100
+            for: 2h
+            labels:
+              severity: warning
+              category: business
+            annotations:
+              summary: "Revenue rate dropped"
+              description: "Revenue rate is ${{ $value }}/hour"
+          
+          - alert: ChurnRateHigh
+            expr: herald_user_churn_rate > 0.1
+            for: 24h
+            labels:
+              severity: warning
+              category: business
+            annotations:
+              summary: "High user churn rate"
+              description: "Churn rate is {{ $value | humanizePercentage }}"

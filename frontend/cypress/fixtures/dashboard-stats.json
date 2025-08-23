@@ -1,0 +1,54 @@
+{
+  "current_rank": {
+    "tier": "GOLD",
+    "rank": "II",
+    "lp": 67,
+    "wins": 45,
+    "losses": 32
+  },
+  "total_matches": 150,
+  "win_rate": 62.5,
+  "kda_ratio": 2.4,
+  "average_kda": {
+    "kills": 8.2,
+    "deaths": 4.1,
+    "assists": 12.3
+  },
+  "cs_per_minute": 7.8,
+  "vision_score": 38.5,
+  "damage_share": 28.7,
+  "gold_per_minute": 342,
+  "recent_performance": {
+    "last_7_days": {
+      "matches": 12,
+      "wins": 8,
+      "win_rate": 66.7
+    },
+    "last_30_days": {
+      "matches": 45,
+      "wins": 28,
+      "win_rate": 62.2
+    }
+  },
+  "champion_stats": {
+    "most_played": "Jinx",
+    "highest_win_rate": "Caitlyn",
+    "best_kda": "Jinx"
+  },
+  "role_distribution": {
+    "ADC": 85,
+    "MID": 10,
+    "SUPPORT": 5
+  },
+  "improvement_areas": [
+    "Vision control could be improved",
+    "CS efficiency in late game",
+    "Positioning in team fights"
+  ],
+  "achievements": [
+    "Reached Gold tier",
+    "10 game win streak",
+    "Perfect KDA game"
+  ],
+  "last_updated": "2025-08-23T05:50:00Z"
+}

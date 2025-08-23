@@ -1,0 +1,55 @@
+{
+  "data": {
+    "damageShare": 0.32,
+    "damagePerMinute": 850,
+    "efficiency": 89,
+    "teamContribution": "high",
+    "breakdown": {
+      "physical": 0.65,
+      "magic": 0.25,
+      "true": 0.10
+    },
+    "damageSources": {
+      "abilities": 0.68,
+      "autoAttacks": 0.28,
+      "items": 0.04
+    },
+    "targetPriority": {
+      "champions": 0.78,
+      "minions": 0.15,
+      "monsters": 0.05,
+      "structures": 0.02
+    },
+    "comparisons": {
+      "roleAverage": 0.29,
+      "rankAverage": 0.27,
+      "percentile": 71
+    },
+    "damageTimeline": [
+      { "minute": 5, "totalDamage": 4200, "dpm": 840 },
+      { "minute": 10, "totalDamage": 8900, "dpm": 890 },
+      { "minute": 15, "totalDamage": 13400, "dpm": 893 },
+      { "minute": 20, "totalDamage": 17800, "dpm": 890 },
+      { "minute": 25, "totalDamage": 22100, "dpm": 884 },
+      { "minute": 30, "totalDamage": 25600, "dpm": 853 }
+    ],
+    "teamFightContribution": {
+      "averageDamage": 3400,
+      "damageShare": 0.34,
+      "positioning": "good",
+      "targetSelection": "excellent"
+    },
+    "burstAnalysis": {
+      "maxBurst": 2850,
+      "averageBurst": 1420,
+      "burstFrequency": 0.23
+    },
+    "recommendations": [
+      "Focus on positioning in team fights",
+      "Improve target priority in late game",
+      "Maximize damage during power spikes",
+      "Consider more aggressive itemization"
+    ]
+  },
+  "confidence": 0.91
+}

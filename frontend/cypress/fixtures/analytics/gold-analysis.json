@@ -1,0 +1,70 @@
+{
+  "data": {
+    "goldPerMinute": 425,
+    "goldEfficiency": 87,
+    "economicRating": "good",
+    "goldSources": {
+      "minions": 0.52,
+      "champions": 0.18,
+      "structures": 0.12,
+      "monsters": 0.08,
+      "passive": 0.10
+    },
+    "spendingPatterns": {
+      "items": 0.89,
+      "consumables": 0.06,
+      "wards": 0.05
+    },
+    "itemEfficiency": {
+      "coreItems": 0.92,
+      "situationalItems": 0.81,
+      "luxuryItems": 0.76
+    },
+    "goldTimeline": [
+      { "minute": 5, "totalGold": 2100, "gpm": 420 },
+      { "minute": 10, "totalGold": 4250, "gpm": 425 },
+      { "minute": 15, "totalGold": 6380, "gpm": 425 },
+      { "minute": 20, "totalGold": 8520, "gpm": 426 },
+      { "minute": 25, "totalGold": 10650, "gpm": 426 },
+      { "minute": 30, "totalGold": 12750, "gpm": 425 }
+    ],
+    "powerSpikes": [
+      {
+        "time": "8:30",
+        "items": ["B.F. Sword", "Pickaxe"],
+        "goldSpent": 2650,
+        "impact": "high"
+      },
+      {
+        "time": "13:45", 
+        "items": ["Kraken Slayer"],
+        "goldSpent": 3400,
+        "impact": "very high"
+      },
+      {
+        "time": "18:20",
+        "items": ["Phantom Dancer"],
+        "goldSpent": 2600,
+        "impact": "medium"
+      }
+    ],
+    "backingEfficiency": {
+      "averageBackTime": "4:23",
+      "goldWasted": 125,
+      "itemCompletions": 8,
+      "efficiency": 0.84
+    },
+    "comparisons": {
+      "roleAverage": 415,
+      "rankAverage": 405,
+      "percentile": 68
+    },
+    "recommendations": [
+      "Improve backing timing for item spikes",
+      "Focus on farming during mid game lulls", 
+      "Consider more cost-efficient item builds",
+      "Maximize gold from objective bounties"
+    ]
+  },
+  "confidence": 0.84
+}

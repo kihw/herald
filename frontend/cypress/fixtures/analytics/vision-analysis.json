@@ -1,0 +1,41 @@
+{
+  "data": {
+    "averageVisionScore": 28.4,
+    "wardPlacement": "good",
+    "visionControl": 72,
+    "heatmapData": [
+      { "x": 2850, "y": 8900, "intensity": 0.9, "type": "ward_placed" },
+      { "x": 3200, "y": 7800, "intensity": 0.8, "type": "control_ward" },
+      { "x": 7800, "y": 4200, "intensity": 0.7, "type": "ward_killed" },
+      { "x": 9800, "y": 3100, "intensity": 0.6, "type": "vision_denied" },
+      { "x": 1200, "y": 5400, "intensity": 0.8, "type": "ward_placed" }
+    ],
+    "wardingPatterns": {
+      "river": 0.85,
+      "jungle": 0.62,
+      "lane": 0.74,
+      "objectives": 0.91
+    },
+    "visionEfficiency": 78,
+    "controlWardUsage": 0.84,
+    "sweepingEfficiency": 0.69,
+    "timelineAnalysis": [
+      { "minute": 5, "visionScore": 8, "wardsPlaced": 3, "wardsCleared": 1 },
+      { "minute": 10, "visionScore": 15, "wardsPlaced": 6, "wardsCleared": 2 },
+      { "minute": 15, "visionScore": 22, "wardsPlaced": 8, "wardsCleared": 4 },
+      { "minute": 20, "visionScore": 28, "wardsPlaced": 11, "wardsCleared": 6 }
+    ],
+    "comparisons": {
+      "roleAverage": 32.1,
+      "rankAverage": 26.8,
+      "percentile": 58
+    },
+    "recommendations": [
+      "Place more control wards around objectives",
+      "Improve river vision coverage", 
+      "Clear enemy wards more efficiently",
+      "Ward deeper in enemy jungle during leads"
+    ]
+  },
+  "confidence": 0.79
+}

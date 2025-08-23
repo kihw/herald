@@ -1,0 +1,60 @@
+# Herald.lol Gaming Analytics Platform - Code Ownership
+
+# Global ownership - Herald.lol core team
+* @herald-lol/core-team
+
+# Gaming Analytics Components
+/backend/internal/services/gaming_analytics* @herald-lol/gaming-analytics-team
+/backend/internal/services/kda* @herald-lol/gaming-analytics-team
+/backend/internal/services/cs* @herald-lol/gaming-analytics-team
+/backend/internal/services/vision* @herald-lol/gaming-analytics-team
+/backend/internal/services/damage* @herald-lol/gaming-analytics-team
+/backend/internal/services/gold* @herald-lol/gaming-analytics-team
+
+# Gaming Features
+/backend/internal/services/team_composition* @herald-lol/gaming-features-team
+/backend/internal/services/counter_pick* @herald-lol/gaming-features-team
+/backend/internal/services/skill_progression* @herald-lol/gaming-features-team
+/backend/internal/services/coaching* @herald-lol/gaming-features-team
+
+# Gaming UI Components
+/frontend/src/components/analytics/ @herald-lol/gaming-ui-team
+/frontend/src/components/gaming/ @herald-lol/gaming-ui-team
+/frontend/src/types/gaming* @herald-lol/gaming-ui-team
+
+# Riot API Integration
+/backend/internal/services/riot* @herald-lol/riot-api-team
+/backend/internal/handlers/riot* @herald-lol/riot-api-team
+
+# Gaming Performance & Infrastructure
+/performance/ @herald-lol/performance-team
+/k8s/ @herald-lol/infrastructure-team
+/docker-compose* @herald-lol/infrastructure-team
+/nginx/ @herald-lol/infrastructure-team
+
+# Gaming Testing
+/frontend/tests/ @herald-lol/testing-team
+/frontend/cypress/ @herald-lol/testing-team
+/backend/internal/services/*_test.go @herald-lol/testing-team
+
+# Gaming CI/CD
+/.github/workflows/ @herald-lol/devops-team
+/.github/ISSUE_TEMPLATE/ @herald-lol/devops-team
+/Dockerfile @herald-lol/devops-team
+
+# Gaming Documentation
+/docs/ @herald-lol/docs-team
+/README.md @herald-lol/docs-team
+/CLAUDE.md @herald-lol/core-team @herald-lol/docs-team
+
+# Gaming Security
+/backend/internal/auth/ @herald-lol/security-team
+/backend/internal/middleware/security* @herald-lol/security-team
+
+# Gaming Database
+/backend/internal/models/ @herald-lol/database-team
+/backend/migrations/ @herald-lol/database-team
+
+# Gaming Configuration
+/.env* @herald-lol/core-team @herald-lol/infrastructure-team
+/config/ @herald-lol/core-team @herald-lol/infrastructure-team

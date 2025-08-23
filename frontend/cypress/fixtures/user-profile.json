@@ -1,0 +1,21 @@
+{
+  "id": "test-user-id-123",
+  "email": "dev@herald.lol",
+  "username": "developer",
+  "display_name": "Test Developer",
+  "avatar": "",
+  "bio": "Test user for Herald.lol development",
+  "timezone": "UTC",
+  "language": "en",
+  "is_active": true,
+  "is_premium": false,
+  "last_login": "2025-08-23T05:50:00Z",
+  "login_count": 42,
+  "total_matches": 150,
+  "last_sync_at": "2025-08-23T05:45:00Z",
+  "favorite_champion": "Jinx",
+  "main_role": "ADC", 
+  "current_rank": "Gold II",
+  "created_at": "2025-01-01T00:00:00Z",
+  "updated_at": "2025-08-23T05:50:00Z"
+}

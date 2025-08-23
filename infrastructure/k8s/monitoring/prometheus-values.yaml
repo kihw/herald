@@ -1,0 +1,259 @@
+# Herald.lol Prometheus Configuration - Gaming Metrics Monitoring
+
+serverFiles:
+  prometheus.yml:
+    global:
+      scrape_interval: 15s
+      scrape_timeout: 10s
+      evaluation_interval: 15s
+      external_labels:
+        platform: 'herald'
+        environment: 'production'
+        game: 'league-of-legends'
+
+    # Gaming-specific alerting rules
+    rule_files:
+      - /etc/prometheus/rules/*.yml
+
+    # Service discovery for Herald services
+    scrape_configs:
+      # Herald API metrics
+      - job_name: 'herald-api'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - herald
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: herald-api
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+            action: replace
+            target_label: __metrics_path__
+            regex: (.+)
+          - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+            action: replace
+            regex: ([^:]+)(?::\d+)?;(\d+)
+            replacement: $1:$2
+            target_label: __address__
+          - action: labelmap
+            regex: __meta_kubernetes_pod_label_(.+)
+          - source_labels: [__meta_kubernetes_namespace]
+            action: replace
+            target_label: kubernetes_namespace
+          - source_labels: [__meta_kubernetes_pod_name]
+            action: replace
+            target_label: kubernetes_pod_name
+
+      # Herald Frontend metrics
+      - job_name: 'herald-frontend'
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - herald
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: herald-frontend
+          - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+            action: keep
+            regex: true
+
+      # Istio mesh metrics
+      - job_name: 'istio-mesh'
+        kubernetes_sd_configs:
+          - role: endpoint
+            namespaces:
+              names:
+                - istio-system
+                - herald
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+            action: keep
+            regex: istio-telemetry;prometheus
+
+      # Node exporter for infrastructure metrics
+      - job_name: 'node-exporter'
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - action: labelmap
+            regex: __meta_kubernetes_node_label_(.+)
+
+      # Gaming-specific: Riot API metrics
+      - job_name: 'riot-api-metrics'
+        static_configs:
+          - targets: ['herald-api:9091']
+        metrics_path: '/metrics/riot'
+        params:
+          module: [riot_api]
+
+      # PostgreSQL metrics
+      - job_name: 'postgresql'
+        static_configs:
+          - targets: ['postgres-exporter:9187']
+
+      # Redis metrics
+      - job_name: 'redis'
+        static_configs:
+          - targets: ['redis-exporter:9121']
+
+    # Alertmanager configuration
+    alerting:
+      alertmanagers:
+        - static_configs:
+            - targets:
+                - alertmanager:9093
+
+server:
+  # Resources for high-volume gaming metrics
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 8Gi
+    requests:
+      cpu: 1000m
+      memory: 4Gi
+
+  # Persistent storage for metrics history
+  persistentVolume:
+    enabled: true
+    size: 100Gi
+    storageClass: gp3
+
+  # Retention for gaming analytics
+  retention: "90d"
+
+  # Global configuration
+  global:
+    scrape_interval: 15s
+    scrape_timeout: 10s
+    evaluation_interval: 15s
+
+  # Service configuration
+  service:
+    type: ClusterIP
+    port: 9090
+
+  # Ingress for internal access
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: nginx
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - prometheus.herald.lol
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.herald.lol
+
+# Alertmanager configuration
+alertmanager:
+  enabled: true
+  
+  config:
+    global:
+      resolve_timeout: 5m
+      slack_api_url: 'YOUR_SLACK_WEBHOOK'
+    
+    route:
+      group_by: ['alertname', 'cluster', 'service']
+      group_wait: 10s
+      group_interval: 10s
+      repeat_interval: 12h
+      receiver: 'herald-team'
+      
+      routes:
+        # Critical gaming alerts
+        - match:
+            severity: critical
+            platform: gaming
+          receiver: 'gaming-critical'
+          continue: true
+        
+        # Riot API alerts
+        - match:
+            service: riot-api
+          receiver: 'riot-api-alerts'
+          group_wait: 30s
+        
+        # Performance alerts
+        - match:
+            category: performance
+          receiver: 'performance-team'
+    
+    receivers:
+      - name: 'herald-team'
+        slack_configs:
+          - channel: '#herald-alerts'
+            title: 'Herald.lol Alert'
+            text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+      
+      - name: 'gaming-critical'
+        pagerduty_configs:
+          - service_key: 'YOUR_PAGERDUTY_KEY'
+            description: 'Critical gaming platform issue'
+        slack_configs:
+          - channel: '#gaming-critical'
+            title: '🚨 CRITICAL Gaming Alert'
+      
+      - name: 'riot-api-alerts'
+        slack_configs:
+          - channel: '#riot-api'
+            title: 'Riot API Issue'
+      
+      - name: 'performance-team'
+        slack_configs:
+          - channel: '#performance'
+            title: 'Performance Alert'
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+
+  persistentVolume:
+    enabled: true
+    size: 10Gi
+
+# Node Exporter for infrastructure metrics
+nodeExporter:
+  enabled: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Pushgateway for batch job metrics
+pushgateway:
+  enabled: true
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Kube State Metrics
+kubeStateMetrics:
+  enabled: true
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

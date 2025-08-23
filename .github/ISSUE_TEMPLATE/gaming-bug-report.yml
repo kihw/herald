@@ -1,0 +1,259 @@
+name: 🎮 Gaming Bug Report
+description: Report a bug in Herald.lol gaming analytics platform
+title: "[BUG] Gaming: "
+labels: ["bug", "gaming", "triage"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎮 Herald.lol Gaming Bug Report
+        
+        Thank you for reporting a bug in Herald.lol gaming analytics platform!
+        Please provide detailed information to help us reproduce and fix the issue.
+
+  - type: dropdown
+    id: gaming-component
+    attributes:
+      label: Gaming Component
+      description: Which Herald.lol gaming component is affected?
+      options:
+        - Gaming Analytics Dashboard
+        - KDA Analysis
+        - CS/min Analytics
+        - Vision Score Analysis
+        - Damage Analytics
+        - Gold Efficiency
+        - Team Composition Optimizer
+        - Counter-pick Analyzer
+        - Skill Progression Tracker
+        - Coaching Insights
+        - Match Analysis
+        - Riot API Integration
+        - Gaming Performance
+        - Other Gaming Feature
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gaming-priority
+    attributes:
+      label: Gaming Priority
+      description: How critical is this gaming bug?
+      options:
+        - Critical - Gaming analytics unavailable
+        - High - Gaming feature not working
+        - Medium - Gaming feature partially working
+        - Low - Gaming UI/UX issue
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-description
+    attributes:
+      label: Gaming Bug Description
+      description: Detailed description of the gaming bug
+      placeholder: |
+        Describe the gaming bug in detail:
+        - What gaming feature were you using?
+        - What gaming metrics were involved?
+        - What happened vs what you expected?
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-reproduction
+    attributes:
+      label: Gaming Steps to Reproduce
+      description: Steps to reproduce the gaming bug
+      placeholder: |
+        1. Go to gaming analytics dashboard
+        2. Select KDA analysis
+        3. Enter summoner name 'TestPlayer'
+        4. Click 'Analyze Gaming Performance'
+        5. See error in gaming metrics
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-expected
+    attributes:
+      label: Expected Gaming Behavior
+      description: What should happen with the gaming feature?
+      placeholder: |
+        Gaming analytics should load within 5 seconds and display:
+        - Accurate KDA calculations
+        - CS/min with efficiency ratings
+        - Vision score with recommendations
+        - Performance trends over time
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-actual
+    attributes:
+      label: Actual Gaming Behavior
+      description: What actually happened with the gaming feature?
+      placeholder: |
+        Instead of loading gaming analytics:
+        - Page shows error message
+        - Gaming metrics are incorrect
+        - Performance data is missing
+        - Takes longer than 5 seconds to load
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gaming-environment
+    attributes:
+      label: Gaming Environment
+      description: Where did you encounter this gaming bug?
+      options:
+        - Production (herald.lol)
+        - Staging (staging.herald.lol)
+        - Local Development
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: gaming-summoner
+    attributes:
+      label: Gaming Summoner Name (if applicable)
+      description: Summoner name used when bug occurred
+      placeholder: TestSummoner123
+
+  - type: input
+    id: gaming-match
+    attributes:
+      label: Gaming Match ID (if applicable)
+      description: Match ID if bug is related to specific match
+      placeholder: NA1_4567890123
+
+  - type: dropdown
+    id: gaming-region
+    attributes:
+      label: Gaming Region
+      description: Which gaming region were you analyzing?
+      options:
+        - North America (NA)
+        - Europe West (EUW)
+        - Europe Nordic & East (EUNE)
+        - Korea (KR)
+        - China (CN)
+        - Brazil (BR)
+        - Latin America North (LAN)
+        - Latin America South (LAS)
+        - Russia (RU)
+        - Turkey (TR)
+        - Oceania (OCE)
+        - Philippines (PH)
+        - Singapore (SG)
+        - Thailand (TH)
+        - Taiwan (TW)
+        - Vietnam (VN)
+        - Japan (JP)
+        - Other
+
+  - type: textarea
+    id: gaming-browser
+    attributes:
+      label: Gaming Browser & Device
+      description: Browser and device information
+      placeholder: |
+        - Browser: Chrome 120.0.6099.109
+        - OS: Windows 11
+        - Device: Gaming Desktop
+        - Screen Resolution: 1920x1080
+        - Gaming Mouse/Keyboard: Yes
+
+  - type: textarea
+    id: gaming-console
+    attributes:
+      label: Gaming Console Errors
+      description: Any console errors or gaming debug information
+      placeholder: |
+        Console errors (F12 -> Console):
+        
+        Network errors (F12 -> Network):
+        
+        Gaming API responses:
+
+  - type: textarea
+    id: gaming-screenshots
+    attributes:
+      label: Gaming Screenshots
+      description: Screenshots of the gaming bug (drag & drop images here)
+      placeholder: |
+        Attach screenshots showing:
+        - Gaming analytics error
+        - Gaming metrics display issue
+        - Gaming performance problem
+        - Console errors
+
+  - type: textarea
+    id: gaming-performance
+    attributes:
+      label: Gaming Performance Impact
+      description: How does this bug affect gaming analytics performance?
+      placeholder: |
+        Performance impact:
+        - Analytics load time: >5 seconds (should be <5s)
+        - UI response time: >2 seconds (should be <2s)
+        - Gaming metrics accuracy: Incorrect calculations
+        - User experience: Cannot analyze gaming performance
+
+  - type: checkboxes
+    id: gaming-requirements
+    attributes:
+      label: Gaming Requirements Impact
+      description: Which Herald.lol gaming requirements are affected?
+      options:
+        - label: Analytics load time <5 seconds
+        - label: UI response time <2 seconds
+        - label: Gaming metrics accuracy
+        - label: Riot API integration
+        - label: Gaming data persistence
+        - label: Gaming performance tracking
+        - label: Gaming recommendations
+        - label: Gaming visualizations
+
+  - type: textarea
+    id: gaming-additional
+    attributes:
+      label: Additional Gaming Context
+      description: Any additional context about this gaming bug
+      placeholder: |
+        Additional gaming information:
+        - Gaming skill level: Gold II
+        - Main gaming role: ADC
+        - Champion pool: Jinx, Caitlyn, Ezreal
+        - Usage frequency: Daily gaming analysis
+        - Impact on gaming improvement: Cannot track progress
+        
+        Similar gaming bugs:
+        - Related gaming issues
+        - Workarounds attempted
+        - Impact on other gaming features
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🎮 Herald.lol Gaming Bug Priority Guidelines
+        
+        - **Critical**: Gaming analytics completely unavailable, affects all users
+        - **High**: Major gaming feature broken, affects core functionality
+        - **Medium**: Gaming feature partially working, workaround available
+        - **Low**: Minor gaming UI issue, does not affect gaming analysis
+        
+        ## 🎯 Herald.lol Gaming Requirements
+        
+        - **Analytics Performance**: <5 seconds load time
+        - **UI Performance**: <2 seconds response time
+        - **Gaming Accuracy**: Precise KDA, CS/min, Vision, Damage, Gold calculations
+        - **Gaming Reliability**: 99.9% uptime for gaming analytics
+        
+        Thank you for helping improve Herald.lol gaming analytics platform! 🎮

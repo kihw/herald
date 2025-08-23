@@ -1,10 +1,8 @@
 {
   "_comment": "Herald.lol Local Development Settings",
   "_description": "Local overrides for Herald.lol gaming platform development. This file should NOT be committed to version control.",
-  
   "hooks": {
     "_comment_hooks": "Local development hooks can be added here to override or extend production hooks",
-    
     "SessionStart": [
       {
         "hooks": [
@@ -16,7 +14,6 @@
         ]
       }
     ],
-    
     "PreToolUse": [
       {
         "_comment": "Local development validation - less strict than production",
@@ -31,17 +28,14 @@
       }
     ]
   },
-  
   "_local_settings_examples": {
     "_comment": "Examples of local settings you might want to configure",
-    
     "development_mode": {
       "_description": "Enable development-specific features",
       "verbose_logging": true,
       "skip_performance_checks": true,
       "mock_riot_api": false
     },
-    
     "gaming_platform_overrides": {
       "_description": "Local overrides for Herald.lol gaming platform",
       "enable_debug_analytics": true,
@@ -49,7 +43,6 @@
       "local_redis_url": "redis://localhost:6379",
       "riot_api_dev_key": "RGAPI-your-dev-key-here"
     },
-    
     "performance_targets_local": {
       "_description": "Relaxed performance targets for local development",
       "analytics_response_time": "10s",
@@ -57,7 +50,6 @@
       "concurrent_users_target": "100"
     }
   },
-  
   "_instructions": [
     "This file is for LOCAL development settings only",
     "Add your personal development preferences here",
@@ -66,12 +58,18 @@
     "Set development-specific performance targets",
     "NEVER commit this file - it's in .gitignore"
   ],
-  
   "_gaming_dev_tips": [
     "Use mock Riot API data for faster local development",
     "Enable verbose logging for gaming analytics debugging",
     "Configure local database with gaming test data",
     "Set relaxed performance targets for development",
     "Enable gaming platform debug features"
-  ]
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(touch:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
 }

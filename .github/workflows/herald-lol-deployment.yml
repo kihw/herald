@@ -1,0 +1,643 @@
+# Herald.lol Gaming Analytics - Production Deployment Pipeline
+name: 🚀 Herald.lol Production Deployment
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - demo
+      skip_tests:
+        description: 'Skip testing phase'
+        required: false
+        default: false
+        type: boolean
+
+# Herald.lol deployment configuration
+env:
+  GO_VERSION: '1.23'
+  NODE_VERSION: '20'
+  DOCKER_REGISTRY: 'heraldlol'
+  IMAGE_TAG: ${{ github.sha }}
+  PRODUCTION_URL: 'https://herald.lol'
+  STAGING_URL: 'https://staging.herald.lol'
+
+jobs:
+  # =============================================================================
+  # PRE-DEPLOYMENT VALIDATION
+  # =============================================================================
+  pre-deployment-checks:
+    name: 🔍 Pre-Deployment Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Herald.lol
+        uses: actions/checkout@v4
+
+      - name: Validate Gaming Configuration
+        run: |
+          echo "🎮 Validating Herald.lol Gaming Configuration"
+          
+          # Check required configuration files
+          required_files=(
+            "docker-compose.production.yml"
+            "backend/cmd/server/main.go"
+            "frontend/package.json"
+            "nginx/nginx.conf"
+            ".env.example"
+          )
+          
+          for file in "${required_files[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file exists"
+            else
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done
+
+      - name: Gaming Performance Requirements Check
+        run: |
+          echo "⚡ Checking Herald.lol Performance Requirements"
+          
+          # Check if performance targets are configured
+          if grep -q "5000ms" .github/workflows/herald-lol-ci.yml; then
+            echo "✅ Analytics <5s requirement configured"
+          else
+            echo "❌ Analytics performance requirement not found"
+            exit 1
+          fi
+          
+          if grep -q "2000ms" .github/workflows/herald-lol-ci.yml; then
+            echo "✅ UI <2s requirement configured"
+          else
+            echo "❌ UI performance requirement not found"
+            exit 1
+          fi
+
+      - name: Gaming Security Validation
+        run: |
+          echo "🛡️ Gaming Security Pre-deployment Check"
+          
+          # Ensure no Riot API keys in code
+          if grep -r "RGAPI-" . --exclude-dir=.git --exclude-dir=.github --exclude="*.md"; then
+            echo "❌ SECURITY ALERT: Riot API key found in code!"
+            exit 1
+          fi
+          
+          # Check for other sensitive gaming data
+          sensitive_patterns=(
+            "password.*="
+            "secret.*="
+            "token.*="
+            "key.*="
+          )
+          
+          for pattern in "${sensitive_patterns[@]}"; do
+            if grep -ri "$pattern" backend/ frontend/ --exclude-dir=test* --exclude="*.test.*" --exclude="*.example*"; then
+              echo "⚠️  Potential sensitive data found: $pattern"
+            fi
+          done
+          
+          echo "✅ Gaming security pre-check completed"
+
+  # =============================================================================
+  # GAMING SMOKE TESTS
+  # =============================================================================
+  gaming-smoke-tests:
+    name: 🎮 Gaming Smoke Tests
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+    if: ${{ !inputs.skip_tests }}
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: herald_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout Herald.lol
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Gaming Backend Smoke Test
+        env:
+          DATABASE_URL: postgres://postgres:testpassword@localhost:5432/herald_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379
+        run: |
+          cd backend
+          go mod download
+          
+          echo "🎮 Running Herald.lol Backend Smoke Tests"
+          
+          # Quick gaming analytics tests
+          go test -short -run=TestKDA ./internal/services/
+          go test -short -run=TestCS ./internal/services/
+          go test -short -run=TestVision ./internal/services/
+          go test -short -run=TestDamage ./internal/services/
+          go test -short -run=TestGold ./internal/services/
+          
+          # Health check test
+          go test -run=TestHealthCheck ./internal/handlers/
+
+      - name: Gaming Frontend Smoke Test
+        run: |
+          cd frontend
+          npm ci
+          
+          echo "🎮 Running Herald.lol Frontend Smoke Tests"
+          
+          # Gaming components smoke tests
+          npm run test:run -- --testNamePattern="smoke|Smoke" --passWithNoTests
+          
+          # Build test
+          npm run build
+          
+          # Check critical gaming files exist
+          critical_files=(
+            "dist/index.html"
+            "dist/assets/index*.js"
+            "dist/assets/index*.css"
+          )
+          
+          for file in "${critical_files[@]}"; do
+            if ls $file 1> /dev/null 2>&1; then
+              echo "✅ Critical file exists: $file"
+            else
+              echo "❌ Missing critical file: $file"
+              exit 1
+            fi
+          done
+
+  # =============================================================================
+  # DOCKER IMAGE BUILD
+  # =============================================================================
+  build-images:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks, gaming-smoke-tests]
+    if: always() && (needs.pre-deployment-checks.result == 'success') && (needs.gaming-smoke-tests.result == 'success' || inputs.skip_tests)
+    
+    steps:
+      - name: Checkout Herald.lol
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Registry
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Herald.lol Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/herald-backend:${{ env.IMAGE_TAG }}
+            ${{ env.DOCKER_REGISTRY }}/herald-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            GO_VERSION=${{ env.GO_VERSION }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            GIT_COMMIT=${{ github.sha }}
+
+      - name: Build Herald.lol Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/herald-frontend:${{ env.IMAGE_TAG }}
+            ${{ env.DOCKER_REGISTRY }}/herald-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_VERSION=${{ env.NODE_VERSION }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            GIT_COMMIT=${{ github.sha }}
+
+      - name: Build Herald.lol Nginx Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/herald-nginx:${{ env.IMAGE_TAG }}
+            ${{ env.DOCKER_REGISTRY }}/herald-nginx:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Gaming Image Security Scan
+        run: |
+          echo "🛡️ Scanning Herald.lol Gaming Images for Vulnerabilities"
+          
+          # Install Trivy scanner
+          sudo apt-get update
+          sudo apt-get install wget apt-transport-https gnupg lsb-release
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+          
+          # Scan images
+          trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ env.DOCKER_REGISTRY }}/herald-backend:${{ env.IMAGE_TAG }}
+          trivy image --exit-code 0 --severity HIGH,CRITICAL ${{ env.DOCKER_REGISTRY }}/herald-frontend:${{ env.IMAGE_TAG }}
+
+  # =============================================================================
+  # STAGING DEPLOYMENT
+  # =============================================================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build-images
+    environment: 
+      name: staging
+      url: ${{ env.STAGING_URL }}
+    if: ${{ inputs.environment == 'staging' || inputs.environment == 'demo' }}
+    
+    steps:
+      - name: Checkout Herald.lol
+        uses: actions/checkout@v4
+
+      - name: Setup Gaming Staging Environment
+        run: |
+          echo "🎮 Setting up Herald.lol Staging Environment"
+          
+          # Create staging environment file
+          cat > .env.staging << EOF
+          # Herald.lol Staging Configuration
+          ENVIRONMENT=staging
+          API_URL=${{ env.STAGING_URL }}/api
+          FRONTEND_URL=${{ env.STAGING_URL }}
+          
+          # Gaming Configuration
+          RIOT_API_KEY=${{ secrets.STAGING_RIOT_API_KEY }}
+          ANALYTICS_CACHE_TTL=300
+          GAMING_FEATURES_ENABLED=true
+          
+          # Performance Settings
+          MAX_CONCURRENT_USERS=10000
+          ANALYTICS_TIMEOUT=5000
+          UI_TIMEOUT=2000
+          
+          # Database
+          DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}
+          REDIS_URL=${{ secrets.STAGING_REDIS_URL }}
+          EOF
+
+      - name: Deploy to Staging Infrastructure
+        env:
+          STAGING_SERVER: ${{ secrets.STAGING_SERVER }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_KEY: ${{ secrets.STAGING_PRIVATE_KEY }}
+        run: |
+          echo "🚀 Deploying Herald.lol to Staging"
+          
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$STAGING_KEY" > ~/.ssh/staging_key
+          chmod 600 ~/.ssh/staging_key
+          
+          # Deploy using docker-compose
+          scp -i ~/.ssh/staging_key -o StrictHostKeyChecking=no \
+            docker-compose.production.yml \
+            .env.staging \
+            $STAGING_USER@$STAGING_SERVER:/opt/herald-lol/
+          
+          ssh -i ~/.ssh/staging_key -o StrictHostKeyChecking=no \
+            $STAGING_USER@$STAGING_SERVER << 'EOF'
+            cd /opt/herald-lol
+            
+            # Pull latest images
+            docker-compose -f docker-compose.production.yml pull
+            
+            # Deploy with zero downtime
+            docker-compose -f docker-compose.production.yml up -d
+            
+            # Verify gaming services
+            sleep 30
+            curl -f http://localhost/health || exit 1
+            curl -f http://localhost/api/health || exit 1
+          EOF
+
+      - name: Staging Gaming Health Check
+        run: |
+          echo "🏥 Herald.lol Staging Health Check"
+          
+          # Wait for services to be ready
+          timeout 300 bash -c 'until curl -f ${{ env.STAGING_URL }}/health; do sleep 10; done'
+          timeout 300 bash -c 'until curl -f ${{ env.STAGING_URL }}/api/health; do sleep 10; done'
+          
+          # Gaming-specific health checks
+          curl -f "${{ env.STAGING_URL }}/api/analytics/health" || echo "Analytics health check failed"
+          curl -f "${{ env.STAGING_URL }}/api/riot/health" || echo "Riot API health check failed"
+          
+          echo "✅ Herald.lol Staging Deployment Successful"
+
+  # =============================================================================
+  # PRODUCTION DEPLOYMENT
+  # =============================================================================
+  deploy-production:
+    name: 🎯 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-images
+    environment: 
+      name: production
+      url: ${{ env.PRODUCTION_URL }}
+    if: ${{ inputs.environment == 'production' || github.event_name == 'release' }}
+    
+    steps:
+      - name: Checkout Herald.lol
+        uses: actions/checkout@v4
+
+      - name: Setup Gaming Production Environment
+        run: |
+          echo "🎮 Setting up Herald.lol Production Environment"
+          
+          # Create production environment file
+          cat > .env.production << EOF
+          # Herald.lol Production Configuration
+          ENVIRONMENT=production
+          API_URL=${{ env.PRODUCTION_URL }}/api
+          FRONTEND_URL=${{ env.PRODUCTION_URL }}
+          
+          # Gaming Configuration
+          RIOT_API_KEY=${{ secrets.PRODUCTION_RIOT_API_KEY }}
+          ANALYTICS_CACHE_TTL=600
+          GAMING_FEATURES_ENABLED=true
+          
+          # Performance Settings (Herald.lol requirements)
+          MAX_CONCURRENT_USERS=1000000
+          ANALYTICS_TIMEOUT=5000
+          UI_TIMEOUT=2000
+          
+          # Production Database
+          DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}
+          REDIS_URL=${{ secrets.PRODUCTION_REDIS_URL }}
+          
+          # Monitoring
+          SENTRY_DSN=${{ secrets.SENTRY_DSN }}
+          DATADOG_API_KEY=${{ secrets.DATADOG_API_KEY }}
+          
+          # CDN and Assets
+          CDN_URL=${{ secrets.CDN_URL }}
+          ASSETS_URL=${{ secrets.ASSETS_URL }}
+          EOF
+
+      - name: Production Deployment with Blue-Green Strategy
+        env:
+          PRODUCTION_SERVER: ${{ secrets.PRODUCTION_SERVER }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_KEY: ${{ secrets.PRODUCTION_PRIVATE_KEY }}
+        run: |
+          echo "🎯 Deploying Herald.lol to Production (Blue-Green)"
+          
+          # Setup SSH
+          mkdir -p ~/.ssh
+          echo "$PRODUCTION_KEY" > ~/.ssh/production_key
+          chmod 600 ~/.ssh/production_key
+          
+          # Deploy to production
+          scp -i ~/.ssh/production_key -o StrictHostKeyChecking=no \
+            docker-compose.production.yml \
+            .env.production \
+            $PRODUCTION_USER@$PRODUCTION_SERVER:/opt/herald-lol/
+          
+          ssh -i ~/.ssh/production_key -o StrictHostKeyChecking=no \
+            $PRODUCTION_USER@$PRODUCTION_SERVER << 'EOF'
+            cd /opt/herald-lol
+            
+            echo "🎮 Starting Herald.lol Production Deployment"
+            
+            # Pull latest gaming images
+            docker-compose -f docker-compose.production.yml pull
+            
+            # Health check current deployment
+            if curl -f http://localhost/health; then
+              echo "✅ Current deployment healthy, proceeding with blue-green"
+              
+              # Deploy new version
+              docker-compose -f docker-compose.production.yml up -d
+              
+              # Wait and verify
+              sleep 60
+              
+              # Gaming health checks
+              curl -f http://localhost/health || exit 1
+              curl -f http://localhost/api/health || exit 1
+              curl -f http://localhost/api/analytics/health || exit 1
+              
+              echo "✅ Herald.lol Production Deployment Successful"
+            else
+              echo "❌ Current deployment unhealthy, aborting"
+              exit 1
+            fi
+          EOF
+
+      - name: Production Gaming Performance Validation
+        run: |
+          echo "⚡ Validating Herald.lol Production Performance"
+          
+          # Wait for services to stabilize
+          sleep 120
+          
+          # Test analytics performance (<5s requirement)
+          start_time=$(date +%s%3N)
+          curl -f "${{ env.PRODUCTION_URL }}/api/analytics/kda" > /dev/null
+          end_time=$(date +%s%3N)
+          analytics_time=$((end_time - start_time))
+          
+          if [ $analytics_time -lt 5000 ]; then
+            echo "✅ Analytics performance: ${analytics_time}ms (<5s requirement met)"
+          else
+            echo "❌ Analytics performance: ${analytics_time}ms (>5s requirement failed)"
+            exit 1
+          fi
+          
+          # Test UI load performance (<2s requirement)
+          start_time=$(date +%s%3N)
+          curl -f "${{ env.PRODUCTION_URL }}" > /dev/null
+          end_time=$(date +%s%3N)
+          ui_time=$((end_time - start_time))
+          
+          if [ $ui_time -lt 2000 ]; then
+            echo "✅ UI performance: ${ui_time}ms (<2s requirement met)"
+          else
+            echo "❌ UI performance: ${ui_time}ms (>2s requirement failed)"
+            exit 1
+          fi
+
+      - name: Gaming Production Health Monitoring Setup
+        env:
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: |
+          echo "📊 Setting up Herald.lol Production Monitoring"
+          
+          # Setup gaming-specific monitoring
+          curl -X POST "https://api.datadoghq.com/api/v1/monitor" \
+            -H "Content-Type: application/json" \
+            -H "DD-API-KEY: $DATADOG_API_KEY" \
+            -d '{
+              "name": "Herald.lol Gaming Analytics Performance",
+              "type": "metric alert",
+              "query": "avg(last_5m):avg:herald.analytics.response_time{*} > 5000",
+              "message": "🎮 Herald.lol analytics response time exceeding 5s requirement",
+              "options": {
+                "thresholds": {
+                  "critical": 5000,
+                  "warning": 4000
+                }
+              }
+            }' || echo "⚠️  Monitoring setup failed (non-blocking)"
+
+  # =============================================================================
+  # POST-DEPLOYMENT VALIDATION
+  # =============================================================================
+  post-deployment-validation:
+    name: ✅ Post-Deployment Validation
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+      - name: Determine Deployment URL
+        id: deployment-url
+        run: |
+          if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
+            echo "url=${{ env.PRODUCTION_URL }}" >> $GITHUB_OUTPUT
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "url=${{ env.STAGING_URL }}" >> $GITHUB_OUTPUT
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Gaming End-to-End Validation
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment-url.outputs.url }}
+        run: |
+          echo "🎮 Herald.lol End-to-End Gaming Validation"
+          
+          # Gaming API endpoints validation
+          gaming_endpoints=(
+            "/api/health"
+            "/api/analytics/kda"
+            "/api/analytics/cs"
+            "/api/analytics/vision"
+            "/api/analytics/damage"
+            "/api/analytics/gold"
+            "/api/team-composition/health"
+            "/api/counter-picks/health"
+          )
+          
+          for endpoint in "${gaming_endpoints[@]}"; do
+            if curl -f "$DEPLOYMENT_URL$endpoint" > /dev/null; then
+              echo "✅ $endpoint responsive"
+            else
+              echo "❌ $endpoint failed"
+              exit 1
+            fi
+          done
+
+      - name: Gaming Performance Final Validation
+        env:
+          DEPLOYMENT_URL: ${{ steps.deployment-url.outputs.url }}
+        run: |
+          echo "⚡ Final Herald.lol Gaming Performance Validation"
+          
+          # Test all gaming analytics performance
+          gaming_analytics=(
+            "/api/analytics/kda"
+            "/api/analytics/cs"
+            "/api/analytics/vision"
+            "/api/analytics/damage" 
+            "/api/analytics/gold"
+          )
+          
+          total_time=0
+          for endpoint in "${gaming_analytics[@]}"; do
+            start_time=$(date +%s%3N)
+            curl -f "$DEPLOYMENT_URL$endpoint" > /dev/null
+            end_time=$(date +%s%3N)
+            endpoint_time=$((end_time - start_time))
+            total_time=$((total_time + endpoint_time))
+            
+            echo "📊 $endpoint: ${endpoint_time}ms"
+          done
+          
+          average_time=$((total_time / ${#gaming_analytics[@]}))
+          echo "📈 Average Gaming Analytics Response: ${average_time}ms"
+          
+          if [ $average_time -lt 5000 ]; then
+            echo "✅ Herald.lol Gaming Performance Requirements Met!"
+            echo "🎯 Analytics: ${average_time}ms (<5s ✅)"
+          else
+            echo "❌ Herald.lol Gaming Performance Requirements NOT Met!"
+            echo "🎯 Analytics: ${average_time}ms (>5s ❌)"
+            exit 1
+          fi
+
+      - name: Gaming Deployment Success Notification
+        run: |
+          echo "🎉 Herald.lol Gaming Analytics Deployment Successful!"
+          echo "=============================================="
+          echo ""
+          echo "🎮 **Herald.lol Deployment Summary**"
+          echo "**Environment:** ${{ steps.deployment-url.outputs.environment }}"
+          echo "**URL:** ${{ steps.deployment-url.outputs.url }}"
+          echo "**Commit:** ${{ github.sha }}"
+          echo "**Date:** $(date)"
+          echo ""
+          echo "🎯 **Gaming Performance Validated:**"
+          echo "- ✅ Analytics Load Time: <5s"
+          echo "- ✅ UI Response Time: <2s" 
+          echo "- ✅ Gaming API Health: All endpoints responsive"
+          echo "- ✅ Gaming Features: KDA, CS/min, Vision, Damage, Gold"
+          echo ""
+          echo "🚀 **Herald.lol Gaming Analytics is LIVE!**"
+
+# =============================================================================
+# WORKFLOW PERMISSIONS
+# =============================================================================
+permissions:
+  contents: read
+  packages: write
+  deployments: write

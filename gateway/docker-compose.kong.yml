@@ -1,0 +1,232 @@
+# Herald.lol Gaming Analytics - Kong API Gateway Docker Setup
+# Comprehensive Kong deployment with gaming-focused plugins
+
+version: '3.8'
+
+services:
+  # Kong Database (PostgreSQL)
+  kong-database:
+    image: postgres:15.4-alpine
+    container_name: herald-kong-db
+    hostname: kong-database
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: ${KONG_PG_PASSWORD:-kong_password}
+      POSTGRES_DB: kong
+    ports:
+      - "5433:5432"  # Different port to avoid conflict with main DB
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+      - ./kong/db-init/:/docker-entrypoint-initdb.d/
+    networks:
+      - herald-gaming-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kong -d kong"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    labels:
+      - "herald.lol.service=kong-database"
+      - "herald.lol.component=gaming-api-gateway"
+
+  # Kong Database Migrations
+  kong-migrations:
+    image: kong:3.4.2-alpine
+    container_name: herald-kong-migrations
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PORT: 5432
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong_password}
+      KONG_PG_DATABASE: kong
+    command: kong migrations bootstrap
+    depends_on:
+      kong-database:
+        condition: service_healthy
+    networks:
+      - herald-gaming-network
+    labels:
+      - "herald.lol.service=kong-migrations"
+      - "herald.lol.component=gaming-api-gateway"
+
+  # Kong API Gateway
+  kong:
+    image: kong:3.4.2-alpine
+    container_name: herald-kong-gateway
+    hostname: kong
+    environment:
+      # Database Configuration
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PORT: 5432
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: ${KONG_PG_PASSWORD:-kong_password}
+      KONG_PG_DATABASE: kong
+      
+      # Gaming API Gateway Configuration
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000, 0.0.0.0:8443 ssl
+      
+      # Gaming Performance Optimization
+      KONG_NGINX_WORKER_PROCESSES: "auto"
+      KONG_NGINX_HTTP_KEEPALIVE_REQUESTS: 10000
+      KONG_NGINX_HTTP_KEEPALIVE_TIMEOUT: 60s
+      KONG_NGINX_UPSTREAM_KEEPALIVE: 60
+      KONG_NGINX_UPSTREAM_KEEPALIVE_REQUESTS: 10000
+      KONG_NGINX_UPSTREAM_KEEPALIVE_TIMEOUT: 60s
+      
+      # Gaming Caching Configuration
+      KONG_PROXY_CACHE: "off"  # Handled by plugins
+      KONG_MEM_CACHE_SIZE: 256m
+      
+      # Gaming Security
+      KONG_ANONYMOUS_REPORTS: "off"
+      KONG_NGINX_HTTP_SSL_PROTOCOLS: TLSv1.2 TLSv1.3
+      KONG_NGINX_HTTP_SSL_CIPHERS: ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305
+      KONG_NGINX_HTTP_SSL_PREFER_SERVER_CIPHERS: "on"
+      
+      # Gaming Logging
+      KONG_LOG_LEVEL: info
+      KONG_PLUGINS: bundled,prometheus,rate-limiting-advanced,request-transformer-advanced,response-transformer-advanced,proxy-cache-advanced,cors,correlation-id,datadog
+      
+    ports:
+      - "8000:8000"   # Gaming API Gateway Proxy
+      - "8443:8443"   # Gaming API Gateway Proxy SSL
+      - "8001:8001"   # Gaming API Gateway Admin
+      - "8444:8444"   # Gaming API Gateway Admin SSL
+    volumes:
+      - ./kong/kong.yml:/usr/local/kong/declarative/kong.yml:ro
+      - ./kong/nginx-custom.conf:/usr/local/kong/nginx-custom.conf:ro
+      - ./kong/ssl/:/usr/local/kong/ssl/:ro
+    depends_on:
+      kong-migrations:
+        condition: service_completed_successfully
+      herald-redis:
+        condition: service_healthy
+    networks:
+      - herald-gaming-network
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    labels:
+      - "herald.lol.service=kong-api-gateway"
+      - "herald.lol.component=gaming-api-gateway"
+      - "herald.lol.performance=<5s-analytics"
+
+  # Kong Manager (Web UI)
+  kong-manager:
+    image: pantsel/konga:latest
+    container_name: herald-kong-manager
+    environment:
+      TOKEN_SECRET: ${KONG_MANAGER_SECRET:-herald-gaming-token-secret}
+      NODE_ENV: ${NODE_ENV:-development}
+      KONGA_HOOK_TIMEOUT: 120000
+    ports:
+      - "1337:1337"
+    depends_on:
+      - kong
+    networks:
+      - herald-gaming-network
+    volumes:
+      - konga_data:/app/kongadata
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:1337/api || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    labels:
+      - "herald.lol.service=kong-manager"
+      - "herald.lol.component=gaming-api-gateway"
+
+  # Herald.lol Redis (for Kong plugins)
+  herald-redis:
+    image: redis:7.2.1-alpine
+    container_name: herald-gaming-redis
+    hostname: herald-redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-herald_gaming_redis}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-herald_gaming_redis} --maxmemory 1gb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./kong/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - herald-gaming-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    labels:
+      - "herald.lol.service=gaming-redis"
+      - "herald.lol.component=gaming-cache"
+
+  # Datadog Agent (Gaming Metrics)
+  datadog-agent:
+    image: gcr.io/datadoghq/agent:7
+    container_name: herald-datadog-agent
+    environment:
+      DD_API_KEY: ${DD_API_KEY:-dummy-key-for-development}
+      DD_SITE: ${DD_SITE:-datadoghq.com}
+      DD_HOSTNAME: herald-gaming-gateway
+      DD_TAGS: "env:${ENVIRONMENT:-development} service:herald-lol component:gaming-api-gateway"
+      DD_APM_ENABLED: true
+      DD_LOGS_ENABLED: true
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: true
+      DD_AC_EXCLUDE: "image:gcr.io/datadoghq/agent"
+    ports:
+      - "8125:8125/udp"  # StatsD
+      - "8126:8126/tcp"  # APM
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /proc/:/host/proc/:ro
+      - /opt/datadog-agent/run:/opt/datadog-agent/run:rw
+      - /sys/fs/cgroup/:/host/sys/fs/cgroup:ro
+      - ./kong/datadog/:/etc/datadog-agent/conf.d/kong.d/:ro
+    depends_on:
+      - kong
+    networks:
+      - herald-gaming-network
+    labels:
+      - "herald.lol.service=datadog-agent"
+      - "herald.lol.component=gaming-monitoring"
+
+# Gaming Network Configuration
+networks:
+  herald-gaming-network:
+    name: herald-gaming-network
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+
+# Gaming Persistent Storage
+volumes:
+  kong_data:
+    name: herald-kong-data
+    labels:
+      - "herald.lol.volume=kong-database"
+  konga_data:
+    name: herald-konga-data
+    labels:
+      - "herald.lol.volume=kong-manager"
+  redis_data:
+    name: herald-gaming-redis-data
+    labels:
+      - "herald.lol.volume=gaming-cache"

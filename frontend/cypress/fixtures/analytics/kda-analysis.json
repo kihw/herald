@@ -1,0 +1,45 @@
+{
+  "data": {
+    "currentKDA": 2.34,
+    "previousKDA": 2.1,
+    "trend": "improving",
+    "recentMatches": [
+      {
+        "matchId": "NA1_4567890123",
+        "kda": 10.0,
+        "date": "2024-01-20",
+        "champion": "Jinx",
+        "result": "victory"
+      },
+      {
+        "matchId": "NA1_4567890124", 
+        "kda": 2.8,
+        "date": "2024-01-19",
+        "champion": "Caitlyn",
+        "result": "victory"
+      },
+      {
+        "matchId": "NA1_4567890125",
+        "kda": 1.2,
+        "date": "2024-01-18", 
+        "champion": "Ezreal",
+        "result": "defeat"
+      }
+    ],
+    "percentile": 65,
+    "rankComparison": "above_average",
+    "trendDirection": "improving",
+    "trendStrength": 0.78,
+    "bestKDA": 15.0,
+    "worstKDA": 0.5,
+    "averageKDA": 2.34,
+    "totalMatches": 47,
+    "kdaDistribution": {
+      "excellent": 8,
+      "good": 15,
+      "average": 18,
+      "poor": 6
+    }
+  },
+  "confidence": 0.92
+}

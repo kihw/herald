@@ -1,0 +1,45 @@
+# Herald.lol Backend Development Dockerfile
+
+FROM golang:1.23-alpine AS builder
+
+# Install git and other dependencies
+RUN apk add --no-cache git
+
+# Set working directory
+WORKDIR /app
+
+# Copy go mod files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Install Air for hot reloading
+RUN go install github.com/cosmtrek/air@latest
+
+# Copy source code
+COPY . .
+
+# Development stage
+FROM golang:1.23-alpine
+
+# Install dependencies
+RUN apk add --no-cache git ca-certificates
+
+# Set working directory
+WORKDIR /app
+
+# Copy Air binary
+COPY --from=builder /go/bin/air /usr/local/bin/air
+
+# Copy source code
+COPY . .
+
+# Create air config
+RUN echo '[build]\n  cmd = "go build -o ./tmp/main ./cmd/server/main.go"\n  bin = "./tmp/main"\n  full_bin = "PORT=8080 ./tmp/main"\n  include_ext = ["go", "tpl", "tmpl", "html"]\n  exclude_dir = ["assets", "tmp", "vendor"]\n  include_dir = []\n  exclude_file = []\n  log = "air_errors.log"\n  delay = 1000\n  stop_on_root = true\n  send_interrupt = false\n  kill_delay = 500' > .air.toml
+
+# Expose port
+EXPOSE 8080 9091
+
+# Command to run with Air for hot reloading
+CMD ["air", "-c", ".air.toml"]

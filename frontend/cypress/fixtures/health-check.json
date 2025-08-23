@@ -1,0 +1,11 @@
+{
+  "status": "ok",
+  "timestamp": "2025-08-23T05:50:00Z",
+  "version": "1.0.0",
+  "environment": "development",
+  "services": {
+    "database": "healthy",
+    "redis": "healthy",
+    "riot_api": "healthy"
+  }
+}

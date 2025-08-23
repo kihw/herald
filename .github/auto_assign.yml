@@ -1,0 +1,57 @@
+# Herald.lol Auto Assignment Configuration
+
+# Add reviewers to PRs
+addReviewers: true
+
+# Add assignees to PRs
+addAssignees: author
+
+# Number of reviewers to add
+numberOfReviewers: 2
+
+# List of reviewers
+reviewers:
+  - lead-dev
+  - senior-backend
+  - senior-frontend
+  - gaming-expert
+
+# Skip certain reviewers
+skipKeywords:
+  - wip
+  - draft
+  - "[skip ci]"
+
+# Group assignment for specific file changes
+reviewerGroups:
+  backend:
+    - senior-backend
+    - lead-dev
+  frontend:
+    - senior-frontend
+    - lead-dev
+  gaming:
+    - gaming-expert
+    - lead-dev
+  infrastructure:
+    - devops-lead
+    - lead-dev
+
+# File patterns for group assignment
+filePatterns:
+  backend:
+    - "backend/**"
+    - "*.go"
+  frontend:
+    - "frontend/**"
+    - "*.tsx"
+    - "*.ts"
+  gaming:
+    - "**/riot/**"
+    - "**/analytics/**"
+    - "**/gaming/**"
+  infrastructure:
+    - ".github/**"
+    - "k8s/**"
+    - "docker-compose*.yml"
+    - "Dockerfile*"

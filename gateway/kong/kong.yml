@@ -1,0 +1,483 @@
+# Herald.lol Gaming Analytics - Kong API Gateway Configuration
+# Comprehensive Kong setup with gaming-focused plugins ecosystem
+
+_format_version: "3.0"
+
+# Herald.lol Gaming Services Configuration
+services:
+  # Gaming Analytics Core Service
+  - name: herald-gaming-analytics
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/analytics
+    connect_timeout: 5000
+    write_timeout: 30000
+    read_timeout: 30000
+    tags:
+      - gaming
+      - analytics
+      - herald-lol
+    
+    routes:
+      - name: gaming-analytics-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/analytics]
+        strip_path: false
+        preserve_host: true
+        tags: [gaming-analytics]
+    
+    plugins:
+      # Gaming Performance Monitoring
+      - name: prometheus
+        config:
+          per_consumer: true
+          status_code_metrics: true
+          latency_metrics: true
+          bandwidth_metrics: true
+      
+      # Gaming API Rate Limiting  
+      - name: rate-limiting-advanced
+        config:
+          limit: [1000, 10000]  # 1000/min, 10000/hour for gaming analytics
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+          redis:
+            host: herald-redis
+            port: 6379
+            database: 1
+      
+      # Gaming Request/Response Transformation
+      - name: request-transformer-advanced
+        config:
+          add:
+            headers: 
+              - "X-Gaming-Platform:herald-lol"
+              - "X-Service:gaming-analytics"
+      
+      # Gaming Response Time SLA
+      - name: response-transformer-advanced
+        config:
+          add:
+            headers:
+              - "X-Gaming-Response-Time:$(latency)"
+              - "X-Herald-Version:1.0"
+
+  # Riot API Integration Service
+  - name: herald-riot-integration  
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/riot
+    connect_timeout: 10000
+    write_timeout: 60000
+    read_timeout: 60000
+    tags:
+      - gaming
+      - riot-api
+      - external-integration
+    
+    routes:
+      - name: riot-api-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/riot]
+        strip_path: false
+        preserve_host: true
+        tags: [riot-integration]
+    
+    plugins:
+      # Riot API Rate Limiting (Compliance)
+      - name: rate-limiting-advanced
+        config:
+          limit: [95, 550]  # 95/2min, 550/10min (under Riot limits)
+          window_size: [120, 600]
+          sync_rate: 1
+          strategy: redis
+          redis:
+            host: herald-redis
+            port: 6379
+            database: 2
+      
+      # Riot API Request Caching
+      - name: proxy-cache-advanced
+        config:
+          response_code: [200]
+          request_method: [GET]
+          content_type: [application/json]
+          cache_ttl: 300  # 5 minutes for gaming data
+          cache_control: true
+          storage_ttl: 3600
+      
+      # Riot API Circuit Breaker
+      - name: request-termination
+        config:
+          status_code: 503
+          message: "Riot API temporarily unavailable"
+        enabled: false  # Enabled programmatically when needed
+
+  # Gaming Match Analysis Service
+  - name: herald-match-analysis
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/matches
+    connect_timeout: 5000
+    write_timeout: 30000
+    read_timeout: 30000
+    tags:
+      - gaming
+      - match-analysis
+      - performance-critical
+    
+    routes:
+      - name: match-analysis-route
+        protocols: [http, https] 
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/matches]
+        strip_path: false
+        preserve_host: true
+        tags: [match-analysis]
+    
+    plugins:
+      # Gaming Performance SLA (<5s requirement)
+      - name: request-timeout
+        config:
+          http_timeout: 5000  # Herald.lol <5s requirement
+          read_timeout: 4500
+      
+      # Match Analysis Caching
+      - name: proxy-cache-advanced
+        config:
+          response_code: [200]
+          request_method: [GET]
+          content_type: [application/json]
+          cache_ttl: 600  # 10 minutes for match analysis
+          cache_control: true
+          vary_headers: [Authorization]
+
+  # Gaming Team Composition Service
+  - name: herald-team-composition
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/team-composition
+    tags: [gaming, team-composition, optimization]
+    
+    routes:
+      - name: team-composition-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/team-composition]
+        strip_path: false
+        preserve_host: true
+        tags: [team-composition]
+
+  # Gaming Counter-Picks Service
+  - name: herald-counter-picks
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/counter-picks
+    tags: [gaming, counter-picks, strategy]
+    
+    routes:
+      - name: counter-picks-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]  
+        paths: [/api/counter-picks]
+        strip_path: false
+        preserve_host: true
+        tags: [counter-picks]
+
+  # Gaming Skill Progression Service
+  - name: herald-skill-progression
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/skill-progression
+    tags: [gaming, skill-progression, coaching]
+    
+    routes:
+      - name: skill-progression-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/skill-progression]
+        strip_path: false
+        preserve_host: true
+        tags: [skill-progression]
+
+  # Gaming Coaching Service
+  - name: herald-coaching
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/coaching
+    tags: [gaming, coaching, ai-insights]
+    
+    routes:
+      - name: coaching-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/coaching]
+        strip_path: false
+        preserve_host: true
+        tags: [coaching]
+
+  # Gaming Authentication Service
+  - name: herald-auth
+    url: http://herald-backend:8080
+    protocol: http
+    host: herald-backend
+    port: 8080
+    path: /api/auth
+    tags: [authentication, security, gaming-users]
+    
+    routes:
+      - name: auth-route
+        protocols: [http, https]
+        hosts: [api.herald.lol, staging-api.herald.lol]
+        paths: [/api/auth]
+        strip_path: false
+        preserve_host: true
+        tags: [authentication]
+    
+    plugins:
+      # Auth Service Rate Limiting (More restrictive)
+      - name: rate-limiting-advanced
+        config:
+          limit: [100, 500]  # 100/min, 500/hour for auth operations
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+
+# Gaming Global Plugin Configuration
+plugins:
+  # Global Gaming CORS Policy
+  - name: cors
+    config:
+      origins: 
+        - "https://herald.lol"
+        - "https://www.herald.lol" 
+        - "https://staging.herald.lol"
+        - "http://localhost:3000"
+      methods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+      headers: 
+        - Accept
+        - Accept-Version
+        - Authorization
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - X-Auth-Token
+        - X-Gaming-Client
+        - X-Herald-Version
+      exposed_headers: [X-Auth-Token, X-Gaming-Response-Time]
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
+
+  # Global Gaming Security Headers
+  - name: response-transformer-advanced
+    config:
+      add:
+        headers:
+          - "X-Content-Type-Options:nosniff"
+          - "X-Frame-Options:DENY"
+          - "X-XSS-Protection:1; mode=block"
+          - "Referrer-Policy:strict-origin-when-cross-origin"
+          - "X-Gaming-Platform:herald-lol"
+          - "Cache-Control:no-cache, no-store, must-revalidate"
+
+  # Global Gaming Request ID
+  - name: correlation-id
+    config:
+      header_name: X-Gaming-Request-ID
+      generator: uuid
+      echo_downstream: true
+
+  # Global Gaming Performance Monitoring
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+
+  # Global Gaming Analytics
+  - name: datadog
+    config:
+      host: datadog-agent
+      port: 8125
+      metrics:
+        - name: request.count
+          type: counter
+          sample_rate: 1
+        - name: request.size
+          type: histogram  
+          sample_rate: 1
+        - name: response.size
+          type: histogram
+          sample_rate: 1
+        - name: latency
+          type: histogram
+          sample_rate: 1
+      tags:
+        - "platform:herald-lol"
+        - "service:gaming-api-gateway"
+
+# Gaming Consumer Groups (User Types)
+consumer_groups:
+  - name: herald-free-users
+    tags: [free-tier, gaming-analytics-basic]
+  
+  - name: herald-premium-users  
+    tags: [premium-tier, gaming-analytics-advanced]
+  
+  - name: herald-pro-users
+    tags: [professional-tier, gaming-analytics-pro]
+  
+  - name: herald-enterprise-users
+    tags: [enterprise-tier, gaming-analytics-enterprise]
+  
+  - name: herald-api-clients
+    tags: [api-client, third-party-integration]
+
+# Gaming API Consumers
+consumers:
+  # Gaming Free Tier Users
+  - username: herald-free-tier-template
+    custom_id: free-tier
+    tags: [free-users, gaming-basic]
+    groups:
+      - name: herald-free-users
+    plugins:
+      - name: rate-limiting-advanced
+        config:
+          limit: [100, 1000]  # 100/min, 1000/hour
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+
+  # Gaming Premium Users  
+  - username: herald-premium-tier-template
+    custom_id: premium-tier
+    tags: [premium-users, gaming-advanced]
+    groups:
+      - name: herald-premium-users
+    plugins:
+      - name: rate-limiting-advanced
+        config:
+          limit: [500, 5000]  # 500/min, 5000/hour
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+
+  # Gaming Professional Users
+  - username: herald-pro-tier-template
+    custom_id: pro-tier
+    tags: [pro-users, gaming-professional]
+    groups:
+      - name: herald-pro-users
+    plugins:
+      - name: rate-limiting-advanced
+        config:
+          limit: [2000, 20000]  # 2000/min, 20000/hour
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+
+  # Gaming Enterprise Users
+  - username: herald-enterprise-tier-template
+    custom_id: enterprise-tier
+    tags: [enterprise-users, gaming-enterprise]
+    groups:
+      - name: herald-enterprise-users
+    plugins:
+      - name: rate-limiting-advanced
+        config:
+          limit: [10000, 100000]  # 10000/min, 100000/hour
+          window_size: [60, 3600]
+          sync_rate: 5
+          strategy: redis
+
+# Gaming Upstreams (Load Balancing)
+upstreams:
+  - name: herald-backend-upstream
+    algorithm: round-robin
+    hash_on: none
+    hash_fallback: none
+    healthchecks:
+      active:
+        type: http
+        http_path: /health
+        healthy:
+          interval: 10
+          http_statuses: [200, 302]
+          successes: 2
+        unhealthy:
+          interval: 10
+          http_statuses: [429, 404, 500, 501, 502, 503, 504, 505]
+          tcp_failures: 3
+          http_failures: 5
+          timeouts: 3
+      passive:
+        type: http
+        healthy:
+          http_statuses: [200, 201, 202, 203, 204, 205, 206, 300, 301, 302, 303, 304, 305, 306, 307, 308]
+          successes: 3
+        unhealthy:
+          http_statuses: [429, 500, 503]
+          tcp_failures: 3
+          http_failures: 3
+          timeouts: 3
+    targets:
+      - target: herald-backend:8080
+        weight: 100
+        tags: [primary, gaming-backend]
+
+# Gaming Certificates (TLS)
+certificates:
+  - cert: |
+      -----BEGIN CERTIFICATE-----
+      # Herald.lol SSL Certificate (placeholder)
+      # Replace with actual SSL certificate for herald.lol
+      -----END CERTIFICATE-----
+    key: |
+      -----BEGIN PRIVATE KEY-----
+      # Herald.lol Private Key (placeholder)
+      # Replace with actual private key for herald.lol  
+      -----END PRIVATE KEY-----
+    tags: [ssl, herald-lol, gaming-platform]
+
+# Gaming SNI Configuration
+snis:
+  - name: herald.lol
+    tags: [production, gaming-domain]
+  - name: api.herald.lol
+    tags: [api, gaming-api]
+  - name: staging.herald.lol
+    tags: [staging, gaming-staging]
+
+# Gaming Vault Configuration (Secrets Management)
+vaults:
+  - name: herald-gaming-vault
+    prefix: herald/gaming/
+    config:
+      protocol: https
+      host: vault.herald.lol
+      port: 8200
+      kv: v2
+      token: vault-token-placeholder
+    tags: [secrets, gaming-vault]

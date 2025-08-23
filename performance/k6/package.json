@@ -1,0 +1,87 @@
+{
+  "name": "@herald-lol/performance-testing",
+  "version": "1.0.0",
+  "description": "Herald.lol Gaming Analytics Performance Testing with k6",
+  "main": "gaming-analytics-load.js",
+  "scripts": {
+    "test": "./run-tests.sh",
+    "test:load": "./run-tests.sh load",
+    "test:stress": "./run-tests.sh stress", 
+    "test:spike": "./run-tests.sh spike",
+    "test:all": "./run-tests.sh all",
+    "test:health": "./run-tests.sh health",
+    "install-k6": "npm run install-k6-linux",
+    "install-k6-linux": "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69 && echo 'deb https://dl.k6.io/deb stable main' | sudo tee /etc/apt/sources.list.d/k6.list && sudo apt-get update && sudo apt-get install k6",
+    "install-k6-mac": "brew install k6",
+    "install-k6-windows": "choco install k6",
+    "clean": "rm -rf results/*.json results/*.html",
+    "report": "ls -la results/",
+    "setup-test-data": "node setup-test-data.js",
+    "validate-config": "node validate-config.js"
+  },
+  "keywords": [
+    "herald.lol",
+    "gaming",
+    "analytics", 
+    "performance",
+    "testing",
+    "k6",
+    "load-testing",
+    "league-of-legends",
+    "tft",
+    "riot-games"
+  ],
+  "author": "Herald.lol Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/herald-lol/herald-lol.git"
+  },
+  "bugs": {
+    "url": "https://github.com/herald-lol/herald-lol/issues"
+  },
+  "homepage": "https://herald.lol",
+  "devDependencies": {
+    "k6": "^0.46.0"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "k6": ">=0.46.0"
+  },
+  "config": {
+    "api_base_url": "http://localhost:8080",
+    "frontend_url": "http://localhost:3000",
+    "test_duration": "5m",
+    "concurrent_users": 1000,
+    "performance_thresholds": {
+      "analytics_response_time": "5000ms",
+      "ui_load_time": "2000ms", 
+      "uptime_target": "99.9%",
+      "error_rate": "1%"
+    }
+  },
+  "herald": {
+    "gaming_requirements": {
+      "analytics_load_time": "<5s",
+      "ui_response_time": "<2s",
+      "concurrent_users": "1M+",
+      "uptime": "99.9%",
+      "riot_api_compliance": true,
+      "gaming_metrics": [
+        "KDA",
+        "CS/min", 
+        "Vision Score",
+        "Damage Share",
+        "Gold Efficiency"
+      ]
+    },
+    "test_scenarios": [
+      "Gaming Analytics Dashboard Load",
+      "Post-Game Analysis Rush",
+      "Tournament End Spike",
+      "Rank Reset Surge", 
+      "Patch Meta Analysis",
+      "Riot API Integration Stress"
+    ]
+  }
+}

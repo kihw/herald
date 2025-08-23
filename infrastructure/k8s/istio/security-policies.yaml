@@ -1,0 +1,264 @@
+# Herald.lol Istio Security Policies - Gaming Platform Protection
+
+# Peer Authentication - mTLS between services
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: herald-mtls
+  namespace: herald
+spec:
+  mtls:
+    mode: STRICT
+---
+# Authorization Policy - API Access Control
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: herald-api-authz
+  namespace: herald
+spec:
+  selector:
+    matchLabels:
+      app: herald-api
+  action: ALLOW
+  rules:
+  # Allow health checks
+  - to:
+    - operation:
+        paths: ["/health", "/ready", "/startup"]
+        methods: ["GET"]
+  # Allow authenticated API access
+  - from:
+    - source:
+        requestPrincipals: ["*"]
+    to:
+    - operation:
+        paths: ["/api/*"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+    when:
+    - key: request.headers[authorization]
+      values: ["Bearer*"]
+  # Allow frontend access
+  - from:
+    - source:
+        namespaces: ["herald"]
+        principals: ["cluster.local/ns/herald/sa/herald-frontend"]
+    to:
+    - operation:
+        paths: ["/api/*"]
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+---
+# Rate Limiting - Gaming API Protection
+apiVersion: networking.istio.io/v1beta1
+kind: EnvoyFilter
+metadata:
+  name: herald-rate-limit
+  namespace: herald
+spec:
+  workloadSelector:
+    labels:
+      app: herald-api
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.local_ratelimit
+        typed_config:
+          "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+          type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+          value:
+            stat_prefix: herald_rate_limiter
+            token_bucket:
+              max_tokens: 100
+              tokens_per_fill: 100
+              fill_interval: 120s  # Riot API: 100 requests per 2 minutes
+            filter_enabled:
+              runtime_key: local_rate_limit_enabled
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            filter_enforced:
+              runtime_key: local_rate_limit_enforced
+              default_value:
+                numerator: 100
+                denominator: HUNDRED
+            response_headers_to_add:
+              - append: false
+                header:
+                  key: x-rate-limit
+                  value: "100"
+              - append: false
+                header:
+                  key: x-rate-limit-window
+                  value: "120"
+---
+# Request Authentication - JWT Validation
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: herald-jwt
+  namespace: herald
+spec:
+  selector:
+    matchLabels:
+      app: herald-api
+  jwtRules:
+  - issuer: "https://auth.herald.lol"
+    jwksUri: "https://auth.herald.lol/.well-known/jwks.json"
+    audiences:
+    - "herald.lol"
+    forwardOriginalToken: true
+---
+# CORS Policy - Gaming Frontend Access
+apiVersion: networking.istio.io/v1beta1
+kind: EnvoyFilter
+metadata:
+  name: herald-cors
+  namespace: herald
+spec:
+  workloadSelector:
+    labels:
+      app: herald-api
+  configPatches:
+  - applyTo: ROUTE_CONFIGURATION
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+    patch:
+      operation: MERGE
+      value:
+        route:
+          cors:
+            allow_origin_string_match:
+            - prefix: "https://herald.lol"
+            - prefix: "https://www.herald.lol"
+            - prefix: "http://localhost"  # Development
+            allow_methods: "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+            allow_headers: "authorization, content-type, x-request-id, x-trace-id"
+            expose_headers: "x-rate-limit, x-rate-limit-remaining, x-rate-limit-reset"
+            max_age: "86400"
+            allow_credentials: true
+---
+# WAF Rules - Gaming Platform Protection
+apiVersion: networking.istio.io/v1beta1
+kind: EnvoyFilter
+metadata:
+  name: herald-waf
+  namespace: herald
+spec:
+  workloadSelector:
+    labels:
+      app: herald-api
+  configPatches:
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        filterChain:
+          filter:
+            name: "envoy.filters.network.http_connection_manager"
+            subFilter:
+              name: "envoy.filters.http.router"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        name: envoy.filters.http.lua
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
+          inline_code: |
+            function envoy_on_request(request_handle)
+              -- Block SQL injection attempts
+              local path = request_handle:headers():get(":path")
+              if path and (
+                string.find(path, "union%s+select") or
+                string.find(path, "drop%s+table") or
+                string.find(path, "';") or
+                string.find(path, "1=1")
+              ) then
+                request_handle:respond({[":status"] = "403"}, "Forbidden")
+              end
+              
+              -- Block XSS attempts
+              local query = request_handle:headers():get(":query")
+              if query and (
+                string.find(query, "<script") or
+                string.find(query, "javascript:") or
+                string.find(query, "onerror=")
+              ) then
+                request_handle:respond({[":status"] = "403"}, "Forbidden")
+              end
+              
+              -- Gaming-specific: Block champion name exploits
+              if path and string.find(path, "/api/v1/champion/") then
+                local champion = string.match(path, "/api/v1/champion/([^/]+)")
+                if champion and string.len(champion) > 50 then
+                  request_handle:respond({[":status"] = "400"}, "Invalid champion name")
+                end
+              end
+            end
+---
+# Network Policy - Service Isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: herald-network-policy
+  namespace: herald
+spec:
+  podSelector:
+    matchLabels:
+      platform: gaming-analytics
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    - podSelector:
+        matchLabels:
+          app: herald-frontend
+    - podSelector:
+        matchLabels:
+          app: herald-api
+    ports:
+    - protocol: TCP
+      port: 8080
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 3000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: herald
+    - namespaceSelector:
+        matchLabels:
+          name: istio-system
+    ports:
+    - protocol: TCP
+      port: 443
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+  - to:
+    - podSelector: {}
+    ports:
+    - protocol: TCP
+      port: 53  # DNS
+    - protocol: UDP
+      port: 53  # DNS

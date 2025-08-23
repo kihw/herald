@@ -1,0 +1,355 @@
+name: 🎯 Gaming Feature Request
+description: Request a new feature for Herald.lol gaming analytics platform
+title: "[FEATURE] Gaming: "
+labels: ["enhancement", "gaming", "feature-request"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🎯 Herald.lol Gaming Feature Request
+        
+        Thank you for suggesting a new gaming feature for Herald.lol!
+        Help us understand your gaming analytics needs and how this feature would improve your gaming experience.
+
+  - type: dropdown
+    id: gaming-category
+    attributes:
+      label: Gaming Feature Category
+      description: Which category of gaming feature are you requesting?
+      options:
+        - Gaming Analytics Enhancement
+        - New Gaming Metric
+        - Gaming Visualization Improvement
+        - Gaming Performance Optimization
+        - New Gaming Analysis Tool
+        - Gaming UI/UX Enhancement
+        - Gaming Integration Feature
+        - Gaming Automation
+        - Gaming Social Feature
+        - Gaming Coaching Tool
+        - Other Gaming Feature
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gaming-priority
+    attributes:
+      label: Gaming Feature Priority
+      description: How important is this gaming feature to you?
+      options:
+        - Critical - Essential for gaming improvement
+        - High - Would significantly improve gaming experience
+        - Medium - Nice to have for gaming analysis
+        - Low - Minor gaming enhancement
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-summary
+    attributes:
+      label: Gaming Feature Summary
+      description: Brief summary of the gaming feature you're requesting
+      placeholder: |
+        Example: "Add advanced jungle pathing analysis to track jungle efficiency and predict optimal gank timings for improved map control and team coordination."
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-problem
+    attributes:
+      label: Gaming Problem Statement
+      description: What gaming problem does this feature solve?
+      placeholder: |
+        Current gaming problem:
+        - As a jungle player, I can't analyze my pathing efficiency
+        - Current gaming tools don't show gank timing optimization
+        - No way to compare my jungle performance to similar skill players
+        - Missing insights on objective control timing
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-solution
+    attributes:
+      label: Gaming Solution Description
+      description: Detailed description of the gaming feature you want
+      placeholder: |
+        Proposed gaming solution:
+        
+        **Gaming Analytics:**
+        - Track jungle clear times and efficiency
+        - Analyze gank success rates and timing
+        - Compare jungle performance to role averages
+        - Show optimal objective control windows
+        
+        **Gaming Visualizations:**
+        - Jungle pathing heatmap
+        - Gank timing timeline
+        - Efficiency comparison charts
+        - Objective control analysis
+        
+        **Gaming Recommendations:**
+        - Suggest optimal jungle routes
+        - Recommend best gank timings
+        - Highlight objective priority windows
+        - Provide jungle coaching tips
+    validations:
+      required: true
+
+  - type: textarea
+    id: gaming-benefits
+    attributes:
+      label: Gaming Benefits
+      description: How would this gaming feature benefit users?
+      placeholder: |
+        Gaming benefits:
+        
+        **For Individual Players:**
+        - Improve jungle efficiency by 15-20%
+        - Better gank timing leads to higher success rate
+        - Clear progression path for jungle skill improvement
+        - Data-driven coaching for jungle role
+        
+        **For Teams:**
+        - Better coordinate jungle-lane synergy
+        - Optimize team objective control
+        - Improve overall map control strategy
+        - Enhanced team performance analysis
+        
+        **For Coaches:**
+        - Detailed jungle performance metrics
+        - Clear improvement recommendations
+        - Team coordination insights
+        - Jungle meta analysis
+    validations:
+      required: true
+
+  - type: dropdown
+    id: gaming-role
+    attributes:
+      label: Gaming Role Focus
+      description: Which gaming roles would benefit from this feature?
+      multiple: true
+      options:
+        - Top Lane
+        - Jungle
+        - Mid Lane
+        - ADC (Bot Lane)
+        - Support
+        - All Roles
+        - Team-wide Analysis
+
+  - type: dropdown
+    id: gaming-skill
+    attributes:
+      label: Gaming Skill Level Target
+      description: Which skill levels would benefit most from this feature?
+      multiple: true
+      options:
+        - Iron
+        - Bronze
+        - Silver
+        - Gold
+        - Platinum
+        - Diamond
+        - Master
+        - Grandmaster
+        - Challenger
+        - All Skill Levels
+
+  - type: textarea
+    id: gaming-metrics
+    attributes:
+      label: Gaming Metrics Involved
+      description: What gaming metrics would this feature analyze or display?
+      placeholder: |
+        Gaming metrics:
+        - Jungle clear speed (CS/min in jungle)
+        - Gank success rate (kills/assists from ganks)
+        - Objective control efficiency (dragon/baron timing)
+        - Map presence (% time in each quadrant)
+        - Vision control (jungle ward placement efficiency)
+        - Counter-jungle effectiveness (enemy jungle CS denied)
+        - Team fight participation (% of team fights joined)
+
+  - type: textarea
+    id: gaming-ui-mockup
+    attributes:
+      label: Gaming UI/UX Ideas
+      description: How should this gaming feature look and feel?
+      placeholder: |
+        Gaming UI/UX concepts:
+        
+        **Dashboard Widget:**
+        - Jungle efficiency score prominently displayed
+        - Mini-map showing pathing heatmap
+        - Quick gank timing recommendations
+        
+        **Detailed Analysis Page:**
+        - Timeline view of jungle activities
+        - Comparison charts vs role averages
+        - Interactive map with clickable events
+        - Coaching tips sidebar
+        
+        **Mobile Optimization:**
+        - Swipeable metric cards
+        - Touch-friendly interactive elements
+        - Portrait mode layout considerations
+
+  - type: textarea
+    id: gaming-integration
+    attributes:
+      label: Gaming Integration Requirements
+      description: How should this feature integrate with existing gaming systems?
+      placeholder: |
+        Gaming integration needs:
+        
+        **Riot API Integration:**
+        - Match timeline data for detailed analysis
+        - Real-time spectator data for live coaching
+        - Champion-specific jungle data
+        
+        **Herald.lol Integration:**
+        - Connect with existing KDA/CS/Vision analysis
+        - Enhance team composition recommendations
+        - Improve counter-pick suggestions
+        - Integrate with skill progression tracking
+        
+        **External Tools:**
+        - Export data for coaching software
+        - Share analysis with team members
+        - Import data from gaming replay tools
+
+  - type: textarea
+    id: gaming-alternatives
+    attributes:
+      label: Gaming Alternatives Considered
+      description: What gaming alternatives have you tried or considered?
+      placeholder: |
+        Existing gaming solutions:
+        - OP.GG: Limited jungle analysis, no pathing insights
+        - U.GG: Basic jungle stats, no efficiency metrics
+        - Mobalytics: Some jungle metrics, but not comprehensive
+        - League of Graphs: General stats, missing specific jungle tools
+        - Blitz.gg: Focus on builds, limited performance analysis
+        
+        Why Herald.lol would be better:
+        - More comprehensive jungle analytics
+        - Better gaming performance integration
+        - Advanced coaching recommendations
+        - Team-focused analysis tools
+
+  - type: checkboxes
+    id: gaming-requirements
+    attributes:
+      label: Gaming Performance Requirements
+      description: Gaming performance considerations for this feature
+      options:
+        - label: Must load within Herald.lol's <5s analytics requirement
+        - label: Should maintain <2s UI response time
+        - label: Needs to handle 1M+ concurrent users
+        - label: Must maintain 99.9% uptime
+        - label: Should work on mobile gaming devices
+        - label: Must comply with Riot API rate limits
+        - label: Should cache data efficiently
+        - label: Needs real-time data updates
+
+  - type: textarea
+    id: gaming-examples
+    attributes:
+      label: Gaming Use Cases & Examples
+      description: Specific gaming scenarios where this feature would be valuable
+      placeholder: |
+        Gaming use cases:
+        
+        **Scenario 1: Jungle Main Improvement**
+        - Player: Gold jungle main wanting to reach Platinum
+        - Usage: Daily analysis of jungle efficiency after ranked games
+        - Benefit: Identifies weak pathing patterns, improves clear speed by 18%
+        
+        **Scenario 2: Team Coaching**
+        - User: Semi-pro team coach analyzing jungle performance
+        - Usage: Weekly team review sessions with detailed jungle analysis
+        - Benefit: Team coordination improves, objective control increases by 25%
+        
+        **Scenario 3: Meta Analysis**
+        - User: Content creator analyzing jungle meta changes
+        - Usage: Compare jungle efficiency across patches and champions
+        - Benefit: Creates data-driven content about jungle optimization
+
+  - type: textarea
+    id: gaming-technical
+    attributes:
+      label: Gaming Technical Considerations
+      description: Technical aspects or challenges for this gaming feature
+      placeholder: |
+        Gaming technical considerations:
+        
+        **Data Requirements:**
+        - Match timeline data from Riot API
+        - Real-time position tracking
+        - Champion-specific jungle benchmarks
+        - Historical performance data
+        
+        **Processing Challenges:**
+        - Complex pathing algorithm calculations
+        - Real-time efficiency computations
+        - Large dataset analysis for comparisons
+        - Machine learning for recommendations
+        
+        **Performance Optimization:**
+        - Efficient data caching strategies
+        - Optimized database queries
+        - Real-time data processing
+        - Mobile performance considerations
+
+  - type: textarea
+    id: gaming-additional
+    attributes:
+      label: Additional Gaming Context
+      description: Any additional gaming context or information
+      placeholder: |
+        Additional gaming information:
+        
+        **Personal Gaming Background:**
+        - Main role: Jungle
+        - Current rank: Gold II
+        - Champion pool: Graves, Kindred, Lee Sin
+        - Gaming experience: 3 years competitive
+        
+        **Community Interest:**
+        - Discord discussions about jungle analytics
+        - Reddit requests for better jungle tools
+        - Streaming community interest in jungle content
+        
+        **Competitive Gaming Impact:**
+        - Would help amateur teams improve
+        - Could benefit coaching at all levels
+        - Useful for solo queue improvement
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 🎮 Herald.lol Gaming Feature Development Process
+        
+        1. **Community Voting**: Popular gaming features get community votes
+        2. **Technical Review**: Development team assesses gaming feature feasibility
+        3. **Gaming Design**: UI/UX design for gaming feature
+        4. **Development**: Gaming feature implementation
+        5. **Gaming Testing**: Comprehensive gaming feature testing
+        6. **Gaming Release**: Feature launch with gaming community feedback
+        
+        ## 🎯 Herald.lol Gaming Priorities
+        
+        We prioritize gaming features that:
+        - Improve gaming performance analysis
+        - Meet Herald.lol's <5s analytics requirement
+        - Serve multiple gaming skill levels
+        - Enhance gaming coaching capabilities
+        - Integrate well with existing gaming tools
+        
+        Thank you for helping shape the future of Herald.lol gaming analytics! 🎮
