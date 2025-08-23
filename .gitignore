@@ -1,68 +1,76 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# Herald.lol Gaming Platform .gitignore
 
-# Virtual environments
+# Claude Code local settings (DO NOT COMMIT)
+.claude/settings.local.json
+
+# Gaming platform environment files
 .env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+.env.local
+.env.development
+.env.production
+*.env
 
-# IDE
+# Riot Games API keys and secrets
+riot-api-keys/
+secrets/
+.secrets/
+
+# Gaming data and logs
+gaming-data/
+match-data/
+analytics-cache/
+*.log
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Gaming platform builds
+dist/
+build/
+target/
+*.exe
+herald-server
+herald-analytics
+
+# Dependencies
+node_modules/
+vendor/
+
+# Gaming platform specific
+gaming-assets/
+champion-data/
+item-data/
+coverage.out
+*.prof
+
+# IDE and editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Project specific
-*.log
-jobs/
-ranked_timelines/
-ranked*.csv
-export_bundle.zip
+# Gaming platform docker
+docker-compose.override.yml
+.docker/
 
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Kubernetes secrets
+k8s/secrets/
+*.key
+*.crt
 
-# Build outputs
-web/dist/
-web/.vite/
-
-# Environment files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Temporary files
-*.tmp
-*.temp
+# Gaming analytics temporary files
+tmp/
+temp/
+analytics-temp/
