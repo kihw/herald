@@ -67,7 +67,7 @@
   ],
   "permissions": {
     "allow": [
-      "Bash(touch:*)"
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
