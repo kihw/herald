@@ -169,7 +169,7 @@ const HomePage = () => {
             </Grid>
             <Grid item xs={6} sm={3}>
               <Typography variant="h3" color="primary" fontWeight="bold">
-                <5s
+                &lt;5s
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Analysis Speed

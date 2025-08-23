@@ -39,6 +39,12 @@
     "src",
     "vite-env.d.ts"
   ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/__tests__",
+    "src/test"
+  ],
   "references": [
     {
       "path": "./tsconfig.node.json"

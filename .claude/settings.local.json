@@ -67,7 +67,7 @@
   ],
   "permissions": {
     "allow": [
-      "Bash(find:*)"
+      "Bash(npx vite build:*)"
     ],
     "deny": [],
     "ask": []
