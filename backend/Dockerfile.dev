@@ -1,7 +1,7 @@
 # Herald.lol Gaming Analytics - Development Dockerfile
 # Optimized for gaming platform development with hot reload
 
-FROM golang:1.23-alpine AS base
+FROM golang:1.25-alpine AS base
 
 # Gaming development tools
 RUN apk add --no-cache \
