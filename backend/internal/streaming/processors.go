@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/herald-lol/backend/internal/analytics"
-	"github.com/herald-lol/backend/internal/match"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/match"
 )
 
 // Herald.lol Gaming Analytics - Streaming Event Processors

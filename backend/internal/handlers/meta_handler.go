@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // MetaHandler handles meta analysis and tier list requests
@@ -109,17 +109,17 @@ func (mh *MetaHandler) GetMetaAnalysis(c *gin.Context) {
 	// Validate region if provided
 	if req.Region != "all" {
 		validRegions := map[string]bool{
-			"na1":   true,
-			"euw1":  true,
-			"eun1":  true,
-			"kr":    true,
-			"jp1":   true,
-			"br1":   true,
-			"la1":   true,
-			"la2":   true,
-			"oc1":   true,
-			"tr1":   true,
-			"ru":    true,
+			"na1":  true,
+			"euw1": true,
+			"eun1": true,
+			"kr":   true,
+			"jp1":  true,
+			"br1":  true,
+			"la1":  true,
+			"la2":  true,
+			"oc1":  true,
+			"tr1":  true,
+			"ru":   true,
 		}
 		if !validRegions[req.Region] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -133,13 +133,13 @@ func (mh *MetaHandler) GetMetaAnalysis(c *gin.Context) {
 	// Validate rank if provided
 	if req.Rank != "all" {
 		validRanks := map[string]bool{
-			"iron":     true,
-			"bronze":   true,
-			"silver":   true,
-			"gold":     true,
-			"platinum": true,
-			"diamond":  true,
-			"master":   true,
+			"iron":        true,
+			"bronze":      true,
+			"silver":      true,
+			"gold":        true,
+			"platinum":    true,
+			"diamond":     true,
+			"master":      true,
 			"grandmaster": true,
 			"challenger":  true,
 		}
@@ -526,9 +526,9 @@ func (mh *MetaHandler) GetMetaPredictions(c *gin.Context) {
 	// Validate prediction type if provided
 	if predictionType != "" {
 		validPredictionTypes := map[string]bool{
-			"champions":   true,
-			"strategies":  true,
-			"items":       true,
+			"champions":  true,
+			"strategies": true,
+			"items":      true,
 		}
 		if !validPredictionTypes[predictionType] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -739,8 +739,8 @@ func (mh *MetaHandler) GetMetaHistory(c *gin.Context) {
 			},
 		},
 		"trend_analysis": map[string]interface{}{
-			"direction": "stable",
-			"change":    0.5,
+			"direction":  "stable",
+			"change":     0.5,
 			"volatility": "low",
 		},
 	}

@@ -3,7 +3,6 @@ package websocket
 import (
 	"encoding/json"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -39,9 +38,9 @@ type Client struct {
 
 // ClientPreferences stores user's real-time notification preferences
 type ClientPreferences struct {
-	MatchUpdates      bool `json:"match_updates"`
-	RankUpdates       bool `json:"rank_updates"`
-	FriendActivity    bool `json:"friend_activity"`
+	MatchUpdates        bool `json:"match_updates"`
+	RankUpdates         bool `json:"rank_updates"`
+	FriendActivity      bool `json:"friend_activity"`
 	CoachingSuggestions bool `json:"coaching_suggestions"`
 	SystemNotifications bool `json:"system_notifications"`
 }
@@ -55,14 +54,14 @@ type ClientMessage struct {
 // Subscription actions
 const (
 	ActionSubscribe         = "subscribe"
-	ActionUnsubscribe      = "unsubscribe"
-	ActionJoinRoom         = "join_room"
-	ActionLeaveRoom        = "leave_room"
-	ActionWatchMatch       = "watch_match"
-	ActionUnwatchMatch     = "unwatch_match"
+	ActionUnsubscribe       = "unsubscribe"
+	ActionJoinRoom          = "join_room"
+	ActionLeaveRoom         = "leave_room"
+	ActionWatchMatch        = "watch_match"
+	ActionUnwatchMatch      = "unwatch_match"
 	ActionUpdatePreferences = "update_preferences"
-	ActionPong             = "pong"
-	ActionGetStats         = "get_stats"
+	ActionPong              = "pong"
+	ActionGetStats          = "get_stats"
 )
 
 // readPump pumps messages from the WebSocket connection to the hub
@@ -89,7 +88,7 @@ func (c *Client) readPump() {
 		}
 
 		c.lastSeen = time.Now()
-		
+
 		// Parse client message
 		var clientMessage ClientMessage
 		if err := json.Unmarshal(messageBytes, &clientMessage); err != nil {
@@ -271,7 +270,7 @@ func (c *Client) handleWatchMatch(data interface{}) {
 		c.hub.matchSubs[matchID] = make(map[*Client]bool)
 	}
 	c.hub.matchSubs[matchID][c] = true
-	
+
 	if c.watchingMatches == nil {
 		c.watchingMatches = make(map[string]bool)
 	}
@@ -306,7 +305,7 @@ func (c *Client) handleUnwatchMatch(data interface{}) {
 			delete(c.hub.matchSubs, matchID)
 		}
 	}
-	
+
 	if c.watchingMatches != nil {
 		delete(c.watchingMatches, matchID)
 	}
@@ -389,6 +388,24 @@ func (c *Client) sendStats() {
 	c.sendMessage(Message{
 		Type: "stats",
 		Data: stats,
+	})
+}
+
+// handleUnsubscribe unsubscribes client from user-specific updates
+func (c *Client) handleUnsubscribe(data interface{}) {
+	c.hub.mu.Lock()
+	defer c.hub.mu.Unlock()
+
+	if clients, exists := c.hub.userSubs[c.userID]; exists {
+		delete(clients, c)
+		if len(clients) == 0 {
+			delete(c.hub.userSubs, c.userID)
+		}
+	}
+
+	c.sendMessage(Message{
+		Type: "subscription_cancelled",
+		Data: map[string]string{"user_id": c.userID},
 	})
 }
 

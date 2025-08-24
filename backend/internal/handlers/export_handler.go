@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/export"
+	"github.com/herald-lol/herald/backend/internal/export"
 )
 
 // ExportHandler handles export and reporting requests
@@ -28,42 +28,42 @@ func (h *ExportHandler) RegisterRoutes(r *gin.RouterGroup) {
 		// Player data exports
 		exports.POST("/player", h.ExportPlayerAnalytics)
 		exports.POST("/player/batch", h.BatchExportPlayers)
-		
+
 		// Match data exports
 		exports.POST("/match", h.ExportMatchAnalytics)
 		exports.POST("/match/batch", h.BatchExportMatches)
-		
+
 		// Team data exports
 		exports.POST("/team", h.ExportTeamAnalytics)
-		
+
 		// Champion data exports
 		exports.POST("/champion", h.ExportChampionAnalytics)
-		
+
 		// Custom report exports
 		exports.POST("/custom-report", h.ExportCustomReport)
-		
+
 		// Export management
 		exports.GET("/status/:export_id", h.GetExportStatus)
 		exports.GET("/download/:export_id", h.DownloadExport)
 		exports.GET("/list/:user_id", h.ListUserExports)
 		exports.DELETE("/:export_id", h.DeleteExport)
-		
+
 		// Export utilities
 		exports.GET("/formats", h.GetSupportedFormats)
 		exports.GET("/templates", h.GetReportTemplates)
 		exports.POST("/preview", h.PreviewExport)
-		
+
 		// Gaming-specific exports
 		exports.POST("/gaming-report", h.ExportGamingReport)
 		exports.POST("/performance-trends", h.ExportPerformanceTrends)
 		exports.POST("/champion-mastery", h.ExportChampionMastery)
 		exports.POST("/rank-progression", h.ExportRankProgression)
-		
+
 		// Advanced exports
 		exports.POST("/meta-analysis", h.ExportMetaAnalysis)
 		exports.POST("/comparative-analysis", h.ExportComparativeAnalysis)
 		exports.POST("/coaching-report", h.ExportCoachingReport)
-		
+
 		// Export metrics and analytics
 		exports.GET("/metrics", h.GetExportMetrics)
 		exports.GET("/usage-stats", h.GetUsageStats)
@@ -73,10 +73,10 @@ func (h *ExportHandler) RegisterRoutes(r *gin.RouterGroup) {
 // ExportPlayerAnalytics handles player analytics export requests
 func (h *ExportHandler) ExportPlayerAnalytics(c *gin.Context) {
 	var request export.PlayerExportRequest
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid player export request",
+			"error":   "Invalid player export request",
 			"details": err.Error(),
 		})
 		return
@@ -85,38 +85,38 @@ func (h *ExportHandler) ExportPlayerAnalytics(c *gin.Context) {
 	result, err := h.exportService.ExportPlayerAnalytics(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export player analytics",
+			"error":   "Failed to export player analytics",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"file_size": result.FileSize,
+		"export_id":    result.ExportID,
+		"format":       result.Format,
+		"file_size":    result.FileSize,
 		"download_url": result.DownloadURL,
-		"status": result.Status,
-		"created_at": result.CreatedAt,
-		"expires_at": result.ExpiresAt,
-		"metadata": result.Metadata,
-		"message": "Player analytics export completed successfully",
+		"status":       result.Status,
+		"created_at":   result.CreatedAt,
+		"expires_at":   result.ExpiresAt,
+		"metadata":     result.Metadata,
+		"message":      "Player analytics export completed successfully",
 	})
 }
 
 // BatchExportPlayers handles batch export of multiple players
 func (h *ExportHandler) BatchExportPlayers(c *gin.Context) {
 	var request struct {
-		PlayerPUUIDs []string                     `json:"player_puuids" binding:"required"`
-		Format       string                       `json:"format" binding:"required"`
-		TimeRange    string                       `json:"time_range"`
-		GameModes    []string                     `json:"game_modes"`
-		Options      *export.ExportOptions        `json:"options"`
+		PlayerPUUIDs []string              `json:"player_puuids" binding:"required"`
+		Format       string                `json:"format" binding:"required"`
+		TimeRange    string                `json:"time_range"`
+		GameModes    []string              `json:"game_modes"`
+		Options      *export.ExportOptions `json:"options"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid batch export request",
+			"error":   "Invalid batch export request",
 			"details": err.Error(),
 		})
 		return
@@ -147,38 +147,38 @@ func (h *ExportHandler) BatchExportPlayers(c *gin.Context) {
 			failureCount++
 			results = append(results, gin.H{
 				"player_puuid": playerPUUID,
-				"status": "failed",
-				"error": err.Error(),
+				"status":       "failed",
+				"error":        err.Error(),
 			})
 		} else {
 			successCount++
 			results = append(results, gin.H{
 				"player_puuid": playerPUUID,
-				"export_id": result.ExportID,
-				"status": result.Status,
+				"export_id":    result.ExportID,
+				"status":       result.Status,
 				"download_url": result.DownloadURL,
 			})
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"batch_id": batchID,
+		"batch_id":      batchID,
 		"total_players": len(request.PlayerPUUIDs),
 		"success_count": successCount,
 		"failure_count": failureCount,
-		"success_rate": float64(successCount) / float64(len(request.PlayerPUUIDs)) * 100,
-		"results": results,
-		"message": "Batch player export completed",
+		"success_rate":  float64(successCount) / float64(len(request.PlayerPUUIDs)) * 100,
+		"results":       results,
+		"message":       "Batch player export completed",
 	})
 }
 
 // ExportMatchAnalytics handles match analytics export requests
 func (h *ExportHandler) ExportMatchAnalytics(c *gin.Context) {
 	var request export.MatchExportRequest
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid match export request",
+			"error":   "Invalid match export request",
 			"details": err.Error(),
 		})
 		return
@@ -187,37 +187,37 @@ func (h *ExportHandler) ExportMatchAnalytics(c *gin.Context) {
 	result, err := h.exportService.ExportMatchAnalytics(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export match analytics",
+			"error":   "Failed to export match analytics",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"file_size": result.FileSize,
+		"export_id":    result.ExportID,
+		"format":       result.Format,
+		"file_size":    result.FileSize,
 		"download_url": result.DownloadURL,
-		"status": result.Status,
-		"created_at": result.CreatedAt,
-		"expires_at": result.ExpiresAt,
-		"metadata": result.Metadata,
-		"message": "Match analytics export completed successfully",
+		"status":       result.Status,
+		"created_at":   result.CreatedAt,
+		"expires_at":   result.ExpiresAt,
+		"metadata":     result.Metadata,
+		"message":      "Match analytics export completed successfully",
 	})
 }
 
 // BatchExportMatches handles batch export of multiple matches
 func (h *ExportHandler) BatchExportMatches(c *gin.Context) {
 	var request struct {
-		MatchIDs     []string `json:"match_ids" binding:"required"`
-		PlayerPUUID  string   `json:"player_puuid" binding:"required"`
-		Format       string   `json:"format" binding:"required"`
-		AnalysisDepth string  `json:"analysis_depth"`
+		MatchIDs      []string `json:"match_ids" binding:"required"`
+		PlayerPUUID   string   `json:"player_puuid" binding:"required"`
+		Format        string   `json:"format" binding:"required"`
+		AnalysisDepth string   `json:"analysis_depth"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid batch match export request",
+			"error":   "Invalid batch match export request",
 			"details": err.Error(),
 		})
 		return
@@ -245,36 +245,36 @@ func (h *ExportHandler) BatchExportMatches(c *gin.Context) {
 		if err != nil {
 			results = append(results, gin.H{
 				"match_id": matchID,
-				"status": "failed",
-				"error": err.Error(),
+				"status":   "failed",
+				"error":    err.Error(),
 			})
 		} else {
 			successCount++
 			results = append(results, gin.H{
-				"match_id": matchID,
-				"export_id": result.ExportID,
-				"status": result.Status,
+				"match_id":     matchID,
+				"export_id":    result.ExportID,
+				"status":       result.Status,
 				"download_url": result.DownloadURL,
 			})
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"batch_id": batchID,
+		"batch_id":      batchID,
 		"total_matches": len(request.MatchIDs),
 		"success_count": successCount,
-		"results": results,
-		"message": "Batch match export completed",
+		"results":       results,
+		"message":       "Batch match export completed",
 	})
 }
 
 // ExportTeamAnalytics handles team analytics export requests
 func (h *ExportHandler) ExportTeamAnalytics(c *gin.Context) {
 	var request export.TeamExportRequest
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid team export request",
+			"error":   "Invalid team export request",
 			"details": err.Error(),
 		})
 		return
@@ -283,32 +283,32 @@ func (h *ExportHandler) ExportTeamAnalytics(c *gin.Context) {
 	result, err := h.exportService.ExportTeamAnalytics(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export team analytics",
+			"error":   "Failed to export team analytics",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"file_size": result.FileSize,
+		"export_id":    result.ExportID,
+		"format":       result.Format,
+		"file_size":    result.FileSize,
 		"download_url": result.DownloadURL,
-		"status": result.Status,
-		"created_at": result.CreatedAt,
-		"expires_at": result.ExpiresAt,
-		"metadata": result.Metadata,
-		"message": "Team analytics export completed successfully",
+		"status":       result.Status,
+		"created_at":   result.CreatedAt,
+		"expires_at":   result.ExpiresAt,
+		"metadata":     result.Metadata,
+		"message":      "Team analytics export completed successfully",
 	})
 }
 
 // ExportChampionAnalytics handles champion analytics export requests
 func (h *ExportHandler) ExportChampionAnalytics(c *gin.Context) {
 	var request export.ChampionExportRequest
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid champion export request",
+			"error":   "Invalid champion export request",
 			"details": err.Error(),
 		})
 		return
@@ -317,32 +317,32 @@ func (h *ExportHandler) ExportChampionAnalytics(c *gin.Context) {
 	result, err := h.exportService.ExportChampionAnalytics(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export champion analytics",
+			"error":   "Failed to export champion analytics",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"file_size": result.FileSize,
+		"export_id":    result.ExportID,
+		"format":       result.Format,
+		"file_size":    result.FileSize,
 		"download_url": result.DownloadURL,
-		"status": result.Status,
-		"created_at": result.CreatedAt,
-		"expires_at": result.ExpiresAt,
-		"metadata": result.Metadata,
-		"message": "Champion analytics export completed successfully",
+		"status":       result.Status,
+		"created_at":   result.CreatedAt,
+		"expires_at":   result.ExpiresAt,
+		"metadata":     result.Metadata,
+		"message":      "Champion analytics export completed successfully",
 	})
 }
 
 // ExportCustomReport handles custom report export requests
 func (h *ExportHandler) ExportCustomReport(c *gin.Context) {
 	var request export.CustomReportRequest
-	
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid custom report request",
+			"error":   "Invalid custom report request",
 			"details": err.Error(),
 		})
 		return
@@ -351,22 +351,22 @@ func (h *ExportHandler) ExportCustomReport(c *gin.Context) {
 	result, err := h.exportService.ExportCustomReport(c.Request.Context(), &request)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export custom report",
+			"error":   "Failed to export custom report",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"file_size": result.FileSize,
+		"export_id":    result.ExportID,
+		"format":       result.Format,
+		"file_size":    result.FileSize,
 		"download_url": result.DownloadURL,
-		"status": result.Status,
-		"created_at": result.CreatedAt,
-		"expires_at": result.ExpiresAt,
-		"metadata": result.Metadata,
-		"message": "Custom report export completed successfully",
+		"status":       result.Status,
+		"created_at":   result.CreatedAt,
+		"expires_at":   result.ExpiresAt,
+		"metadata":     result.Metadata,
+		"message":      "Custom report export completed successfully",
 	})
 }
 
@@ -383,20 +383,20 @@ func (h *ExportHandler) GetExportStatus(c *gin.Context) {
 	status, err := h.exportService.GetExportStatus(c.Request.Context(), exportID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Export not found",
+			"error":   "Export not found",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": status.ExportID,
-		"status": status.Status,
-		"progress": status.Progress,
-		"file_size": status.FileSize,
-		"download_url": status.DownloadURL,
-		"created_at": status.CreatedAt,
-		"expires_at": status.ExpiresAt,
+		"export_id":     status.ExportID,
+		"status":        status.Status,
+		"progress":      status.Progress,
+		"file_size":     status.FileSize,
+		"download_url":  status.DownloadURL,
+		"created_at":    status.CreatedAt,
+		"expires_at":    status.ExpiresAt,
 		"error_message": status.ErrorMessage,
 	})
 }
@@ -415,7 +415,7 @@ func (h *ExportHandler) DownloadExport(c *gin.Context) {
 	status, err := h.exportService.GetExportStatus(c.Request.Context(), exportID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Export not found",
+			"error":   "Export not found",
 			"details": err.Error(),
 		})
 		return
@@ -423,8 +423,8 @@ func (h *ExportHandler) DownloadExport(c *gin.Context) {
 
 	if status.Status != "completed" {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Export is not ready for download",
-			"status": status.Status,
+			"error":    "Export is not ready for download",
+			"status":   status.Status,
 			"progress": status.Progress,
 		})
 		return
@@ -433,9 +433,9 @@ func (h *ExportHandler) DownloadExport(c *gin.Context) {
 	// In production, this would stream the file or redirect to CDN URL
 	c.JSON(http.StatusOK, gin.H{
 		"download_url": status.DownloadURL,
-		"file_size": status.FileSize,
-		"expires_at": status.ExpiresAt,
-		"message": "Export ready for download",
+		"file_size":    status.FileSize,
+		"expires_at":   status.ExpiresAt,
+		"message":      "Export ready for download",
 		"instructions": "Use the download_url to fetch the file directly",
 	})
 }
@@ -462,7 +462,7 @@ func (h *ExportHandler) ListUserExports(c *gin.Context) {
 	exports, err := h.exportService.ListExports(c.Request.Context(), userID, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list exports",
+			"error":   "Failed to list exports",
 			"details": err.Error(),
 		})
 		return
@@ -471,8 +471,8 @@ func (h *ExportHandler) ListUserExports(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"user_id": userID,
 		"exports": exports,
-		"count": len(exports),
-		"limit": limit,
+		"count":   len(exports),
+		"limit":   limit,
 		"message": "User exports retrieved successfully",
 	})
 }
@@ -490,7 +490,7 @@ func (h *ExportHandler) DeleteExport(c *gin.Context) {
 	err := h.exportService.DeleteExport(c.Request.Context(), exportID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to delete export",
+			"error":   "Failed to delete export",
 			"details": err.Error(),
 		})
 		return
@@ -498,8 +498,8 @@ func (h *ExportHandler) DeleteExport(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"export_id": exportID,
-		"status": "deleted",
-		"message": "Export deleted successfully",
+		"status":    "deleted",
+		"message":   "Export deleted successfully",
 	})
 }
 
@@ -509,8 +509,8 @@ func (h *ExportHandler) GetSupportedFormats(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"supported_formats": formats,
-		"count": len(formats),
-		"message": "Supported export formats retrieved successfully",
+		"count":             len(formats),
+		"message":           "Supported export formats retrieved successfully",
 	})
 }
 
@@ -518,46 +518,46 @@ func (h *ExportHandler) GetSupportedFormats(c *gin.Context) {
 func (h *ExportHandler) GetReportTemplates(c *gin.Context) {
 	templates := []gin.H{
 		{
-			"template_id": "player_performance",
-			"name": "Player Performance Report",
-			"description": "Comprehensive player analytics with performance metrics",
+			"template_id":       "player_performance",
+			"name":              "Player Performance Report",
+			"description":       "Comprehensive player analytics with performance metrics",
 			"supported_formats": []string{"csv", "json", "xlsx", "pdf"},
-			"parameters": []string{"time_range", "game_modes", "champion_filter"},
+			"parameters":        []string{"time_range", "game_modes", "champion_filter"},
 		},
 		{
-			"template_id": "match_analysis",
-			"name": "Match Analysis Report",
-			"description": "Detailed analysis of individual match performance",
+			"template_id":       "match_analysis",
+			"name":              "Match Analysis Report",
+			"description":       "Detailed analysis of individual match performance",
 			"supported_formats": []string{"json", "pdf", "charts"},
-			"parameters": []string{"analysis_depth", "include_teammates", "include_opponents"},
+			"parameters":        []string{"analysis_depth", "include_teammates", "include_opponents"},
 		},
 		{
-			"template_id": "champion_mastery",
-			"name": "Champion Mastery Report",
-			"description": "Champion-specific performance and progression analysis",
+			"template_id":       "champion_mastery",
+			"name":              "Champion Mastery Report",
+			"description":       "Champion-specific performance and progression analysis",
 			"supported_formats": []string{"csv", "xlsx", "pdf", "charts"},
-			"parameters": []string{"champion_name", "time_range", "comparison_data"},
+			"parameters":        []string{"champion_name", "time_range", "comparison_data"},
 		},
 		{
-			"template_id": "team_comparison",
-			"name": "Team Comparison Report",
-			"description": "Multi-player team performance comparison",
+			"template_id":       "team_comparison",
+			"name":              "Team Comparison Report",
+			"description":       "Multi-player team performance comparison",
 			"supported_formats": []string{"xlsx", "pdf", "charts"},
-			"parameters": []string{"team_members", "time_range", "metrics_focus"},
+			"parameters":        []string{"team_members", "time_range", "metrics_focus"},
 		},
 		{
-			"template_id": "rank_progression",
-			"name": "Rank Progression Report",
-			"description": "Ranking progression and performance trends over time",
+			"template_id":       "rank_progression",
+			"name":              "Rank Progression Report",
+			"description":       "Ranking progression and performance trends over time",
 			"supported_formats": []string{"csv", "json", "charts"},
-			"parameters": []string{"time_range", "queue_type", "include_predictions"},
+			"parameters":        []string{"time_range", "queue_type", "include_predictions"},
 		},
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"templates": templates,
-		"count": len(templates),
-		"message": "Report templates retrieved successfully",
+		"count":     len(templates),
+		"message":   "Report templates retrieved successfully",
 	})
 }
 
@@ -572,7 +572,7 @@ func (h *ExportHandler) PreviewExport(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid preview request",
+			"error":   "Invalid preview request",
 			"details": err.Error(),
 		})
 		return
@@ -604,8 +604,8 @@ func (h *ExportHandler) PreviewExport(c *gin.Context) {
 		preview = gin.H{
 			"sections": []string{"Match Overview", "Performance Metrics", "Key Moments", "Team Analysis", "Insights"},
 			"sample_metrics": gin.H{
-				"kda": "8/2/12",
-				"cs": "182 (7.5/min)",
+				"kda":    "8/2/12",
+				"cs":     "182 (7.5/min)",
 				"damage": "28,450",
 				"vision": "22",
 				"rating": 85.2,
@@ -614,10 +614,10 @@ func (h *ExportHandler) PreviewExport(c *gin.Context) {
 		}
 	case "champion_mastery":
 		preview = gin.H{
-			"champion": "Jinx",
+			"champion":    "Jinx",
 			"total_games": 45,
-			"win_rate": 0.73,
-			"avg_kda": 2.8,
+			"win_rate":    0.73,
+			"avg_kda":     2.8,
 			"sample_trends": []gin.H{
 				{"week": "Week 1", "games": 8, "win_rate": 0.625, "avg_rating": 78.2},
 				{"week": "Week 2", "games": 12, "win_rate": 0.75, "avg_rating": 82.1},
@@ -625,17 +625,17 @@ func (h *ExportHandler) PreviewExport(c *gin.Context) {
 		}
 	default:
 		preview = gin.H{
-			"message": "Preview not available for this export type",
+			"message":         "Preview not available for this export type",
 			"supported_types": []string{"player_performance", "match_analysis", "champion_mastery"},
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"export_type": request.ExportType,
-		"format": request.Format,
-		"preview": preview,
+		"format":      request.Format,
+		"preview":     preview,
 		"sample_size": sampleSize,
-		"message": "Export preview generated successfully",
+		"message":     "Export preview generated successfully",
 	})
 }
 
@@ -654,7 +654,7 @@ func (h *ExportHandler) ExportGamingReport(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid gaming report request",
+			"error":   "Invalid gaming report request",
 			"details": err.Error(),
 		})
 		return
@@ -669,29 +669,29 @@ func (h *ExportHandler) ExportGamingReport(c *gin.Context) {
 	downloadURL := "https://api.herald.lol/exports/gaming_report_" + strconv.FormatInt(reportID, 10)
 
 	c.JSON(http.StatusAccepted, gin.H{
-		"report_id": reportID,
-		"player_puuid": request.PlayerPUUID,
-		"report_type": request.ReportType,
-		"format": request.Format,
-		"status": "generating",
+		"report_id":            reportID,
+		"player_puuid":         request.PlayerPUUID,
+		"report_type":          request.ReportType,
+		"format":               request.Format,
+		"status":               "generating",
 		"estimated_completion": time.Now().Add(30 * time.Second),
-		"download_url": downloadURL,
-		"message": "Gaming report generation started",
+		"download_url":         downloadURL,
+		"message":              "Gaming report generation started",
 	})
 }
 
 // ExportPerformanceTrends handles performance trends export
 func (h *ExportHandler) ExportPerformanceTrends(c *gin.Context) {
 	var request struct {
-		PlayerPUUID string `json:"player_puuid" binding:"required"`
-		TimeRange   string `json:"time_range" binding:"required"`
+		PlayerPUUID string   `json:"player_puuid" binding:"required"`
+		TimeRange   string   `json:"time_range" binding:"required"`
 		Metrics     []string `json:"metrics"`
-		Format      string `json:"format"`
+		Format      string   `json:"format"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid performance trends request",
+			"error":   "Invalid performance trends request",
 			"details": err.Error(),
 		})
 		return
@@ -717,19 +717,19 @@ func (h *ExportHandler) ExportPerformanceTrends(c *gin.Context) {
 	result, err := h.exportService.ExportCustomReport(c.Request.Context(), customRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export performance trends",
+			"error":   "Failed to export performance trends",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"format": result.Format,
-		"download_url": result.DownloadURL,
+		"export_id":       result.ExportID,
+		"format":          result.Format,
+		"download_url":    result.DownloadURL,
 		"trends_analyzed": len(request.Metrics),
-		"time_range": request.TimeRange,
-		"message": "Performance trends export completed successfully",
+		"time_range":      request.TimeRange,
+		"message":         "Performance trends export completed successfully",
 	})
 }
 
@@ -745,7 +745,7 @@ func (h *ExportHandler) ExportChampionMastery(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid champion mastery request",
+			"error":   "Invalid champion mastery request",
 			"details": err.Error(),
 		})
 		return
@@ -766,35 +766,35 @@ func (h *ExportHandler) ExportChampionMastery(c *gin.Context) {
 	result, err := h.exportService.ExportChampionAnalytics(c.Request.Context(), championRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export champion mastery",
+			"error":   "Failed to export champion mastery",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"champion": request.ChampionName,
-		"format": result.Format,
-		"download_url": result.DownloadURL,
+		"export_id":        result.ExportID,
+		"champion":         request.ChampionName,
+		"format":           result.Format,
+		"download_url":     result.DownloadURL,
 		"include_matchups": request.IncludeMatchups,
-		"message": "Champion mastery export completed successfully",
+		"message":          "Champion mastery export completed successfully",
 	})
 }
 
 // ExportRankProgression handles rank progression export
 func (h *ExportHandler) ExportRankProgression(c *gin.Context) {
 	var request struct {
-		PlayerPUUID     string `json:"player_puuid" binding:"required"`
-		QueueType       string `json:"queue_type"`
-		TimeRange       string `json:"time_range" binding:"required"`
-		IncludePrediction bool `json:"include_prediction"`
-		Format          string `json:"format"`
+		PlayerPUUID       string `json:"player_puuid" binding:"required"`
+		QueueType         string `json:"queue_type"`
+		TimeRange         string `json:"time_range" binding:"required"`
+		IncludePrediction bool   `json:"include_prediction"`
+		Format            string `json:"format"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid rank progression request",
+			"error":   "Invalid rank progression request",
 			"details": err.Error(),
 		})
 		return
@@ -821,37 +821,37 @@ func (h *ExportHandler) ExportRankProgression(c *gin.Context) {
 	result, err := h.exportService.ExportCustomReport(c.Request.Context(), customRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export rank progression",
+			"error":   "Failed to export rank progression",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"queue_type": request.QueueType,
-		"format": result.Format,
-		"download_url": result.DownloadURL,
-		"time_range": request.TimeRange,
+		"export_id":          result.ExportID,
+		"queue_type":         request.QueueType,
+		"format":             result.Format,
+		"download_url":       result.DownloadURL,
+		"time_range":         request.TimeRange,
 		"include_prediction": request.IncludePrediction,
-		"message": "Rank progression export completed successfully",
+		"message":            "Rank progression export completed successfully",
 	})
 }
 
 // ExportMetaAnalysis handles meta analysis export
 func (h *ExportHandler) ExportMetaAnalysis(c *gin.Context) {
 	var request struct {
-		Region      string   `json:"region"`
-		Tier        string   `json:"tier"`
-		Role        string   `json:"role"`
-		Champions   []string `json:"champions"`
-		TimeRange   string   `json:"time_range"`
-		Format      string   `json:"format"`
+		Region    string   `json:"region"`
+		Tier      string   `json:"tier"`
+		Role      string   `json:"role"`
+		Champions []string `json:"champions"`
+		TimeRange string   `json:"time_range"`
+		Format    string   `json:"format"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid meta analysis request",
+			"error":   "Invalid meta analysis request",
 			"details": err.Error(),
 		})
 		return
@@ -879,37 +879,37 @@ func (h *ExportHandler) ExportMetaAnalysis(c *gin.Context) {
 	result, err := h.exportService.ExportCustomReport(c.Request.Context(), customRequest)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to export meta analysis",
+			"error":   "Failed to export meta analysis",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"export_id": result.ExportID,
-		"region": request.Region,
-		"tier": request.Tier,
-		"role": request.Role,
-		"format": result.Format,
-		"download_url": result.DownloadURL,
+		"export_id":          result.ExportID,
+		"region":             request.Region,
+		"tier":               request.Tier,
+		"role":               request.Role,
+		"format":             result.Format,
+		"download_url":       result.DownloadURL,
 		"champions_analyzed": len(request.Champions),
-		"message": "Meta analysis export completed successfully",
+		"message":            "Meta analysis export completed successfully",
 	})
 }
 
 // ExportComparativeAnalysis handles comparative analysis export
 func (h *ExportHandler) ExportComparativeAnalysis(c *gin.Context) {
 	var request struct {
-		PlayerPUUIDs  []string `json:"player_puuids" binding:"required"`
-		CompareType   string   `json:"compare_type" binding:"required"`
-		TimeRange     string   `json:"time_range"`
-		Metrics       []string `json:"metrics"`
-		Format        string   `json:"format"`
+		PlayerPUUIDs []string `json:"player_puuids" binding:"required"`
+		CompareType  string   `json:"compare_type" binding:"required"`
+		TimeRange    string   `json:"time_range"`
+		Metrics      []string `json:"metrics"`
+		Format       string   `json:"format"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid comparative analysis request",
+			"error":   "Invalid comparative analysis request",
 			"details": err.Error(),
 		})
 		return
@@ -938,14 +938,14 @@ func (h *ExportHandler) ExportComparativeAnalysis(c *gin.Context) {
 	downloadURL := "https://api.herald.lol/exports/comparative_" + strconv.FormatInt(analysisID, 10)
 
 	c.JSON(http.StatusOK, gin.H{
-		"analysis_id": analysisID,
-		"compare_type": request.CompareType,
-		"players_count": len(request.PlayerPUUIDs),
-		"format": request.Format,
-		"download_url": downloadURL,
+		"analysis_id":      analysisID,
+		"compare_type":     request.CompareType,
+		"players_count":    len(request.PlayerPUUIDs),
+		"format":           request.Format,
+		"download_url":     downloadURL,
 		"metrics_compared": len(request.Metrics),
-		"time_range": request.TimeRange,
-		"message": "Comparative analysis export completed successfully",
+		"time_range":       request.TimeRange,
+		"message":          "Comparative analysis export completed successfully",
 	})
 }
 
@@ -962,7 +962,7 @@ func (h *ExportHandler) ExportCoachingReport(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid coaching report request",
+			"error":   "Invalid coaching report request",
 			"details": err.Error(),
 		})
 		return
@@ -981,17 +981,17 @@ func (h *ExportHandler) ExportCoachingReport(c *gin.Context) {
 	downloadURL := "https://api.herald.lol/exports/coaching_" + strconv.FormatInt(reportID, 10)
 
 	c.JSON(http.StatusOK, gin.H{
-		"report_id": reportID,
-		"player_puuid": request.PlayerPUUID,
-		"coaching_level": request.CoachingLevel,
-		"format": request.Format,
-		"download_url": downloadURL,
-		"focus_areas": len(request.FocusAreas),
-		"include_exercises": request.IncludeExercises,
-		"time_range": request.TimeRange,
+		"report_id":                   reportID,
+		"player_puuid":                request.PlayerPUUID,
+		"coaching_level":              request.CoachingLevel,
+		"format":                      request.Format,
+		"download_url":                downloadURL,
+		"focus_areas":                 len(request.FocusAreas),
+		"include_exercises":           request.IncludeExercises,
+		"time_range":                  request.TimeRange,
 		"estimated_improvement_areas": 8,
-		"personalized_tips": 15,
-		"message": "Coaching report export completed successfully",
+		"personalized_tips":           15,
+		"message":                     "Coaching report export completed successfully",
 	})
 }
 
@@ -999,55 +999,55 @@ func (h *ExportHandler) ExportCoachingReport(c *gin.Context) {
 func (h *ExportHandler) GetExportMetrics(c *gin.Context) {
 	// Mock export metrics
 	metrics := gin.H{
-		"total_exports": 15420,
-		"exports_today": 245,
-		"exports_this_week": 1680,
+		"total_exports":      15420,
+		"exports_today":      245,
+		"exports_this_week":  1680,
 		"exports_this_month": 6720,
 		"format_breakdown": gin.H{
 			"pdf": gin.H{
-				"count": 6200,
+				"count":      6200,
 				"percentage": 40.2,
 			},
 			"csv": gin.H{
-				"count": 4630,
+				"count":      4630,
 				"percentage": 30.0,
 			},
 			"xlsx": gin.H{
-				"count": 2470,
+				"count":      2470,
 				"percentage": 16.0,
 			},
 			"json": gin.H{
-				"count": 1540,
+				"count":      1540,
 				"percentage": 10.0,
 			},
 			"charts": gin.H{
-				"count": 580,
+				"count":      580,
 				"percentage": 3.8,
 			},
 		},
 		"export_type_breakdown": gin.H{
 			"player_analytics": 45.2,
-			"match_analysis": 22.1,
-			"team_analytics": 12.8,
+			"match_analysis":   22.1,
+			"team_analytics":   12.8,
 			"champion_mastery": 10.5,
-			"custom_reports": 9.4,
+			"custom_reports":   9.4,
 		},
-		"average_file_size": "512 KB",
+		"average_file_size":       "512 KB",
 		"average_generation_time": "3.2 seconds",
-		"success_rate": 98.7,
-		"cache_hit_rate": 34.6,
+		"success_rate":            98.7,
+		"cache_hit_rate":          34.6,
 		"popular_time_ranges": gin.H{
 			"30_days": 52.3,
-			"7_days": 28.1,
+			"7_days":  28.1,
 			"90_days": 15.2,
-			"custom": 4.4,
+			"custom":  4.4,
 		},
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"metrics": metrics,
+		"metrics":      metrics,
 		"generated_at": time.Now(),
-		"message": "Export metrics retrieved successfully",
+		"message":      "Export metrics retrieved successfully",
 	})
 }
 
@@ -1057,43 +1057,43 @@ func (h *ExportHandler) GetUsageStats(c *gin.Context) {
 	timeRange := c.DefaultQuery("time_range", "30d")
 
 	stats := gin.H{
-		"user_id": userID,
-		"time_range": timeRange,
-		"total_exports": 45,
+		"user_id":            userID,
+		"time_range":         timeRange,
+		"total_exports":      45,
 		"successful_exports": 44,
-		"failed_exports": 1,
-		"success_rate": 97.8,
-		"total_file_size": "23.5 MB",
-		"average_file_size": "534 KB",
-		"most_used_format": "pdf",
+		"failed_exports":     1,
+		"success_rate":       97.8,
+		"total_file_size":    "23.5 MB",
+		"average_file_size":  "534 KB",
+		"most_used_format":   "pdf",
 		"most_exported_type": "player_analytics",
 		"recent_exports": []gin.H{
 			{
-				"export_id": "export_123456",
-				"type": "player_analytics",
-				"format": "pdf",
+				"export_id":  "export_123456",
+				"type":       "player_analytics",
+				"format":     "pdf",
 				"created_at": "2024-01-15T14:30:00Z",
-				"status": "completed",
+				"status":     "completed",
 			},
 			{
-				"export_id": "export_123457",
-				"type": "match_analysis",
-				"format": "json",
+				"export_id":  "export_123457",
+				"type":       "match_analysis",
+				"format":     "json",
 				"created_at": "2024-01-15T13:45:00Z",
-				"status": "completed",
+				"status":     "completed",
 			},
 		},
 		"quota_usage": gin.H{
-			"exports_used": 45,
-			"exports_limit": 100,
+			"exports_used":    45,
+			"exports_limit":   100,
 			"percentage_used": 45.0,
-			"resets_at": "2024-02-01T00:00:00Z",
+			"resets_at":       "2024-02-01T00:00:00Z",
 		},
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"usage_stats": stats,
+		"usage_stats":  stats,
 		"generated_at": time.Now(),
-		"message": "Usage statistics retrieved successfully",
+		"message":      "Usage statistics retrieved successfully",
 	})
 }

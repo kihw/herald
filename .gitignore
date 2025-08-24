@@ -74,3 +74,5 @@ k8s/secrets/
 tmp/
 temp/
 analytics-temp/
+*storybook.log
+storybook-static

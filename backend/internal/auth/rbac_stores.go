@@ -21,21 +21,21 @@ type DatabaseRBACStore struct {
 
 // GamingRoleRecord database model for roles
 type GamingRoleRecord struct {
-	ID              string    `gorm:"primaryKey;type:varchar(255)" json:"id"`
-	Name            string    `gorm:"uniqueIndex;type:varchar(255)" json:"name"`
-	DisplayName     string    `gorm:"type:varchar(255)" json:"display_name"`
-	Description     string    `gorm:"type:text" json:"description"`
-	Type            string    `gorm:"type:varchar(50)" json:"type"`
-	Category        string    `gorm:"type:varchar(100);index" json:"category"`
-	Level           int       `gorm:"default:1;index" json:"level"`
-	ParentRoleID    *string   `gorm:"type:varchar(255);index" json:"parent_role_id,omitempty"`
-	IsSystem        bool      `gorm:"default:false;index" json:"is_system"`
-	IsActive        bool      `gorm:"default:true;index" json:"is_active"`
-	GamingContext   string    `gorm:"type:jsonb" json:"gaming_context"` // JSON
-	Metadata        string    `gorm:"type:jsonb" json:"metadata"`       // JSON
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
-	CreatedBy       string    `gorm:"type:varchar(255)" json:"created_by"`
+	ID            string    `gorm:"primaryKey;type:varchar(255)" json:"id"`
+	Name          string    `gorm:"uniqueIndex;type:varchar(255)" json:"name"`
+	DisplayName   string    `gorm:"type:varchar(255)" json:"display_name"`
+	Description   string    `gorm:"type:text" json:"description"`
+	Type          string    `gorm:"type:varchar(50)" json:"type"`
+	Category      string    `gorm:"type:varchar(100);index" json:"category"`
+	Level         int       `gorm:"default:1;index" json:"level"`
+	ParentRoleID  *string   `gorm:"type:varchar(255);index" json:"parent_role_id,omitempty"`
+	IsSystem      bool      `gorm:"default:false;index" json:"is_system"`
+	IsActive      bool      `gorm:"default:true;index" json:"is_active"`
+	GamingContext string    `gorm:"type:jsonb" json:"gaming_context"` // JSON
+	Metadata      string    `gorm:"type:jsonb" json:"metadata"`       // JSON
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	CreatedBy     string    `gorm:"type:varchar(255)" json:"created_by"`
 }
 
 // GamingPermissionRecord database model for permissions
@@ -134,26 +134,26 @@ func (s *DatabaseRBACStore) CreateRole(ctx context.Context, role *GamingRole) er
 	if err != nil {
 		return fmt.Errorf("failed to convert role to record: %w", err)
 	}
-	
+
 	record.CreatedAt = time.Now()
 	record.UpdatedAt = time.Now()
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to create gaming role: %w", err)
 	}
-	
+
 	// Update role with generated ID
 	role.ID = record.ID
 	role.CreatedAt = record.CreatedAt
 	role.UpdatedAt = record.UpdatedAt
-	
+
 	return nil
 }
 
 // GetRole retrieves role by ID
 func (s *DatabaseRBACStore) GetRole(ctx context.Context, roleID string) (*GamingRole, error) {
 	var record GamingRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("id = ?", roleID).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -161,14 +161,14 @@ func (s *DatabaseRBACStore) GetRole(ctx context.Context, roleID string) (*Gaming
 		}
 		return nil, fmt.Errorf("failed to get gaming role: %w", err)
 	}
-	
+
 	return s.recordToRole(&record)
 }
 
 // GetRoleByName retrieves role by name
 func (s *DatabaseRBACStore) GetRoleByName(ctx context.Context, name string) (*GamingRole, error) {
 	var record GamingRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("name = ?", name).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -176,7 +176,7 @@ func (s *DatabaseRBACStore) GetRoleByName(ctx context.Context, name string) (*Ga
 		}
 		return nil, fmt.Errorf("failed to get gaming role by name: %w", err)
 	}
-	
+
 	return s.recordToRole(&record)
 }
 
@@ -186,13 +186,13 @@ func (s *DatabaseRBACStore) UpdateRole(ctx context.Context, role *GamingRole) er
 	if err != nil {
 		return fmt.Errorf("failed to convert role to record: %w", err)
 	}
-	
+
 	record.UpdatedAt = time.Now()
-	
+
 	if err := s.db.WithContext(ctx).Save(record).Error; err != nil {
 		return fmt.Errorf("failed to update gaming role: %w", err)
 	}
-	
+
 	role.UpdatedAt = record.UpdatedAt
 	return nil
 }
@@ -202,22 +202,22 @@ func (s *DatabaseRBACStore) DeleteRole(ctx context.Context, roleID string) error
 	result := s.db.WithContext(ctx).Model(&GamingRoleRecord{}).
 		Where("id = ?", roleID).
 		Update("is_active", false)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to delete gaming role: %w", result.Error)
 	}
-	
+
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("gaming role not found")
 	}
-	
+
 	return nil
 }
 
 // ListRoles lists roles with filters
 func (s *DatabaseRBACStore) ListRoles(ctx context.Context, filters *RoleFilters) ([]*GamingRole, error) {
 	query := s.db.WithContext(ctx).Model(&GamingRoleRecord{})
-	
+
 	if filters != nil {
 		if filters.Type != nil {
 			query = query.Where("type = ?", *filters.Type)
@@ -235,12 +235,12 @@ func (s *DatabaseRBACStore) ListRoles(ctx context.Context, filters *RoleFilters)
 			query = query.Where("level = ?", *filters.Level)
 		}
 	}
-	
+
 	var records []GamingRoleRecord
 	if err := query.Order("level ASC, name ASC").Find(&records).Error; err != nil {
 		return nil, fmt.Errorf("failed to list gaming roles: %w", err)
 	}
-	
+
 	var roles []*GamingRole
 	for _, record := range records {
 		role, err := s.recordToRole(&record)
@@ -249,7 +249,7 @@ func (s *DatabaseRBACStore) ListRoles(ctx context.Context, filters *RoleFilters)
 		}
 		roles = append(roles, role)
 	}
-	
+
 	return roles, nil
 }
 
@@ -261,25 +261,25 @@ func (s *DatabaseRBACStore) CreatePermission(ctx context.Context, permission *Ga
 	if err != nil {
 		return fmt.Errorf("failed to convert permission to record: %w", err)
 	}
-	
+
 	record.CreatedAt = time.Now()
 	record.UpdatedAt = time.Now()
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to create gaming permission: %w", err)
 	}
-	
+
 	permission.ID = record.ID
 	permission.CreatedAt = record.CreatedAt
 	permission.UpdatedAt = record.UpdatedAt
-	
+
 	return nil
 }
 
 // GetPermission retrieves permission by ID
 func (s *DatabaseRBACStore) GetPermission(ctx context.Context, permissionID string) (*GamingPermission, error) {
 	var record GamingPermissionRecord
-	
+
 	err := s.db.WithContext(ctx).Where("id = ?", permissionID).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -287,14 +287,14 @@ func (s *DatabaseRBACStore) GetPermission(ctx context.Context, permissionID stri
 		}
 		return nil, fmt.Errorf("failed to get gaming permission: %w", err)
 	}
-	
+
 	return s.recordToPermission(&record)
 }
 
 // GetPermissionByName retrieves permission by name
 func (s *DatabaseRBACStore) GetPermissionByName(ctx context.Context, name string) (*GamingPermission, error) {
 	var record GamingPermissionRecord
-	
+
 	err := s.db.WithContext(ctx).Where("name = ?", name).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -302,14 +302,14 @@ func (s *DatabaseRBACStore) GetPermissionByName(ctx context.Context, name string
 		}
 		return nil, fmt.Errorf("failed to get gaming permission by name: %w", err)
 	}
-	
+
 	return s.recordToPermission(&record)
 }
 
 // ListPermissions lists permissions with filters
 func (s *DatabaseRBACStore) ListPermissions(ctx context.Context, filters *PermissionFilters) ([]*GamingPermission, error) {
 	query := s.db.WithContext(ctx).Model(&GamingPermissionRecord{})
-	
+
 	if filters != nil {
 		if filters.Category != nil {
 			query = query.Where("category = ?", *filters.Category)
@@ -330,12 +330,12 @@ func (s *DatabaseRBACStore) ListPermissions(ctx context.Context, filters *Permis
 			query = query.Where("is_active = ?", *filters.IsActive)
 		}
 	}
-	
+
 	var records []GamingPermissionRecord
 	if err := query.Order("category ASC, resource ASC, action ASC").Find(&records).Error; err != nil {
 		return nil, fmt.Errorf("failed to list gaming permissions: %w", err)
 	}
-	
+
 	var permissions []*GamingPermission
 	for _, record := range records {
 		permission, err := s.recordToPermission(&record)
@@ -344,7 +344,7 @@ func (s *DatabaseRBACStore) ListPermissions(ctx context.Context, filters *Permis
 		}
 		permissions = append(permissions, permission)
 	}
-	
+
 	return permissions, nil
 }
 
@@ -360,11 +360,11 @@ func (s *DatabaseRBACStore) AssignPermissionToRole(ctx context.Context, roleID, 
 		AssignedAt:   time.Now(),
 		CreatedAt:    time.Now(),
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to assign permission to gaming role: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -372,28 +372,28 @@ func (s *DatabaseRBACStore) AssignPermissionToRole(ctx context.Context, roleID, 
 func (s *DatabaseRBACStore) RemovePermissionFromRole(ctx context.Context, roleID, permissionID string) error {
 	result := s.db.WithContext(ctx).Where("role_id = ? AND permission_id = ?", roleID, permissionID).
 		Delete(&GamingRolePermissionRecord{})
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to remove permission from gaming role: %w", result.Error)
 	}
-	
+
 	return nil
 }
 
 // GetRolePermissions gets all permissions for a role
 func (s *DatabaseRBACStore) GetRolePermissions(ctx context.Context, roleID string) ([]*GamingPermission, error) {
 	var records []GamingPermissionRecord
-	
+
 	err := s.db.WithContext(ctx).
 		Table("gaming_permission_records").
 		Joins("JOIN gaming_role_permission_records ON gaming_permission_records.id = gaming_role_permission_records.permission_id").
 		Where("gaming_role_permission_records.role_id = ?", roleID).
 		Find(&records).Error
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("failed to get role permissions: %w", err)
 	}
-	
+
 	var permissions []*GamingPermission
 	for _, record := range records {
 		permission, err := s.recordToPermission(&record)
@@ -402,7 +402,7 @@ func (s *DatabaseRBACStore) GetRolePermissions(ctx context.Context, roleID strin
 		}
 		permissions = append(permissions, permission)
 	}
-	
+
 	return permissions, nil
 }
 
@@ -422,7 +422,7 @@ func (s *DatabaseRBACStore) AssignRoleToUser(ctx context.Context, userID, roleID
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	
+
 	// Marshal context to JSON
 	if assignment.Context != nil {
 		contextJSON, err := json.Marshal(assignment.Context)
@@ -430,11 +430,11 @@ func (s *DatabaseRBACStore) AssignRoleToUser(ctx context.Context, userID, roleID
 			record.Context = string(contextJSON)
 		}
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to assign role to gaming user: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -443,24 +443,24 @@ func (s *DatabaseRBACStore) RemoveRoleFromUser(ctx context.Context, userID, role
 	result := s.db.WithContext(ctx).Model(&GamingUserRoleRecord{}).
 		Where("user_id = ? AND role_id = ?", userID, roleID).
 		Update("is_active", false)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to remove role from gaming user: %w", result.Error)
 	}
-	
+
 	return nil
 }
 
 // GetUserRoles gets all roles for a user
 func (s *DatabaseRBACStore) GetUserRoles(ctx context.Context, userID string) ([]*UserRole, error) {
 	var records []GamingUserRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ? AND is_active = ?", userID, true).
 		Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user roles: %w", err)
 	}
-	
+
 	var userRoles []*UserRole
 	for _, record := range records {
 		userRole, err := s.recordToUserRole(&record)
@@ -469,20 +469,20 @@ func (s *DatabaseRBACStore) GetUserRoles(ctx context.Context, userID string) ([]
 		}
 		userRoles = append(userRoles, userRole)
 	}
-	
+
 	return userRoles, nil
 }
 
 // GetUsersWithRole gets all users with specific role
 func (s *DatabaseRBACStore) GetUsersWithRole(ctx context.Context, roleID string) ([]*UserRole, error) {
 	var records []GamingUserRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("role_id = ? AND is_active = ?", roleID, true).
 		Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get users with role: %w", err)
 	}
-	
+
 	var userRoles []*UserRole
 	for _, record := range records {
 		userRole, err := s.recordToUserRole(&record)
@@ -491,7 +491,7 @@ func (s *DatabaseRBACStore) GetUsersWithRole(ctx context.Context, roleID string)
 		}
 		userRoles = append(userRoles, userRole)
 	}
-	
+
 	return userRoles, nil
 }
 
@@ -512,7 +512,7 @@ func (s *DatabaseRBACStore) AssignRoleToTeam(ctx context.Context, teamID, roleID
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
-	
+
 	// Marshal champion list to JSON
 	if assignment.Champion != nil {
 		championJSON, err := json.Marshal(assignment.Champion)
@@ -520,11 +520,11 @@ func (s *DatabaseRBACStore) AssignRoleToTeam(ctx context.Context, teamID, roleID
 			record.Champion = string(championJSON)
 		}
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to assign role to gaming team: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -533,24 +533,24 @@ func (s *DatabaseRBACStore) RemoveRoleFromTeam(ctx context.Context, teamID, role
 	result := s.db.WithContext(ctx).Model(&GamingTeamRoleRecord{}).
 		Where("team_id = ? AND role_id = ?", teamID, roleID).
 		Update("is_active", false)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to remove role from gaming team: %w", result.Error)
 	}
-	
+
 	return nil
 }
 
 // GetTeamRoles gets all roles for a team
 func (s *DatabaseRBACStore) GetTeamRoles(ctx context.Context, teamID string) ([]*TeamRole, error) {
 	var records []GamingTeamRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("team_id = ? AND is_active = ?", teamID, true).
 		Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team roles: %w", err)
 	}
-	
+
 	var teamRoles []*TeamRole
 	for _, record := range records {
 		teamRole, err := s.recordToTeamRole(&record)
@@ -559,20 +559,20 @@ func (s *DatabaseRBACStore) GetTeamRoles(ctx context.Context, teamID string) ([]
 		}
 		teamRoles = append(teamRoles, teamRole)
 	}
-	
+
 	return teamRoles, nil
 }
 
 // GetUserTeamRoles gets all team roles for a user
 func (s *DatabaseRBACStore) GetUserTeamRoles(ctx context.Context, userID string) ([]*TeamRole, error) {
 	var records []GamingTeamRoleRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ? AND is_active = ?", userID, true).
 		Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user team roles: %w", err)
 	}
-	
+
 	var teamRoles []*TeamRole
 	for _, record := range records {
 		teamRole, err := s.recordToTeamRole(&record)
@@ -581,7 +581,7 @@ func (s *DatabaseRBACStore) GetUserTeamRoles(ctx context.Context, userID string)
 		}
 		teamRoles = append(teamRoles, teamRole)
 	}
-	
+
 	return teamRoles, nil
 }
 
@@ -605,7 +605,7 @@ func (s *DatabaseRBACStore) LogRoleAction(ctx context.Context, action *RoleAudit
 		TeamID:       action.TeamID,
 		CreatedAt:    time.Now(),
 	}
-	
+
 	// Marshal changes to JSON
 	if action.Changes != nil {
 		changesJSON, err := json.Marshal(action.Changes)
@@ -613,18 +613,18 @@ func (s *DatabaseRBACStore) LogRoleAction(ctx context.Context, action *RoleAudit
 			record.Changes = string(changesJSON)
 		}
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to log gaming role action: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetRoleAuditLog gets role audit log with filters
 func (s *DatabaseRBACStore) GetRoleAuditLog(ctx context.Context, filters *AuditFilters) ([]*RoleAuditLog, error) {
 	query := s.db.WithContext(ctx).Model(&GamingRoleAuditLogRecord{})
-	
+
 	if filters != nil {
 		if filters.ActorID != nil {
 			query = query.Where("actor_id = ?", *filters.ActorID)
@@ -645,12 +645,12 @@ func (s *DatabaseRBACStore) GetRoleAuditLog(ctx context.Context, filters *AuditF
 			query = query.Where("team_id = ?", *filters.TeamID)
 		}
 	}
-	
+
 	var records []GamingRoleAuditLogRecord
 	if err := query.Order("timestamp DESC").Limit(1000).Find(&records).Error; err != nil {
 		return nil, fmt.Errorf("failed to get gaming role audit log: %w", err)
 	}
-	
+
 	var auditLogs []*RoleAuditLog
 	for _, record := range records {
 		auditLog, err := s.recordToAuditLog(&record)
@@ -659,7 +659,7 @@ func (s *DatabaseRBACStore) GetRoleAuditLog(ctx context.Context, filters *AuditF
 		}
 		auditLogs = append(auditLogs, auditLog)
 	}
-	
+
 	return auditLogs, nil
 }
 
@@ -679,20 +679,20 @@ func (s *DatabaseRBACStore) roleToRecord(role *GamingRole) (*GamingRoleRecord, e
 		IsActive:     role.IsActive,
 		CreatedBy:    role.CreatedBy,
 	}
-	
+
 	// Marshal JSON fields
 	if role.GamingContext != nil {
 		if contextJSON, err := json.Marshal(role.GamingContext); err == nil {
 			record.GamingContext = string(contextJSON)
 		}
 	}
-	
+
 	if role.Metadata != nil {
 		if metadataJSON, err := json.Marshal(role.Metadata); err == nil {
 			record.Metadata = string(metadataJSON)
 		}
 	}
-	
+
 	return record, nil
 }
 
@@ -712,7 +712,7 @@ func (s *DatabaseRBACStore) recordToRole(record *GamingRoleRecord) (*GamingRole,
 		UpdatedAt:    record.UpdatedAt,
 		CreatedBy:    record.CreatedBy,
 	}
-	
+
 	// Unmarshal JSON fields
 	if record.GamingContext != "" {
 		var context map[string]interface{}
@@ -720,14 +720,14 @@ func (s *DatabaseRBACStore) recordToRole(record *GamingRoleRecord) (*GamingRole,
 			role.GamingContext = context
 		}
 	}
-	
+
 	if record.Metadata != "" {
 		var metadata map[string]string
 		if err := json.Unmarshal([]byte(record.Metadata), &metadata); err == nil {
 			role.Metadata = metadata
 		}
 	}
-	
+
 	return role, nil
 }
 
@@ -747,14 +747,14 @@ func (s *DatabaseRBACStore) permissionToRecord(permission *GamingPermission) (*G
 		IsActive:         permission.IsActive,
 		CreatedBy:        permission.CreatedBy,
 	}
-	
+
 	// Marshal JSON fields
 	if permission.GamingContext != nil {
 		if contextJSON, err := json.Marshal(permission.GamingContext); err == nil {
 			record.GamingContext = string(contextJSON)
 		}
 	}
-	
+
 	return record, nil
 }
 
@@ -776,7 +776,7 @@ func (s *DatabaseRBACStore) recordToPermission(record *GamingPermissionRecord) (
 		UpdatedAt:        record.UpdatedAt,
 		CreatedBy:        record.CreatedBy,
 	}
-	
+
 	// Unmarshal JSON fields
 	if record.GamingContext != "" {
 		var context map[string]interface{}
@@ -784,7 +784,7 @@ func (s *DatabaseRBACStore) recordToPermission(record *GamingPermissionRecord) (
 			permission.GamingContext = context
 		}
 	}
-	
+
 	return permission, nil
 }
 
@@ -799,7 +799,7 @@ func (s *DatabaseRBACStore) recordToUserRole(record *GamingUserRoleRecord) (*Use
 		IsActive:   record.IsActive,
 		Scope:      record.Scope,
 	}
-	
+
 	// Unmarshal context
 	if record.Context != "" {
 		var context map[string]interface{}
@@ -807,7 +807,7 @@ func (s *DatabaseRBACStore) recordToUserRole(record *GamingUserRoleRecord) (*Use
 			userRole.Context = context
 		}
 	}
-	
+
 	return userRole, nil
 }
 
@@ -825,7 +825,7 @@ func (s *DatabaseRBACStore) recordToTeamRole(record *GamingTeamRoleRecord) (*Tea
 		GameRole:   record.GameRole,
 		Region:     record.Region,
 	}
-	
+
 	// Unmarshal champion list
 	if record.Champion != "" {
 		var champion []string
@@ -833,7 +833,7 @@ func (s *DatabaseRBACStore) recordToTeamRole(record *GamingTeamRoleRecord) (*Tea
 			teamRole.Champion = champion
 		}
 	}
-	
+
 	return teamRole, nil
 }
 
@@ -853,7 +853,7 @@ func (s *DatabaseRBACStore) recordToAuditLog(record *GamingRoleAuditLogRecord) (
 		GamingAction: record.GamingAction,
 		TeamID:       record.TeamID,
 	}
-	
+
 	// Unmarshal changes
 	if record.Changes != "" {
 		var changes map[string]interface{}
@@ -861,6 +861,6 @@ func (s *DatabaseRBACStore) recordToAuditLog(record *GamingRoleAuditLogRecord) (
 			auditLog.Changes = changes
 		}
 	}
-	
+
 	return auditLog, nil
 }

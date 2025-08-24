@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/herald-lol/backend/internal/analytics"
-	"github.com/herald-lol/backend/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // TestMatchAnalyzer tests the complete match analyzer functionality
@@ -18,7 +18,7 @@ func TestMatchAnalyzer(t *testing.T) {
 
 	// Create test match data
 	testMatch := createTestMatch()
-	
+
 	// Test basic analysis
 	request := &MatchAnalysisRequest{
 		Match:                   testMatch,
@@ -181,7 +181,7 @@ func TestCSRating(t *testing.T) {
 	for _, tc := range testCases {
 		rating := analyzer.calculateCSRating(tc.csPerMin, tc.role)
 		if rating != tc.expected {
-			t.Errorf("For CS %.1f and role %s, expected %s, got %s", 
+			t.Errorf("For CS %.1f and role %s, expected %s, got %s",
 				tc.csPerMin, tc.role, tc.expected, rating)
 		}
 	}
@@ -208,7 +208,7 @@ func TestVisionRating(t *testing.T) {
 	for _, tc := range testCases {
 		rating := analyzer.calculateVisionRating(tc.visionScore, tc.role)
 		if rating != tc.expected {
-			t.Errorf("For vision %d and role %s, expected %s, got %s", 
+			t.Errorf("For vision %d and role %s, expected %s, got %s",
 				tc.visionScore, tc.role, tc.expected, rating)
 		}
 	}
@@ -225,12 +225,12 @@ func TestSeriesAnalysis(t *testing.T) {
 	}
 
 	request := &MatchSeriesRequest{
-		Matches:             matches,
-		PlayerPUUID:         "test-player-puuid",
-		AnalysisType:        "trend",
-		TimeFrame:           "recent",
-		FocusMetrics:        []string{"kda", "cs", "vision"},
-		IncludeComparisons:  true,
+		Matches:            matches,
+		PlayerPUUID:        "test-player-puuid",
+		AnalysisType:       "trend",
+		TimeFrame:          "recent",
+		FocusMetrics:       []string{"kda", "cs", "vision"},
+		IncludeComparisons: true,
 	}
 
 	result, err := analyzer.AnalyzeMatchSeries(context.Background(), request)
@@ -299,7 +299,7 @@ func TestPhaseAnalysis(t *testing.T) {
 	player := &match.Info.Participants[0] // First participant
 
 	phases := analyzer.analyzeGamePhases(match, player)
-	
+
 	if phases == nil {
 		t.Fatal("Expected phase analysis")
 	}
@@ -310,7 +310,7 @@ func TestPhaseAnalysis(t *testing.T) {
 	}
 
 	if phases.MidGame == nil {
-		t.Error("Expected mid game analysis")  
+		t.Error("Expected mid game analysis")
 	}
 
 	if phases.LateGame == nil {
@@ -336,14 +336,14 @@ func TestKeyMomentDetection(t *testing.T) {
 	analyzer := &MatchAnalyzer{config: DefaultMatchAnalysisConfig()}
 	match := createTestMatch()
 	player := &match.Info.Participants[0]
-	
+
 	// Set some stats for key moments
 	player.FirstBloodKill = true
 	player.DoubleKills = 2
 	player.Deaths = 8 // High deaths for negative moment
 
 	moments := analyzer.detectKeyMoments(match, player)
-	
+
 	if len(moments) == 0 {
 		t.Error("Expected some key moments")
 	}
@@ -373,18 +373,18 @@ func TestKeyMomentDetection(t *testing.T) {
 
 func TestLearningOpportunities(t *testing.T) {
 	analyzer := &MatchAnalyzer{config: DefaultMatchAnalysisConfig()}
-	
+
 	// Create result with poor performance to generate opportunities
 	result := &MatchAnalysisResult{
 		Performance: &PerformanceAnalysis{
-			KDA:         1.2,  // Poor KDA
-			CSPerMinute: 4.5,  // Poor CS
-			VisionScore: 10,   // Poor vision
+			KDA:         1.2, // Poor KDA
+			CSPerMinute: 4.5, // Poor CS
+			VisionScore: 10,  // Poor vision
 		},
 	}
 
 	opportunities := analyzer.identifyLearningOpportunities(result)
-	
+
 	if len(opportunities) == 0 {
 		t.Error("Expected learning opportunities for poor performance")
 	}
@@ -393,7 +393,7 @@ func TestLearningOpportunities(t *testing.T) {
 	categories := make(map[string]bool)
 	for _, opp := range opportunities {
 		categories[opp.Category] = true
-		
+
 		// Validate opportunity structure
 		if opp.Description == "" {
 			t.Error("Expected opportunity description")
@@ -423,13 +423,13 @@ func TestLearningOpportunities(t *testing.T) {
 
 func TestPerformanceRating(t *testing.T) {
 	analyzer := &MatchAnalyzer{config: DefaultMatchAnalysisConfig()}
-	
+
 	// Test excellent performance
 	excellentPerf := &PerformanceAnalysis{
-		KDA:              4.5,
-		CSPerMinute:      8.5,
-		VisionPerMinute:  2.2,
-		DamageShare:      0.35,
+		KDA:             4.5,
+		CSPerMinute:     8.5,
+		VisionPerMinute: 2.2,
+		DamageShare:     0.35,
 	}
 
 	rating := analyzer.calculatePerformanceRating(excellentPerf, "TOP")
@@ -439,10 +439,10 @@ func TestPerformanceRating(t *testing.T) {
 
 	// Test poor performance
 	poorPerf := &PerformanceAnalysis{
-		KDA:              0.8,
-		CSPerMinute:      3.2,
-		VisionPerMinute:  0.5,
-		DamageShare:      0.15,
+		KDA:             0.8,
+		CSPerMinute:     3.2,
+		VisionPerMinute: 0.5,
+		DamageShare:     0.15,
 	}
 
 	rating = analyzer.calculatePerformanceRating(poorPerf, "TOP")
@@ -459,7 +459,7 @@ func TestRequestValidation(t *testing.T) {
 		Match:       nil,
 		PlayerPUUID: "test-puuid",
 	}
-	
+
 	err := analyzer.validateRequest(request)
 	if err == nil {
 		t.Error("Expected error for nil match")
@@ -470,7 +470,7 @@ func TestRequestValidation(t *testing.T) {
 		Match:       createTestMatch(),
 		PlayerPUUID: "",
 	}
-	
+
 	err = analyzer.validateRequest(request)
 	if err == nil {
 		t.Error("Expected error for empty player PUUID")
@@ -481,7 +481,7 @@ func TestRequestValidation(t *testing.T) {
 		Match:       createTestMatch(),
 		PlayerPUUID: "test-puuid",
 	}
-	
+
 	err = analyzer.validateRequest(request)
 	if err != nil {
 		t.Errorf("Expected no error for valid request, got: %v", err)
@@ -495,14 +495,14 @@ func createTestMatch() *riot.Match {
 			MatchID: "TEST_MATCH_123",
 		},
 		Info: riot.MatchInfo{
-			GameMode:             "CLASSIC",
-			GameDuration:         1800, // 30 minutes
-			GameStartTimestamp:   time.Now().Unix() * 1000,
-			GameVersion:          "14.1.1",
-			QueueID:              420, // Ranked Solo/Duo
+			GameMode:           "CLASSIC",
+			GameDuration:       1800, // 30 minutes
+			GameStartTimestamp: time.Now().Unix() * 1000,
+			GameVersion:        "14.1.1",
+			QueueID:            420, // Ranked Solo/Duo
 			Participants: []riot.Participant{
 				{
-					PUUID:                        "test-player-puuid",
+					PUUID:                       "test-player-puuid",
 					SummonerName:                "TestPlayer",
 					ChampionName:                "Jinx",
 					TeamID:                      100,
@@ -532,7 +532,7 @@ func createTestMatch() *riot.Match {
 				},
 				// Add more participants for team analysis
 				{
-					PUUID:                        "teammate-1",
+					PUUID:                       "teammate-1",
 					SummonerName:                "Teammate1",
 					ChampionName:                "Thresh",
 					TeamID:                      100,
@@ -552,7 +552,7 @@ func createTestMatch() *riot.Match {
 					TurretKills:                 1,
 				},
 				{
-					PUUID:                        "enemy-1",
+					PUUID:                       "enemy-1",
 					SummonerName:                "Enemy1",
 					ChampionName:                "Caitlyn",
 					TeamID:                      200,

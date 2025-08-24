@@ -53,11 +53,11 @@ type JWTConfig struct {
 }
 
 type RiotConfig struct {
-	APIKey              string `mapstructure:"api_key"`
-	RateLimitPerSecond  int    `mapstructure:"rate_limit_per_second"`
-	RateLimitPerMinute  int    `mapstructure:"rate_limit_per_minute"`
-	BaseURL             string `mapstructure:"base_url"`
-	Timeout             time.Duration `mapstructure:"timeout"`
+	APIKey             string        `mapstructure:"api_key"`
+	RateLimitPerSecond int           `mapstructure:"rate_limit_per_second"`
+	RateLimitPerMinute int           `mapstructure:"rate_limit_per_minute"`
+	BaseURL            string        `mapstructure:"base_url"`
+	Timeout            time.Duration `mapstructure:"timeout"`
 }
 
 type LoggingConfig struct {
@@ -215,11 +215,11 @@ func (c *Config) GetDatabaseDSN() string {
 	case "sqlite":
 		return "./herald.db"
 	case "postgres":
-		return "host=" + c.Database.Host + 
-			" port=" + c.Database.Port + 
-			" user=" + c.Database.User + 
-			" password=" + c.Database.Password + 
-			" dbname=" + c.Database.Name + 
+		return "host=" + c.Database.Host +
+			" port=" + c.Database.Port +
+			" user=" + c.Database.User +
+			" password=" + c.Database.Password +
+			" dbname=" + c.Database.Name +
 			" sslmode=" + c.Database.SSLMode
 	default:
 		return "./herald.db"

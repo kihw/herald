@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // GoldAnalyticsService handles gold efficiency and economy analytics
@@ -17,228 +17,228 @@ type GoldAnalyticsService struct {
 
 // GoldAnalysis represents comprehensive gold efficiency analysis
 type GoldAnalysis struct {
-	PlayerID              string                  `json:"player_id"`
-	Champion              string                  `json:"champion,omitempty"`
-	Position              string                  `json:"position,omitempty"`
-	TimeRange             string                  `json:"time_range"`
-	
+	PlayerID  string `json:"player_id"`
+	Champion  string `json:"champion,omitempty"`
+	Position  string `json:"position,omitempty"`
+	TimeRange string `json:"time_range"`
+
 	// Core Gold Metrics
-	AverageGoldEarned     float64                 `json:"average_gold_earned"`
-	AverageGoldPerMinute  float64                 `json:"average_gold_per_minute"`
-	GoldEfficiencyScore   float64                 `json:"gold_efficiency_score"` // 0-100 scale
-	EconomyRating         string                  `json:"economy_rating"`        // "excellent", "good", "average", "poor"
-	
+	AverageGoldEarned    float64 `json:"average_gold_earned"`
+	AverageGoldPerMinute float64 `json:"average_gold_per_minute"`
+	GoldEfficiencyScore  float64 `json:"gold_efficiency_score"` // 0-100 scale
+	EconomyRating        string  `json:"economy_rating"`        // "excellent", "good", "average", "poor"
+
 	// Gold Sources Analysis
-	GoldSources           GoldSourcesData         `json:"gold_sources"`
-	
+	GoldSources GoldSourcesData `json:"gold_sources"`
+
 	// Spending Efficiency
-	ItemEfficiency        ItemEfficiencyData      `json:"item_efficiency"`
-	SpendingPatterns      SpendingPatternsData    `json:"spending_patterns"`
-	
+	ItemEfficiency   ItemEfficiencyData   `json:"item_efficiency"`
+	SpendingPatterns SpendingPatternsData `json:"spending_patterns"`
+
 	// Game Phase Analysis
-	EarlyGameGold         GoldPhaseData           `json:"early_game_gold"`
-	MidGameGold           GoldPhaseData           `json:"mid_game_gold"`
-	LateGameGold          GoldPhaseData           `json:"late_game_gold"`
-	
+	EarlyGameGold GoldPhaseData `json:"early_game_gold"`
+	MidGameGold   GoldPhaseData `json:"mid_game_gold"`
+	LateGameGold  GoldPhaseData `json:"late_game_gold"`
+
 	// Comparative Analysis
-	RoleBenchmark         GoldBenchmark           `json:"role_benchmark"`
-	RankBenchmark         GoldBenchmark           `json:"rank_benchmark"`
-	GlobalBenchmark       GoldBenchmark           `json:"global_benchmark"`
-	
+	RoleBenchmark   GoldBenchmark `json:"role_benchmark"`
+	RankBenchmark   GoldBenchmark `json:"rank_benchmark"`
+	GlobalBenchmark GoldBenchmark `json:"global_benchmark"`
+
 	// Performance Impact
-	GoldAdvantageWinRate  float64                 `json:"gold_advantage_win_rate"`
-	GoldDisadvantageWinRate float64               `json:"gold_disadvantage_win_rate"`
-	GoldImpactScore       float64                 `json:"gold_impact_score"`
-	
+	GoldAdvantageWinRate    float64 `json:"gold_advantage_win_rate"`
+	GoldDisadvantageWinRate float64 `json:"gold_disadvantage_win_rate"`
+	GoldImpactScore         float64 `json:"gold_impact_score"`
+
 	// Trend Analysis
-	TrendDirection        string                  `json:"trend_direction"`
-	TrendSlope            float64                 `json:"trend_slope"`
-	TrendConfidence       float64                 `json:"trend_confidence"`
-	TrendData             []GoldTrendPoint        `json:"trend_data"`
-	
+	TrendDirection  string           `json:"trend_direction"`
+	TrendSlope      float64          `json:"trend_slope"`
+	TrendConfidence float64          `json:"trend_confidence"`
+	TrendData       []GoldTrendPoint `json:"trend_data"`
+
 	// Economy Optimization
-	IncomeOptimization    IncomeOptimizationData  `json:"income_optimization"`
-	SpendingOptimization  SpendingOptimizationData `json:"spending_optimization"`
-	
+	IncomeOptimization   IncomeOptimizationData   `json:"income_optimization"`
+	SpendingOptimization SpendingOptimizationData `json:"spending_optimization"`
+
 	// Insights and Recommendations
-	StrengthAreas         []string                `json:"strength_areas"`
-	ImprovementAreas      []string                `json:"improvement_areas"`
-	Recommendations       []GoldRecommendation    `json:"recommendations"`
-	
+	StrengthAreas    []string             `json:"strength_areas"`
+	ImprovementAreas []string             `json:"improvement_areas"`
+	Recommendations  []GoldRecommendation `json:"recommendations"`
+
 	// Match Performance
-	RecentMatches         []MatchGoldData         `json:"recent_matches"`
+	RecentMatches []MatchGoldData `json:"recent_matches"`
 }
 
 // GoldSourcesData represents breakdown of gold income sources
 type GoldSourcesData struct {
-	FarmingGold           float64                 `json:"farming_gold"`         // CS + monsters
-	FarmingPercent        float64                 `json:"farming_percent"`
-	KillsGold             float64                 `json:"kills_gold"`           // Champion kills
-	KillsPercent          float64                 `json:"kills_percent"`
-	AssistsGold           float64                 `json:"assists_gold"`         // Assist gold
-	AssistsPercent        float64                 `json:"assists_percent"`
-	ObjectiveGold         float64                 `json:"objective_gold"`       // Dragons, Baron, turrets
-	ObjectivePercent      float64                 `json:"objective_percent"`
-	PassiveGold           float64                 `json:"passive_gold"`         // Base income
-	PassivePercent        float64                 `json:"passive_percent"`
-	ItemsGold             float64                 `json:"items_gold"`           // Item actives, selling items
-	ItemsPercent          float64                 `json:"items_percent"`
-	
+	FarmingGold      float64 `json:"farming_gold"` // CS + monsters
+	FarmingPercent   float64 `json:"farming_percent"`
+	KillsGold        float64 `json:"kills_gold"` // Champion kills
+	KillsPercent     float64 `json:"kills_percent"`
+	AssistsGold      float64 `json:"assists_gold"` // Assist gold
+	AssistsPercent   float64 `json:"assists_percent"`
+	ObjectiveGold    float64 `json:"objective_gold"` // Dragons, Baron, turrets
+	ObjectivePercent float64 `json:"objective_percent"`
+	PassiveGold      float64 `json:"passive_gold"` // Base income
+	PassivePercent   float64 `json:"passive_percent"`
+	ItemsGold        float64 `json:"items_gold"` // Item actives, selling items
+	ItemsPercent     float64 `json:"items_percent"`
+
 	// Efficiency Metrics
-	CSGoldPerMinute       float64                 `json:"cs_gold_per_minute"`
-	KillGoldEfficiency    float64                 `json:"kill_gold_efficiency"` // Gold per kill vs deaths lost
-	ObjectiveGoldShare    float64                 `json:"objective_gold_share"` // Team objective gold %
+	CSGoldPerMinute    float64 `json:"cs_gold_per_minute"`
+	KillGoldEfficiency float64 `json:"kill_gold_efficiency"` // Gold per kill vs deaths lost
+	ObjectiveGoldShare float64 `json:"objective_gold_share"` // Team objective gold %
 }
 
 // ItemEfficiencyData represents item purchase and utilization efficiency
 type ItemEfficiencyData struct {
-	AverageItemsCompleted   int                   `json:"average_items_completed"`
-	ItemCompletionSpeed     float64               `json:"item_completion_speed"`      // Items per minute
-	GoldSpentOnItems        float64               `json:"gold_spent_on_items"`
-	ItemValueEfficiency     float64               `json:"item_value_efficiency"`      // Value gained vs gold spent
-	
+	AverageItemsCompleted int     `json:"average_items_completed"`
+	ItemCompletionSpeed   float64 `json:"item_completion_speed"` // Items per minute
+	GoldSpentOnItems      float64 `json:"gold_spent_on_items"`
+	ItemValueEfficiency   float64 `json:"item_value_efficiency"` // Value gained vs gold spent
+
 	// Item Categories
-	DamageItemsPercent      float64               `json:"damage_items_percent"`
-	DefensiveItemsPercent   float64               `json:"defensive_items_percent"`
-	UtilityItemsPercent     float64               `json:"utility_items_percent"`
-	
+	DamageItemsPercent    float64 `json:"damage_items_percent"`
+	DefensiveItemsPercent float64 `json:"defensive_items_percent"`
+	UtilityItemsPercent   float64 `json:"utility_items_percent"`
+
 	// Power Spikes
-	FirstItemTiming         float64               `json:"first_item_timing"`          // Minutes to first item
-	CoreItemsTiming         float64               `json:"core_items_timing"`          // Minutes to core build
-	SixItemsTiming          float64               `json:"six_items_timing"`           // Minutes to full build
-	
+	FirstItemTiming float64 `json:"first_item_timing"` // Minutes to first item
+	CoreItemsTiming float64 `json:"core_items_timing"` // Minutes to core build
+	SixItemsTiming  float64 `json:"six_items_timing"`  // Minutes to full build
+
 	// Optimization Metrics
-	OptimalItemOrder        bool                  `json:"optimal_item_order"`
-	CounterBuildEfficiency  float64               `json:"counter_build_efficiency"`   // Adapting to enemy team
-	ComponentUtilization    float64               `json:"component_utilization"`      // Using item components effectively
+	OptimalItemOrder       bool    `json:"optimal_item_order"`
+	CounterBuildEfficiency float64 `json:"counter_build_efficiency"` // Adapting to enemy team
+	ComponentUtilization   float64 `json:"component_utilization"`    // Using item components effectively
 }
 
 // SpendingPatternsData represents gold spending behavior analysis
 type SpendingPatternsData struct {
-	ControlWardsPercent     float64               `json:"control_wards_percent"`      // % gold on control wards
-	ConsumablesPercent      float64               `json:"consumables_percent"`        // % gold on potions
-	BackTiming              BackTimingData        `json:"back_timing"`
-	GoldEfficiencyByPhase   []PhaseGoldEfficiency `json:"gold_efficiency_by_phase"`
-	
+	ControlWardsPercent   float64               `json:"control_wards_percent"` // % gold on control wards
+	ConsumablesPercent    float64               `json:"consumables_percent"`   // % gold on potions
+	BackTiming            BackTimingData        `json:"back_timing"`
+	GoldEfficiencyByPhase []PhaseGoldEfficiency `json:"gold_efficiency_by_phase"`
+
 	// Shopping Behavior
-	AverageShoppingTime     float64               `json:"average_shopping_time"`      // Seconds in shop per back
-	OptimalBackTiming       float64               `json:"optimal_back_timing"`        // % of backs at good timings
-	EmergencyBacks          int                   `json:"emergency_backs"`            // Forced backs due to low HP
+	AverageShoppingTime float64 `json:"average_shopping_time"` // Seconds in shop per back
+	OptimalBackTiming   float64 `json:"optimal_back_timing"`   // % of backs at good timings
+	EmergencyBacks      int     `json:"emergency_backs"`       // Forced backs due to low HP
 }
 
 // BackTimingData represents recall timing analysis
 type BackTimingData struct {
-	AverageBackTiming       float64               `json:"average_back_timing"`        // Minutes between backs
-	OptimalBacks            int                   `json:"optimal_backs"`              // Good timing backs
-	SuboptimalBacks         int                   `json:"suboptimal_backs"`          // Poor timing backs
-	ForcedbBacks            int                   `json:"forced_backs"`               // Emergency backs
-	GoldPerBack             float64               `json:"gold_per_back"`              // Average gold spent per back
+	AverageBackTiming float64 `json:"average_back_timing"` // Minutes between backs
+	OptimalBacks      int     `json:"optimal_backs"`       // Good timing backs
+	SuboptimalBacks   int     `json:"suboptimal_backs"`    // Poor timing backs
+	ForcedbBacks      int     `json:"forced_backs"`        // Emergency backs
+	GoldPerBack       float64 `json:"gold_per_back"`       // Average gold spent per back
 }
 
 // PhaseGoldEfficiency represents gold efficiency by game phase
 type PhaseGoldEfficiency struct {
-	Phase                   string                `json:"phase"`                      // "early", "mid", "late"
-	GoldPerMinute           float64               `json:"gold_per_minute"`
-	SpendingEfficiency      float64               `json:"spending_efficiency"`        // 0-100
-	IncomeEfficiency        float64               `json:"income_efficiency"`          // 0-100
-	EconomyScore            float64               `json:"economy_score"`              // Combined score
+	Phase              string  `json:"phase"` // "early", "mid", "late"
+	GoldPerMinute      float64 `json:"gold_per_minute"`
+	SpendingEfficiency float64 `json:"spending_efficiency"` // 0-100
+	IncomeEfficiency   float64 `json:"income_efficiency"`   // 0-100
+	EconomyScore       float64 `json:"economy_score"`       // Combined score
 }
 
 // GoldPhaseData represents gold metrics for a game phase
 type GoldPhaseData struct {
-	Phase                   string                `json:"phase"`
-	AverageGoldPerMinute    float64               `json:"average_gold_per_minute"`
-	GoldAdvantage           float64               `json:"gold_advantage"`             // vs enemy laner
-	FarmingEfficiency       float64               `json:"farming_efficiency"`         // % of available CS gold
-	KillParticipation       float64               `json:"kill_participation"`         // % of team's kill gold
-	ObjectiveParticipation  float64               `json:"objective_participation"`    // % of team's objective gold
-	SpendingScore           float64               `json:"spending_score"`             // 0-100 efficiency
-	EfficiencyRating        string                `json:"efficiency_rating"`
+	Phase                  string  `json:"phase"`
+	AverageGoldPerMinute   float64 `json:"average_gold_per_minute"`
+	GoldAdvantage          float64 `json:"gold_advantage"`          // vs enemy laner
+	FarmingEfficiency      float64 `json:"farming_efficiency"`      // % of available CS gold
+	KillParticipation      float64 `json:"kill_participation"`      // % of team's kill gold
+	ObjectiveParticipation float64 `json:"objective_participation"` // % of team's objective gold
+	SpendingScore          float64 `json:"spending_score"`          // 0-100 efficiency
+	EfficiencyRating       string  `json:"efficiency_rating"`
 }
 
 // GoldBenchmark represents gold performance benchmarks
 type GoldBenchmark struct {
-	Category                string                `json:"category"`
-	AverageGoldPerMinute    float64               `json:"average_gold_per_minute"`
-	Top10Percent            float64               `json:"top_10_percent"`
-	Top25Percent            float64               `json:"top_25_percent"`
-	Median                  float64               `json:"median"`
-	PlayerPercentile        float64               `json:"player_percentile"`
-	EfficiencyAverage       float64               `json:"efficiency_average"`
+	Category             string  `json:"category"`
+	AverageGoldPerMinute float64 `json:"average_gold_per_minute"`
+	Top10Percent         float64 `json:"top_10_percent"`
+	Top25Percent         float64 `json:"top_25_percent"`
+	Median               float64 `json:"median"`
+	PlayerPercentile     float64 `json:"player_percentile"`
+	EfficiencyAverage    float64 `json:"efficiency_average"`
 }
 
 // IncomeOptimizationData represents income improvement opportunities
 type IncomeOptimizationData struct {
-	CSImprovementPotential    float64             `json:"cs_improvement_potential"`     // Additional GPM from better CS
-	KillParticipationPotential float64           `json:"kp_improvement_potential"`     // Additional GPM from better KP
-	ObjectiveImprovementPotential float64        `json:"objective_improvement_potential"` // Additional GPM from objectives
-	
+	CSImprovementPotential        float64 `json:"cs_improvement_potential"`        // Additional GPM from better CS
+	KillParticipationPotential    float64 `json:"kp_improvement_potential"`        // Additional GPM from better KP
+	ObjectiveImprovementPotential float64 `json:"objective_improvement_potential"` // Additional GPM from objectives
+
 	// Specific Recommendations
-	EarlyFarmingSuggestions   []string            `json:"early_farming_suggestions"`
-	MidGamePositionSuggestions []string           `json:"mid_game_position_suggestions"`
-	LateGameFocusSuggestions  []string            `json:"late_game_focus_suggestions"`
-	
+	EarlyFarmingSuggestions    []string `json:"early_farming_suggestions"`
+	MidGamePositionSuggestions []string `json:"mid_game_position_suggestions"`
+	LateGameFocusSuggestions   []string `json:"late_game_focus_suggestions"`
+
 	// Potential Impact
-	ExpectedGPMIncrease       float64             `json:"expected_gpm_increase"`
-	ExpectedWinRateIncrease   float64             `json:"expected_win_rate_increase"`
+	ExpectedGPMIncrease     float64 `json:"expected_gpm_increase"`
+	ExpectedWinRateIncrease float64 `json:"expected_win_rate_increase"`
 }
 
 // SpendingOptimizationData represents spending efficiency improvements
 type SpendingOptimizationData struct {
-	ItemOrderOptimization     []string            `json:"item_order_optimization"`
-	BackTimingOptimization    []string            `json:"back_timing_optimization"`
-	GoldAllocationSuggestions []string            `json:"gold_allocation_suggestions"`
-	
+	ItemOrderOptimization     []string `json:"item_order_optimization"`
+	BackTimingOptimization    []string `json:"back_timing_optimization"`
+	GoldAllocationSuggestions []string `json:"gold_allocation_suggestions"`
+
 	// Component Management
-	ComponentBuyingTips       []string            `json:"component_buying_tips"`
-	PowerSpikeTiming          []string            `json:"power_spike_timing"`
-	
+	ComponentBuyingTips []string `json:"component_buying_tips"`
+	PowerSpikeTiming    []string `json:"power_spike_timing"`
+
 	// Economic Priorities
-	EarlyGamePriorities       []string            `json:"early_game_priorities"`
-	MidGamePriorities         []string            `json:"mid_game_priorities"`
-	LateGamePriorities        []string            `json:"late_game_priorities"`
+	EarlyGamePriorities []string `json:"early_game_priorities"`
+	MidGamePriorities   []string `json:"mid_game_priorities"`
+	LateGamePriorities  []string `json:"late_game_priorities"`
 }
 
 // GoldTrendPoint represents gold performance over time
 type GoldTrendPoint struct {
-	Date                      time.Time           `json:"date"`
-	GoldPerMinute             float64             `json:"gold_per_minute"`
-	GoldEfficiency            float64             `json:"gold_efficiency"`
-	FarmingEfficiency         float64             `json:"farming_efficiency"`
-	SpendingEfficiency        float64             `json:"spending_efficiency"`
-	MovingAverage             float64             `json:"moving_average"`
+	Date               time.Time `json:"date"`
+	GoldPerMinute      float64   `json:"gold_per_minute"`
+	GoldEfficiency     float64   `json:"gold_efficiency"`
+	FarmingEfficiency  float64   `json:"farming_efficiency"`
+	SpendingEfficiency float64   `json:"spending_efficiency"`
+	MovingAverage      float64   `json:"moving_average"`
 }
 
 // GoldRecommendation represents actionable gold efficiency advice
 type GoldRecommendation struct {
-	Priority                  string              `json:"priority"`       // "high", "medium", "low"
-	Category                  string              `json:"category"`       // "farming", "spending", "timing", "itemization"
-	Title                     string              `json:"title"`
-	Description               string              `json:"description"`
-	Impact                    string              `json:"impact"`
-	GamePhase                 []string            `json:"game_phase"`
-	ExpectedGPMIncrease       float64             `json:"expected_gpm_increase"`
-	ImplementationDifficulty  string              `json:"implementation_difficulty"` // "easy", "medium", "hard"
+	Priority                 string   `json:"priority"` // "high", "medium", "low"
+	Category                 string   `json:"category"` // "farming", "spending", "timing", "itemization"
+	Title                    string   `json:"title"`
+	Description              string   `json:"description"`
+	Impact                   string   `json:"impact"`
+	GamePhase                []string `json:"game_phase"`
+	ExpectedGPMIncrease      float64  `json:"expected_gpm_increase"`
+	ImplementationDifficulty string   `json:"implementation_difficulty"` // "easy", "medium", "hard"
 }
 
 // MatchGoldData represents gold performance in a specific match
 type MatchGoldData struct {
-	MatchID                   string              `json:"match_id"`
-	Champion                  string              `json:"champion"`
-	Position                  string              `json:"position"`
-	TotalGoldEarned           int                 `json:"total_gold_earned"`
-	GoldPerMinute             float64             `json:"gold_per_minute"`
-	GoldEfficiencyScore       float64             `json:"gold_efficiency_score"`
-	FarmingGold               int                 `json:"farming_gold"`
-	KillGold                  int                 `json:"kill_gold"`
-	ObjectiveGold             int                 `json:"objective_gold"`
-	ItemsCompleted            int                 `json:"items_completed"`
-	ControlWardsSpent         int                 `json:"control_wards_spent"`
-	GameDuration              int                 `json:"game_duration"`
-	Result                    string              `json:"result"`
-	Date                      time.Time           `json:"date"`
-	GoldAdvantageAt15         int                 `json:"gold_advantage_at_15"`
-	TeamGoldShare             float64             `json:"team_gold_share"`
+	MatchID             string    `json:"match_id"`
+	Champion            string    `json:"champion"`
+	Position            string    `json:"position"`
+	TotalGoldEarned     int       `json:"total_gold_earned"`
+	GoldPerMinute       float64   `json:"gold_per_minute"`
+	GoldEfficiencyScore float64   `json:"gold_efficiency_score"`
+	FarmingGold         int       `json:"farming_gold"`
+	KillGold            int       `json:"kill_gold"`
+	ObjectiveGold       int       `json:"objective_gold"`
+	ItemsCompleted      int       `json:"items_completed"`
+	ControlWardsSpent   int       `json:"control_wards_spent"`
+	GameDuration        int       `json:"game_duration"`
+	Result              string    `json:"result"`
+	Date                time.Time `json:"date"`
+	GoldAdvantageAt15   int       `json:"gold_advantage_at_15"`
+	TeamGoldShare       float64   `json:"team_gold_share"`
 }
 
 // NewGoldAnalyticsService creates a new gold analytics service
@@ -324,10 +324,10 @@ func (gas *GoldAnalyticsService) calculateGoldBasics(analysis *GoldAnalysis, mat
 	for _, match := range matches {
 		goldEarned := float64(match.GoldEarned)
 		minutes := float64(match.GameDuration) / 60.0
-		
+
 		totalGold += goldEarned
 		totalMinutes += minutes
-		
+
 		// Calculate efficiency score for this match (0-100)
 		gpm := goldEarned / minutes
 		efficiencyScore := gas.calculateMatchGoldEfficiency(match)
@@ -348,28 +348,28 @@ func (gas *GoldAnalyticsService) analyzeGoldSources(analysis *GoldAnalysis, matc
 	totalAssists := 0.0
 	totalObjectives := 0.0
 	totalPassive := 0.0
-	
+
 	for _, match := range matches {
 		goldEarned := float64(match.GoldEarned)
 		totalGold += goldEarned
-		
+
 		// Estimate gold sources based on match data
-		farmingGold := float64(match.CS) * 20.0 + float64(match.NeutralMinionsKilled) * 30.0 // Rough estimates
-		killsGold := float64(match.Kills) * 300.0 // Average kill gold
-		assistsGold := float64(match.Assists) * 150.0 // Average assist gold
-		
+		farmingGold := float64(match.CS)*20.0 + float64(match.NeutralMinionsKilled)*30.0 // Rough estimates
+		killsGold := float64(match.Kills) * 300.0                                        // Average kill gold
+		assistsGold := float64(match.Assists) * 150.0                                    // Average assist gold
+
 		totalFarming += farmingGold
 		totalKills += killsGold
 		totalAssists += assistsGold
-		
+
 		// Estimate other sources
-		objectiveGold := goldEarned * 0.15 // Rough estimate for objectives
+		objectiveGold := goldEarned * 0.15               // Rough estimate for objectives
 		passiveGold := float64(match.GameDuration) * 1.5 // Base gold per second
-		
+
 		totalObjectives += objectiveGold
 		totalPassive += passiveGold
 	}
-	
+
 	analysis.GoldSources = GoldSourcesData{
 		FarmingGold:      totalFarming / float64(len(matches)),
 		FarmingPercent:   (totalFarming / totalGold) * 100,
@@ -381,9 +381,9 @@ func (gas *GoldAnalyticsService) analyzeGoldSources(analysis *GoldAnalysis, matc
 		ObjectivePercent: (totalObjectives / totalGold) * 100,
 		PassiveGold:      totalPassive / float64(len(matches)),
 		PassivePercent:   (totalPassive / totalGold) * 100,
-		
+
 		// Calculate efficiency metrics
-		CSGoldPerMinute:   (totalFarming / totalGold) * analysis.AverageGoldPerMinute,
+		CSGoldPerMinute:    (totalFarming / totalGold) * analysis.AverageGoldPerMinute,
 		KillGoldEfficiency: gas.calculateKillGoldEfficiency(matches),
 		ObjectiveGoldShare: 25.0, // Placeholder - would need team data
 	}
@@ -394,34 +394,34 @@ func (gas *GoldAnalyticsService) analyzeItemEfficiency(analysis *GoldAnalysis, m
 	totalItems := 0.0
 	totalGameTime := 0.0
 	firstItemTimings := make([]float64, 0)
-	
+
 	for _, match := range matches {
 		totalItems += float64(match.ItemsPurchased)
 		gameMinutes := float64(match.GameDuration) / 60.0
 		totalGameTime += gameMinutes
-		
+
 		// Estimate first item timing (rough calculation)
 		if match.GoldEarned > 3000 { // Assume first item around 3000+ gold
-			firstItemTimings = append(firstItemTimings, gameMinutes * 0.2) // Rough estimate
+			firstItemTimings = append(firstItemTimings, gameMinutes*0.2) // Rough estimate
 		}
 	}
-	
+
 	analysis.ItemEfficiency = ItemEfficiencyData{
-		AverageItemsCompleted:  int(totalItems / float64(len(matches))),
-		ItemCompletionSpeed:    totalItems / totalGameTime,
-		GoldSpentOnItems:       analysis.AverageGoldEarned * 0.85, // Most gold goes to items
-		ItemValueEfficiency:    75.0, // Placeholder efficiency score
-		
+		AverageItemsCompleted: int(totalItems / float64(len(matches))),
+		ItemCompletionSpeed:   totalItems / totalGameTime,
+		GoldSpentOnItems:      analysis.AverageGoldEarned * 0.85, // Most gold goes to items
+		ItemValueEfficiency:   75.0,                              // Placeholder efficiency score
+
 		// Rough estimates for item categories
-		DamageItemsPercent:     60.0,
-		DefensiveItemsPercent:  25.0,
-		UtilityItemsPercent:    15.0,
-		
+		DamageItemsPercent:    60.0,
+		DefensiveItemsPercent: 25.0,
+		UtilityItemsPercent:   15.0,
+
 		// Timing estimates
-		FirstItemTiming:        gas.calculateMean(firstItemTimings),
-		CoreItemsTiming:        20.0, // Minutes to core items
-		SixItemsTiming:         35.0, // Minutes to full build
-		
+		FirstItemTiming: gas.calculateMean(firstItemTimings),
+		CoreItemsTiming: 20.0, // Minutes to core items
+		SixItemsTiming:  35.0, // Minutes to full build
+
 		// Optimization metrics
 		OptimalItemOrder:       true,
 		CounterBuildEfficiency: 70.0,
@@ -434,15 +434,15 @@ func (gas *GoldAnalyticsService) analyzeSpendingPatterns(analysis *GoldAnalysis,
 	analysis.SpendingPatterns = SpendingPatternsData{
 		ControlWardsPercent: 5.0, // Typical % spent on control wards
 		ConsumablesPercent:  3.0, // Typical % spent on consumables
-		
+
 		BackTiming: BackTimingData{
 			AverageBackTiming: 8.0, // Minutes between backs
-			OptimalBacks:     6,
-			SuboptimalBacks:  3,
-			ForcedbBacks:     2,
-			GoldPerBack:      1200.0,
+			OptimalBacks:      6,
+			SuboptimalBacks:   3,
+			ForcedbBacks:      2,
+			GoldPerBack:       1200.0,
 		},
-		
+
 		GoldEfficiencyByPhase: []PhaseGoldEfficiency{
 			{
 				Phase:              "early",
@@ -466,10 +466,10 @@ func (gas *GoldAnalyticsService) analyzeSpendingPatterns(analysis *GoldAnalysis,
 				EconomyScore:       80.0,
 			},
 		},
-		
-		AverageShoppingTime:  15.0,
-		OptimalBackTiming:    70.0,
-		EmergencyBacks:       2,
+
+		AverageShoppingTime: 15.0,
+		OptimalBackTiming:   70.0,
+		EmergencyBacks:      2,
 	}
 }
 
@@ -478,14 +478,14 @@ func (gas *GoldAnalyticsService) analyzeGoldPhases(analysis *GoldAnalysis, match
 	analysis.EarlyGameGold = GoldPhaseData{
 		Phase:                  "early",
 		AverageGoldPerMinute:   analysis.AverageGoldPerMinute * 0.7,
-		GoldAdvantage:          50.0,  // Average gold advantage
-		FarmingEfficiency:      85.0,  // % of available CS
-		KillParticipation:      15.0,  // % of team kills
-		ObjectiveParticipation: 20.0,  // % of objectives
+		GoldAdvantage:          50.0, // Average gold advantage
+		FarmingEfficiency:      85.0, // % of available CS
+		KillParticipation:      15.0, // % of team kills
+		ObjectiveParticipation: 20.0, // % of objectives
 		SpendingScore:          80.0,
 		EfficiencyRating:       gas.rateEfficiency(80.0),
 	}
-	
+
 	analysis.MidGameGold = GoldPhaseData{
 		Phase:                  "mid",
 		AverageGoldPerMinute:   analysis.AverageGoldPerMinute * 1.2,
@@ -496,7 +496,7 @@ func (gas *GoldAnalyticsService) analyzeGoldPhases(analysis *GoldAnalysis, match
 		SpendingScore:          85.0,
 		EfficiencyRating:       gas.rateEfficiency(85.0),
 	}
-	
+
 	analysis.LateGameGold = GoldPhaseData{
 		Phase:                  "late",
 		AverageGoldPerMinute:   analysis.AverageGoldPerMinute * 0.9,
@@ -597,33 +597,33 @@ func (gas *GoldAnalyticsService) analyzeGoldTrend(analysis *GoldAnalysis, matche
 // generateOptimizationSuggestions creates income and spending optimization advice
 func (gas *GoldAnalyticsService) generateOptimizationSuggestions(analysis *GoldAnalysis) {
 	// Income optimization
-	csImprovement := 50.0 // Potential additional GPM from better CS
-	kpImprovement := 30.0 // Potential additional GPM from better kill participation
+	csImprovement := 50.0  // Potential additional GPM from better CS
+	kpImprovement := 30.0  // Potential additional GPM from better kill participation
 	objImprovement := 25.0 // Potential additional GPM from better objective control
 
 	analysis.IncomeOptimization = IncomeOptimizationData{
 		CSImprovementPotential:        csImprovement,
 		KillParticipationPotential:    kpImprovement,
 		ObjectiveImprovementPotential: objImprovement,
-		
+
 		EarlyFarmingSuggestions: []string{
 			"Focus on last-hitting minions more accurately",
 			"Take jungle camps when available",
 			"Prioritize farming over trades in early game",
 		},
-		
+
 		MidGamePositionSuggestions: []string{
 			"Be present for dragon and herald fights",
 			"Farm side lanes safely while team groups",
 			"Take enemy jungle camps when ahead",
 		},
-		
+
 		LateGameFocusSuggestions: []string{
 			"Focus on team fights over farming",
 			"Secure baron and elder dragon",
 			"Farm efficiently between team objectives",
 		},
-		
+
 		ExpectedGPMIncrease:     csImprovement + kpImprovement + objImprovement,
 		ExpectedWinRateIncrease: 5.0,
 	}
@@ -635,31 +635,31 @@ func (gas *GoldAnalyticsService) generateOptimizationSuggestions(analysis *GoldA
 			"Build components that help in lane first",
 			"Consider enemy team comp in item choices",
 		},
-		
+
 		BackTimingOptimization: []string{
 			"Back when you have gold for meaningful items",
 			"Don't back with small amounts of gold",
 			"Time backs with wave management",
 		},
-		
+
 		GoldAllocationSuggestions: []string{
 			"Spend 5-8% of gold on control wards",
 			"Buy consumables for sustain in lane",
 			"Prioritize power spikes for objectives",
 		},
-		
+
 		ComponentBuyingTips: []string{
 			"Buy the most useful components first",
 			"Consider component passive effects",
 			"Build components that help current game state",
 		},
-		
+
 		PowerSpikeTiming: []string{
 			"Plan team fights around item completions",
 			"Communicate power spikes to team",
 			"Use advantage windows effectively",
 		},
-		
+
 		EarlyGamePriorities: []string{"Farming tools", "Sustain items", "Basic components"},
 		MidGamePriorities:   []string{"Core items", "Team fight items", "Control wards"},
 		LateGamePriorities:  []string{"Situational items", "Defensive options", "Team utility"},
@@ -713,7 +713,7 @@ func (gas *GoldAnalyticsService) generateGoldRecommendations(analysis *GoldAnaly
 	}
 
 	// Check kill participation
-	if analysis.GoldSources.KillsPercent + analysis.GoldSources.AssistsPercent < 20 {
+	if analysis.GoldSources.KillsPercent+analysis.GoldSources.AssistsPercent < 20 {
 		recommendations = append(recommendations, GoldRecommendation{
 			Priority:                 "medium",
 			Category:                 "teamwork",
@@ -770,11 +770,11 @@ func (gas *GoldAnalyticsService) generateGoldTrendData(analysis *GoldAnalysis, m
 		}
 
 		point := GoldTrendPoint{
-			Date:              matches[i].Date,
-			GoldPerMinute:     gpm,
-			GoldEfficiency:    gas.calculateMatchGoldEfficiency(matches[i]),
-			FarmingEfficiency: float64(matches[i].CS) / gameMinutes * 10.0, // CS per 10 min
-			SpendingEfficiency: 80.0, // Placeholder
+			Date:               matches[i].Date,
+			GoldPerMinute:      gpm,
+			GoldEfficiency:     gas.calculateMatchGoldEfficiency(matches[i]),
+			FarmingEfficiency:  float64(matches[i].CS) / gameMinutes * 10.0, // CS per 10 min
+			SpendingEfficiency: 80.0,                                        // Placeholder
 		}
 
 		// Calculate moving average
@@ -817,7 +817,7 @@ func (gas *GoldAnalyticsService) calculateMatchGoldEfficiency(match models.Match
 
 	gpm := float64(match.GoldEarned) / gameMinutes
 	csPerMin := float64(match.CS) / gameMinutes
-	
+
 	// Base efficiency on GPM and CS rate
 	baseScore := 50.0
 	if gpm > 400 {
@@ -829,26 +829,26 @@ func (gas *GoldAnalyticsService) calculateMatchGoldEfficiency(match models.Match
 	if match.Kills+match.Assists > match.Deaths*2 {
 		baseScore += 15.0
 	}
-	
+
 	return math.Max(0.0, math.Min(100.0, baseScore))
 }
 
 func (gas *GoldAnalyticsService) calculateKillGoldEfficiency(matches []models.MatchData) float64 {
 	totalKillGold := 0.0
 	totalDeathCost := 0.0
-	
+
 	for _, match := range matches {
 		killGold := float64(match.Kills+match.Assists) * 225.0 // Average kill/assist gold
-		deathCost := float64(match.Deaths) * 200.0 // Average death cost
-		
+		deathCost := float64(match.Deaths) * 200.0             // Average death cost
+
 		totalKillGold += killGold
 		totalDeathCost += deathCost
 	}
-	
+
 	if totalDeathCost == 0 {
 		return 100.0
 	}
-	
+
 	return (totalKillGold / (totalKillGold + totalDeathCost)) * 100.0
 }
 
@@ -859,7 +859,7 @@ func (gas *GoldAnalyticsService) calculateSourcesBalance(sources GoldSourcesData
 		sources.KillsPercent + sources.AssistsPercent,
 		sources.ObjectivePercent,
 	}
-	
+
 	// Calculate variance - lower variance means better balance
 	mean := (percentages[0] + percentages[1] + percentages[2]) / 3.0
 	variance := 0.0
@@ -867,7 +867,7 @@ func (gas *GoldAnalyticsService) calculateSourcesBalance(sources GoldSourcesData
 		variance += (p - mean) * (p - mean)
 	}
 	variance /= float64(len(percentages))
-	
+
 	// Convert to 0-1 scale where lower variance = higher score
 	return 1.0 - (variance / 1000.0) // Normalize variance
 }
@@ -876,10 +876,10 @@ func (gas *GoldAnalyticsService) calculateLinearRegression(values []float64) (sl
 	if len(values) < 2 {
 		return 0, 0
 	}
-	
+
 	n := float64(len(values))
 	sumX, sumY, sumXY, sumXX := 0.0, 0.0, 0.0, 0.0
-	
+
 	for i, y := range values {
 		x := float64(i)
 		sumX += x
@@ -887,29 +887,29 @@ func (gas *GoldAnalyticsService) calculateLinearRegression(values []float64) (sl
 		sumXY += x * y
 		sumXX += x * x
 	}
-	
+
 	denominator := n*sumXX - sumX*sumX
 	if denominator == 0 {
 		return 0, 0
 	}
-	
+
 	slope = (n*sumXY - sumX*sumY) / denominator
-	
+
 	// Calculate R-squared
 	meanY := sumY / n
 	ssTotal, ssRes := 0.0, 0.0
-	
+
 	for i, y := range values {
 		predicted := slope*float64(i) + (sumY-slope*sumX)/n
 		ssTotal += (y - meanY) * (y - meanY)
 		ssRes += (y - predicted) * (y - predicted)
 	}
-	
+
 	confidence = 1 - (ssRes / ssTotal)
 	if confidence < 0 {
 		confidence = 0
 	}
-	
+
 	return slope, confidence
 }
 

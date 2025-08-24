@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type ImprovementHandler struct {

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type SkillProgressionHandler struct {
@@ -27,69 +27,69 @@ func (h *SkillProgressionHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		skillProgression.POST("/analyze", h.AnalyzeSkillProgression)
 		skillProgression.GET("/overview/:summoner_id", h.GetProgressionOverview)
 		skillProgression.GET("/detailed/:summoner_id", h.GetDetailedProgression)
-		
+
 		// Skill categories
 		skillProgression.GET("/categories/:summoner_id", h.GetSkillCategories)
 		skillProgression.GET("/category/:summoner_id/:category", h.GetCategoryDetail)
 		skillProgression.POST("/categories/track", h.TrackSkillCategory)
-		
+
 		// Rank progression
 		skillProgression.GET("/rank-history/:summoner_id", h.GetRankHistory)
 		skillProgression.GET("/rank-prediction/:summoner_id", h.GetRankPrediction)
 		skillProgression.POST("/rank/record", h.RecordRankChange)
-		
+
 		// Champion mastery progression
 		skillProgression.GET("/champion-mastery/:summoner_id", h.GetChampionMastery)
 		skillProgression.GET("/champion-mastery/:summoner_id/:champion", h.GetChampionMasteryDetail)
 		skillProgression.POST("/champion-mastery/update", h.UpdateChampionMastery)
-		
+
 		// Core skills
 		skillProgression.GET("/core-skills/:summoner_id", h.GetCoreSkills)
 		skillProgression.GET("/core-skills/:summoner_id/:skill", h.GetCoreSkillDetail)
 		skillProgression.POST("/core-skills/measure", h.MeasureCoreSkill)
-		
+
 		// Learning curve analysis
 		skillProgression.GET("/learning-curve/:summoner_id", h.GetLearningCurve)
 		skillProgression.GET("/learning-efficiency/:summoner_id", h.GetLearningEfficiency)
 		skillProgression.POST("/learning-curve/update", h.UpdateLearningCurve)
-		
+
 		// Milestones
 		skillProgression.GET("/milestones/:summoner_id", h.GetMilestones)
 		skillProgression.POST("/milestones/achieve", h.AchieveMilestone)
 		skillProgression.GET("/milestones/available/:summoner_id", h.GetAvailableMilestones)
-		
+
 		// Predictions
 		skillProgression.GET("/predictions/:summoner_id", h.GetPredictions)
 		skillProgression.POST("/predictions/validate", h.ValidatePrediction)
 		skillProgression.GET("/potential/:summoner_id", h.GetPotentialAssessment)
-		
+
 		// Recommendations
 		skillProgression.GET("/recommendations/:summoner_id", h.GetRecommendations)
 		skillProgression.POST("/recommendations/:id/start", h.StartRecommendation)
 		skillProgression.POST("/recommendations/:id/complete", h.CompleteRecommendation)
 		skillProgression.POST("/recommendations/:id/dismiss", h.DismissRecommendation)
-		
+
 		// Breakthroughs and insights
 		skillProgression.GET("/breakthroughs/:summoner_id", h.GetBreakthroughs)
 		skillProgression.POST("/breakthroughs/record", h.RecordBreakthrough)
 		skillProgression.GET("/insights/:summoner_id", h.GetSkillInsights)
-		
+
 		// Practice tracking
 		skillProgression.GET("/practice-sessions/:summoner_id", h.GetPracticeSessions)
 		skillProgression.POST("/practice-sessions/start", h.StartPracticeSession)
 		skillProgression.POST("/practice-sessions/:id/complete", h.CompletePracticeSession)
-		
+
 		// Goals management
 		skillProgression.GET("/goals/:summoner_id", h.GetSkillGoals)
 		skillProgression.POST("/goals/create", h.CreateSkillGoal)
 		skillProgression.PUT("/goals/:id", h.UpdateSkillGoal)
 		skillProgression.DELETE("/goals/:id", h.DeleteSkillGoal)
-		
+
 		// Benchmarks and comparisons
 		skillProgression.GET("/benchmarks", h.GetSkillBenchmarks)
 		skillProgression.GET("/compare/:summoner_id", h.CompareToRank)
 		skillProgression.GET("/percentile/:summoner_id", h.GetSkillPercentiles)
-		
+
 		// Trends and analytics
 		skillProgression.GET("/trends/:summoner_id", h.GetProgressionTrends)
 		skillProgression.GET("/analytics/:summoner_id", h.GetProgressionAnalytics)
@@ -349,10 +349,10 @@ func (h *SkillProgressionHandler) TrackSkillCategory(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Skill category tracked successfully",
 		"data": gin.H{
-			"summonerId":  request.SummonerID,
-			"category":    request.Category,
-			"rating":      request.Rating,
-			"recordedAt":  time.Now(),
+			"summonerId": request.SummonerID,
+			"category":   request.Category,
+			"rating":     request.Rating,
+			"recordedAt": time.Now(),
 		},
 	})
 }
@@ -434,10 +434,10 @@ func (h *SkillProgressionHandler) GetRankPrediction(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"summonerId":      summonerID,
-		"rankPrediction":  analysis.Predictions.RankPrediction,
-		"timeFrame":       timeFrame,
-		"confidence":      analysis.Confidence,
+		"summonerId":     summonerID,
+		"rankPrediction": analysis.Predictions.RankPrediction,
+		"timeFrame":      timeFrame,
+		"confidence":     analysis.Confidence,
 	})
 }
 
@@ -455,12 +455,12 @@ func (h *SkillProgressionHandler) GetMilestones(c *gin.Context) {
 	// TODO: Query from database
 	mockMilestones := []gin.H{
 		{
-			"id":          "milestone_001",
-			"name":        "CS Master",
-			"category":    "mechanical",
-			"description": "Achieve 8+ CS/min average over 10 games",
-			"achieved":    true,
-			"progress":    100.0,
+			"id":              "milestone_001",
+			"name":            "CS Master",
+			"category":        "mechanical",
+			"description":     "Achieve 8+ CS/min average over 10 games",
+			"achieved":        true,
+			"progress":        100.0,
 			"achievementDate": time.Now().AddDate(0, 0, -15),
 		},
 		{
@@ -542,11 +542,11 @@ func (h *SkillProgressionHandler) GetRecommendations(c *gin.Context) {
 // StartPracticeSession starts a new practice session
 func (h *SkillProgressionHandler) StartPracticeSession(c *gin.Context) {
 	var request struct {
-		SummonerID   string   `json:"summonerId" binding:"required"`
-		SessionType  string   `json:"sessionType" binding:"required"`
-		FocusAreas   []string `json:"focusAreas"`
-		Goals        []string `json:"goals"`
-		Duration     int      `json:"duration"` // planned duration in minutes
+		SummonerID  string   `json:"summonerId" binding:"required"`
+		SessionType string   `json:"sessionType" binding:"required"`
+		FocusAreas  []string `json:"focusAreas"`
+		Goals       []string `json:"goals"`
+		Duration    int      `json:"duration"` // planned duration in minutes
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -571,13 +571,13 @@ func (h *SkillProgressionHandler) StartPracticeSession(c *gin.Context) {
 // CreateSkillGoal creates a new skill improvement goal
 func (h *SkillProgressionHandler) CreateSkillGoal(c *gin.Context) {
 	var request struct {
-		SummonerID  string    `json:"summonerId" binding:"required"`
-		GoalType    string    `json:"goalType" binding:"required"`
-		Target      string    `json:"target" binding:"required"`
-		Priority    string    `json:"priority"`
-		Deadline    string    `json:"deadline"`
-		Description string    `json:"description"`
-		Strategy    []string  `json:"strategy"`
+		SummonerID  string   `json:"summonerId" binding:"required"`
+		GoalType    string   `json:"goalType" binding:"required"`
+		Target      string   `json:"target" binding:"required"`
+		Priority    string   `json:"priority"`
+		Deadline    string   `json:"deadline"`
+		Description string   `json:"description"`
+		Strategy    []string `json:"strategy"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -694,12 +694,12 @@ func min(a, b int) int {
 // Additional handler methods for completeness
 func (h *SkillProgressionHandler) RecordRankChange(c *gin.Context) {
 	var request struct {
-		SummonerID   string  `json:"summonerId" binding:"required"`
-		NewRank      string  `json:"newRank" binding:"required"`
-		NewLP        int     `json:"newLp"`
-		Change       int     `json:"change"`
-		MatchResult  string  `json:"matchResult"`
-		Performance  float64 `json:"performance"`
+		SummonerID  string  `json:"summonerId" binding:"required"`
+		NewRank     string  `json:"newRank" binding:"required"`
+		NewLP       int     `json:"newLp"`
+		Change      int     `json:"change"`
+		MatchResult string  `json:"matchResult"`
+		Performance float64 `json:"performance"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {

@@ -67,9 +67,12 @@
   ],
   "permissions": {
     "allow": [
-      "Bash(/home/debian/herald/setup-hooks.sh:*)"
+      "Bash(./scripts/deploy-production-vps.sh:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "/"
+    ]
   }
 }

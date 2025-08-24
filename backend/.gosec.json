@@ -1,0 +1,135 @@
+{
+  "global": {
+    "nosec": false,
+    "show-ignored": false,
+    "fmt": "sonarqube",
+    "out": "gosec-report.json",
+    "severity": "medium"
+  },
+  "rules": {
+    "G101": {
+      "description": "Look for hardcoded credentials",
+      "enabled": true
+    },
+    "G102": {
+      "description": "Bind to all interfaces", 
+      "enabled": true
+    },
+    "G103": {
+      "description": "Audit the use of unsafe block",
+      "enabled": true
+    },
+    "G104": {
+      "description": "Audit errors not checked",
+      "enabled": true
+    },
+    "G105": {
+      "description": "Audit the use of math/big.Int.Exp",
+      "enabled": true
+    },
+    "G106": {
+      "description": "Audit the use of ssh.InsecureIgnoreHostKey",
+      "enabled": true
+    },
+    "G107": {
+      "description": "Url provided to HTTP request as taint input",
+      "enabled": true
+    },
+    "G108": {
+      "description": "Profiling endpoint automatically exposed",
+      "enabled": false
+    },
+    "G109": {
+      "description": "Potential Integer overflow made by strconv.Atoi result conversion to int16/32",
+      "enabled": true
+    },
+    "G110": {
+      "description": "Potential DoS vulnerability via decompression bomb",
+      "enabled": true
+    },
+    "G201": {
+      "description": "SQL query construction using format string",
+      "enabled": true
+    },
+    "G202": {
+      "description": "SQL query construction using string concatenation",
+      "enabled": true
+    },
+    "G203": {
+      "description": "Use of unescaped data in HTML templates",
+      "enabled": true
+    },
+    "G204": {
+      "description": "Audit use of command execution",
+      "enabled": true
+    },
+    "G301": {
+      "description": "Poor file permissions used when creating a directory",
+      "enabled": true
+    },
+    "G302": {
+      "description": "Poor file permissions used when creation file or using chmod",
+      "enabled": true
+    },
+    "G303": {
+      "description": "Creating tempfile using a predictable path",
+      "enabled": true
+    },
+    "G304": {
+      "description": "File path provided as taint input",
+      "enabled": true
+    },
+    "G305": {
+      "description": "File traversal when extracting zip archive",
+      "enabled": true
+    },
+    "G401": {
+      "description": "Detect the usage of DES, RC4, MD5 or SHA1",
+      "enabled": true
+    },
+    "G402": {
+      "description": "Look for bad TLS connection settings",
+      "enabled": true
+    },
+    "G403": {
+      "description": "Ensure minimum RSA key length of 2048 bits",
+      "enabled": true
+    },
+    "G404": {
+      "description": "Insecure random number source (rand)",
+      "enabled": true
+    },
+    "G501": {
+      "description": "Import blocklist: crypto/md5",
+      "enabled": true
+    },
+    "G502": {
+      "description": "Import blocklist: crypto/des",
+      "enabled": true
+    },
+    "G503": {
+      "description": "Import blocklist: crypto/rc4",
+      "enabled": true
+    },
+    "G504": {
+      "description": "Import blocklist: net/http/cgi",
+      "enabled": true
+    },
+    "G505": {
+      "description": "Import blocklist: crypto/sha1",
+      "enabled": true
+    },
+    "G601": {
+      "description": "Implicit memory aliasing in RangeStmt",
+      "enabled": true
+    }
+  },
+  "includes": [
+    "**/*.go"
+  ],
+  "excludes": [
+    "**/vendor/**",
+    "**/testdata/**",
+    "**/*_test.go"
+  ]
+}

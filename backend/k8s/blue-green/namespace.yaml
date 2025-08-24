@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: herald-blue
+  labels:
+    app: herald-gaming-analytics
+    environment: blue
+    deployment-strategy: blue-green
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: herald-green
+  labels:
+    app: herald-gaming-analytics
+    environment: green
+    deployment-strategy: blue-green
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: herald-production
+  labels:
+    app: herald-gaming-analytics
+    environment: production
+    deployment-strategy: active

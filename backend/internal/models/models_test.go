@@ -54,8 +54,8 @@ func TestUser_BeforeCreate(t *testing.T) {
 
 func TestUser_GetFullDisplayName(t *testing.T) {
 	tests := []struct {
-		name        string
-		user        User
+		name         string
+		user         User
 		expectedName string
 	}{
 		{
@@ -139,7 +139,7 @@ func TestUser_GetPrimaryRiotAccount_NoAccounts(t *testing.T) {
 
 func TestUser_HasValidSubscription(t *testing.T) {
 	now := time.Now()
-	
+
 	tests := []struct {
 		name         string
 		subscription *Subscription
@@ -187,9 +187,9 @@ func TestUser_HasValidSubscription(t *testing.T) {
 
 func TestUser_CanAddRiotAccount(t *testing.T) {
 	tests := []struct {
-		name         string
-		user         User
-		expected     bool
+		name     string
+		user     User
+		expected bool
 	}{
 		{
 			name: "free user with no accounts",
@@ -309,7 +309,7 @@ func TestMatchParticipant_CalculateCSPerMinute(t *testing.T) {
 				TotalCS: 60,
 			},
 			gameDurationSecs: 600, // 10 minutes
-			expected:         6.0,  // 60 / 10
+			expected:         6.0, // 60 / 10
 		},
 	}
 
@@ -373,7 +373,7 @@ func TestGamingPerformanceValidation(t *testing.T) {
 
 		// Test batch creation performance
 		start := time.Now()
-		
+
 		matches := make([]Match, 1000)
 		for i := 0; i < 1000; i++ {
 			matches[i] = Match{
@@ -399,14 +399,14 @@ func TestGamingPerformanceValidation(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Less(t, duration, 5*time.Second, "Batch operations must complete within 5 seconds for Herald.lol performance target")
-		
+
 		t.Logf("Created 1000 matches in %v (target: <5s)", duration)
 	})
 
 	t.Run("query performance with complex filters", func(t *testing.T) {
 		user := createTestUserModel(t, db)
 		account := createTestRiotAccountModel(t, db, user.ID)
-		
+
 		// Create diverse match data
 		for i := 0; i < 500; i++ {
 			match := Match{
@@ -429,13 +429,13 @@ func TestGamingPerformanceValidation(t *testing.T) {
 
 		// Test complex analytics queries
 		start := time.Now()
-		
+
 		var results []struct {
-			Champion     string
-			AvgKDA       float64
-			AvgCS        float64
-			WinRate      float64
-			MatchCount   int64
+			Champion   string
+			AvgKDA     float64
+			AvgCS      float64
+			WinRate    float64
+			MatchCount int64
 		}
 
 		// Simulate Herald.lol dashboard query
@@ -456,7 +456,7 @@ func TestGamingPerformanceValidation(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Less(t, duration, time.Second, "Complex analytics queries must be fast")
 		assert.NotEmpty(t, results)
-		
+
 		t.Logf("Complex analytics query completed in %v", duration)
 	})
 }
@@ -487,7 +487,7 @@ func TestGamingCalculationAccuracy(t *testing.T) {
 
 				kda := participant.CalculateKDA()
 				assert.Equal(t, tc.expected, kda, "KDA calculation must be precise for Herald.lol analytics")
-				
+
 				// Validate gaming constraints
 				assert.GreaterOrEqual(t, kda, 0.0, "KDA cannot be negative")
 				if tc.deaths == 0 && (tc.kills > 0 || tc.assists > 0) {
@@ -499,10 +499,10 @@ func TestGamingCalculationAccuracy(t *testing.T) {
 
 	t.Run("CS per minute precision", func(t *testing.T) {
 		testCases := []struct {
-			name         string
-			totalCS      int
-			duration     int
-			expectedCS   float64
+			name       string
+			totalCS    int
+			duration   int
+			expectedCS float64
 		}{
 			{"excellent ADC", 300, 1800, 10.0}, // 10 CS/min is excellent
 			{"good ADC", 240, 1800, 8.0},       // 8 CS/min is good
@@ -518,7 +518,7 @@ func TestGamingCalculationAccuracy(t *testing.T) {
 				}
 
 				csPerMin := participant.CalculateCSPerMinute(tc.duration)
-				
+
 				if tc.name == "long game" {
 					assert.InDelta(t, tc.expectedCS, csPerMin, 0.01, "CS/min should be accurate to 2 decimals")
 				} else {
@@ -624,13 +624,13 @@ func createTestUserModel(t *testing.T, db *gorm.DB) *User {
 		Email:    "herald-test@herald.lol",
 		Username: "heraldtester",
 	}
-	
+
 	err := user.BeforeCreate(db)
 	assert.NoError(t, err)
-	
+
 	err = db.Create(user).Error
 	assert.NoError(t, err)
-	
+
 	return user
 }
 
@@ -647,13 +647,13 @@ func createTestRiotAccountModel(t *testing.T, db *gorm.DB, userID uuid.UUID) *Ri
 
 	err := db.Create(account).Error
 	assert.NoError(t, err)
-	
+
 	return account
 }
 
 func getTestChampion(index int) string {
 	champions := []string{
-		"Jinx", "Caitlyn", "Ezreal", "Vayne", "Ashe", "Sivir", 
+		"Jinx", "Caitlyn", "Ezreal", "Vayne", "Ashe", "Sivir",
 		"Lucian", "Tristana", "Aphelios", "Jhin", "Kai'Sa", "Xayah",
 	}
 	return champions[index%len(champions)]

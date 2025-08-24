@@ -26,11 +26,11 @@ func NewCSVProcessor(config *CSVConfig) *CSVProcessor {
 func (p *CSVProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerExportRequest) ([]byte, string, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	
+
 	if p.config.DefaultDelimiter != "," {
 		writer.Comma = rune(p.config.DefaultDelimiter[0])
 	}
-	
+
 	// Write headers
 	if p.config.IncludeHeadersDefault {
 		headers := []string{
@@ -40,7 +40,7 @@ func (p *CSVProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerE
 		}
 		writer.Write(headers)
 	}
-	
+
 	// Write match data
 	for _, match := range data.Matches {
 		record := []string{
@@ -51,7 +51,7 @@ func (p *CSVProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerE
 			match.Result,
 			strconv.Itoa(match.Duration),
 		}
-		
+
 		if match.Performance != nil {
 			record = append(record,
 				strconv.Itoa(match.Performance.Kills),
@@ -71,30 +71,30 @@ func (p *CSVProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerE
 				record = append(record, "")
 			}
 		}
-		
+
 		writer.Write(record)
 	}
-	
+
 	writer.Flush()
 	if err := writer.Error(); err != nil {
 		return nil, "", fmt.Errorf("failed to write CSV: %w", err)
 	}
-	
-	fileName := fmt.Sprintf("%s_analytics_%s.csv", 
+
+	fileName := fmt.Sprintf("%s_analytics_%s.csv",
 		data.PlayerInfo.SummonerName,
 		time.Now().Format("2006-01-02"))
-	
+
 	return buffer.Bytes(), fileName, nil
 }
 
 func (p *CSVProcessor) ExportMatchData(data *MatchExportData, request *MatchExportRequest) ([]byte, string, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	
+
 	// Write match summary
 	headers := []string{"Metric", "Value"}
 	writer.Write(headers)
-	
+
 	records := [][]string{
 		{"Match ID", data.MatchID},
 		{"Champion", data.Champion},
@@ -102,7 +102,7 @@ func (p *CSVProcessor) ExportMatchData(data *MatchExportData, request *MatchExpo
 		{"Result", data.Result},
 		{"Duration", fmt.Sprintf("%d minutes", data.Duration/60)},
 	}
-	
+
 	if data.Performance != nil {
 		records = append(records, [][]string{
 			{"KDA", fmt.Sprintf("%.2f", data.Performance.KDA)},
@@ -112,25 +112,25 @@ func (p *CSVProcessor) ExportMatchData(data *MatchExportData, request *MatchExpo
 			{"Rating", fmt.Sprintf("%.1f", data.OverallRating)},
 		}...)
 	}
-	
+
 	for _, record := range records {
 		writer.Write(record)
 	}
-	
+
 	writer.Flush()
 	fileName := fmt.Sprintf("match_%s_%s.csv", data.MatchID, time.Now().Format("2006-01-02"))
-	
+
 	return buffer.Bytes(), fileName, nil
 }
 
 func (p *CSVProcessor) ExportTeamData(data *TeamExportData, request *TeamExportRequest) ([]byte, string, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	
+
 	// Write team summary headers
 	headers := []string{"Player", "Games", "Win Rate", "Avg KDA", "Avg CS/Min", "Avg Vision", "Rating"}
 	writer.Write(headers)
-	
+
 	// Write player data
 	for _, player := range data.Players {
 		if player.Summary != nil {
@@ -146,23 +146,23 @@ func (p *CSVProcessor) ExportTeamData(data *TeamExportData, request *TeamExportR
 			writer.Write(record)
 		}
 	}
-	
+
 	writer.Flush()
-	fileName := fmt.Sprintf("team_%s_%s.csv", 
+	fileName := fmt.Sprintf("team_%s_%s.csv",
 		strings.ReplaceAll(data.TeamName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return buffer.Bytes(), fileName, nil
 }
 
 func (p *CSVProcessor) ExportChampionData(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	
+
 	// Write champion statistics
 	headers := []string{"Date", "Match ID", "Result", "KDA", "CS/Min", "Damage", "Vision", "Rating"}
 	writer.Write(headers)
-	
+
 	for _, history := range data.PerformanceHistory {
 		record := []string{
 			history.Date.Format("2006-01-02"),
@@ -176,23 +176,23 @@ func (p *CSVProcessor) ExportChampionData(data *ChampionExportData, request *Cha
 		}
 		writer.Write(record)
 	}
-	
+
 	writer.Flush()
 	fileName := fmt.Sprintf("%s_%s_%s.csv",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return buffer.Bytes(), fileName, nil
 }
 
 func (p *CSVProcessor) ExportCustomReport(data *CustomReportData, request *CustomReportRequest) ([]byte, string, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
-	
+
 	// Write headers from columns
 	writer.Write(data.Columns)
-	
+
 	// Write data rows
 	for _, row := range data.DataRows {
 		record := make([]string, len(data.Columns))
@@ -203,12 +203,12 @@ func (p *CSVProcessor) ExportCustomReport(data *CustomReportData, request *Custo
 		}
 		writer.Write(record)
 	}
-	
+
 	writer.Flush()
 	fileName := fmt.Sprintf("%s_%s.csv",
 		strings.ReplaceAll(data.ReportName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return buffer.Bytes(), fileName, nil
 }
 
@@ -225,106 +225,106 @@ func NewJSONProcessor(config *JSONConfig) *JSONProcessor {
 func (p *JSONProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerExportRequest) ([]byte, string, error) {
 	var jsonData []byte
 	var err error
-	
+
 	if p.config.PrettyPrintDefault {
 		jsonData, err = json.MarshalIndent(data, "", "  ")
 	} else {
 		jsonData, err = json.Marshal(data)
 	}
-	
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fileName := fmt.Sprintf("%s_analytics_%s.json",
 		data.PlayerInfo.SummonerName,
 		time.Now().Format("2006-01-02"))
-	
+
 	return jsonData, fileName, nil
 }
 
 func (p *JSONProcessor) ExportMatchData(data *MatchExportData, request *MatchExportRequest) ([]byte, string, error) {
 	var jsonData []byte
 	var err error
-	
+
 	if p.config.PrettyPrintDefault {
 		jsonData, err = json.MarshalIndent(data, "", "  ")
 	} else {
 		jsonData, err = json.Marshal(data)
 	}
-	
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fileName := fmt.Sprintf("match_%s_%s.json",
 		data.MatchID,
 		time.Now().Format("2006-01-02"))
-	
+
 	return jsonData, fileName, nil
 }
 
 func (p *JSONProcessor) ExportTeamData(data *TeamExportData, request *TeamExportRequest) ([]byte, string, error) {
 	var jsonData []byte
 	var err error
-	
+
 	if p.config.PrettyPrintDefault {
 		jsonData, err = json.MarshalIndent(data, "", "  ")
 	} else {
 		jsonData, err = json.Marshal(data)
 	}
-	
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fileName := fmt.Sprintf("team_%s_%s.json",
 		strings.ReplaceAll(data.TeamName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return jsonData, fileName, nil
 }
 
 func (p *JSONProcessor) ExportChampionData(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	var jsonData []byte
 	var err error
-	
+
 	if p.config.PrettyPrintDefault {
 		jsonData, err = json.MarshalIndent(data, "", "  ")
 	} else {
 		jsonData, err = json.Marshal(data)
 	}
-	
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fileName := fmt.Sprintf("%s_%s_%s.json",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return jsonData, fileName, nil
 }
 
 func (p *JSONProcessor) ExportCustomReport(data *CustomReportData, request *CustomReportRequest) ([]byte, string, error) {
 	var jsonData []byte
 	var err error
-	
+
 	if p.config.PrettyPrintDefault {
 		jsonData, err = json.MarshalIndent(data, "", "  ")
 	} else {
 		jsonData, err = json.Marshal(data)
 	}
-	
+
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fileName := fmt.Sprintf("%s_%s.json",
 		strings.ReplaceAll(data.ReportName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return jsonData, fileName, nil
 }
 
@@ -342,52 +342,52 @@ func (p *XLSXProcessor) ExportPlayerData(data *PlayerExportData, request *Player
 	// In a real implementation, this would use a library like excelize
 	// For now, return CSV-like data as placeholder
 	content := p.generateXLSXContent("Player Analytics", data.PlayerInfo.SummonerName, len(data.Matches))
-	
+
 	fileName := fmt.Sprintf("%s_analytics_%s.xlsx",
 		data.PlayerInfo.SummonerName,
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *XLSXProcessor) ExportMatchData(data *MatchExportData, request *MatchExportRequest) ([]byte, string, error) {
 	content := p.generateXLSXContent("Match Analysis", data.MatchID, 1)
-	
+
 	fileName := fmt.Sprintf("match_%s_%s.xlsx",
 		data.MatchID,
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *XLSXProcessor) ExportTeamData(data *TeamExportData, request *TeamExportRequest) ([]byte, string, error) {
 	content := p.generateXLSXContent("Team Analytics", data.TeamName, len(data.Players))
-	
+
 	fileName := fmt.Sprintf("team_%s_%s.xlsx",
 		strings.ReplaceAll(data.TeamName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *XLSXProcessor) ExportChampionData(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	content := p.generateXLSXContent("Champion Analytics", data.ChampionName, len(data.PerformanceHistory))
-	
+
 	fileName := fmt.Sprintf("%s_%s_%s.xlsx",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *XLSXProcessor) ExportCustomReport(data *CustomReportData, request *CustomReportRequest) ([]byte, string, error) {
 	content := p.generateXLSXContent("Custom Report", data.ReportName, len(data.DataRows))
-	
+
 	fileName := fmt.Sprintf("%s_%s.xlsx",
 		strings.ReplaceAll(data.ReportName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
@@ -410,63 +410,63 @@ func NewPDFProcessor(config *PDFConfig) *PDFProcessor {
 
 func (p *PDFProcessor) ExportPlayerData(data *PlayerExportData, request *PlayerExportRequest) ([]byte, string, error) {
 	content := p.generatePDFContent("Player Analytics Report", data.PlayerInfo.SummonerName, len(data.Matches))
-	
+
 	fileName := fmt.Sprintf("%s_analytics_%s.pdf",
 		data.PlayerInfo.SummonerName,
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *PDFProcessor) ExportMatchData(data *MatchExportData, request *MatchExportRequest) ([]byte, string, error) {
 	content := p.generatePDFContent("Match Analysis Report", data.MatchID, 1)
-	
+
 	fileName := fmt.Sprintf("match_%s_%s.pdf",
 		data.MatchID,
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *PDFProcessor) ExportTeamData(data *TeamExportData, request *TeamExportRequest) ([]byte, string, error) {
 	content := p.generatePDFContent("Team Analytics Report", data.TeamName, len(data.Players))
-	
+
 	fileName := fmt.Sprintf("team_%s_%s.pdf",
 		strings.ReplaceAll(data.TeamName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *PDFProcessor) ExportChampionData(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	content := p.generatePDFContent("Champion Analytics Report", data.ChampionName, len(data.PerformanceHistory))
-	
+
 	fileName := fmt.Sprintf("%s_%s_%s.pdf",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *PDFProcessor) ExportChampionDataWithCharts(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	content := p.generatePDFContentWithCharts("Champion Analytics Report with Charts", data.ChampionName, len(data.PerformanceHistory))
-	
+
 	fileName := fmt.Sprintf("%s_charts_%s_%s.pdf",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *PDFProcessor) ExportCustomReport(data *CustomReportData, request *CustomReportRequest) ([]byte, string, error) {
 	content := p.generatePDFContent("Custom Analytics Report", data.ReportName, len(data.DataRows))
-	
+
 	fileName := fmt.Sprintf("%s_%s.pdf",
 		strings.ReplaceAll(data.ReportName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
@@ -524,22 +524,22 @@ func NewChartProcessor(config *ChartsConfig) *ChartProcessor {
 
 func (p *ChartProcessor) ExportChampionCharts(data *ChampionExportData, request *ChampionExportRequest) ([]byte, string, error) {
 	content := p.generateChartHTML("Champion Performance Charts", data.ChampionName, len(data.PerformanceHistory))
-	
+
 	fileName := fmt.Sprintf("%s_charts_%s_%s.html",
 		data.ChampionName,
 		data.PlayerPUUID[:8],
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 
 func (p *ChartProcessor) ExportCustomCharts(data *CustomReportData, request *CustomReportRequest) ([]byte, string, error) {
 	content := p.generateChartHTML("Custom Analytics Charts", data.ReportName, len(data.DataRows))
-	
+
 	fileName := fmt.Sprintf("%s_charts_%s.html",
 		strings.ReplaceAll(data.ReportName, " ", "_"),
 		time.Now().Format("2006-01-02"))
-	
+
 	return []byte(content), fileName, nil
 }
 

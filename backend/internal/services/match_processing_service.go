@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/herald-lol/backend/internal/analytics"
-	"github.com/herald-lol/backend/internal/match"
-	"github.com/herald-lol/backend/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/match"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // Herald.lol Gaming Analytics - Match Processing Service
@@ -20,10 +20,10 @@ type MatchProcessingService struct {
 	riotService     *RiotService
 	analyticsEngine *analytics.AnalyticsEngine
 	matchAnalyzer   *match.MatchAnalyzer
-	
+
 	// Processing configuration
 	config *MatchProcessingConfig
-	
+
 	// Processing state
 	processingQueue chan *MatchProcessingJob
 	workers         int
@@ -34,42 +34,42 @@ type MatchProcessingService struct {
 // MatchProcessingConfig contains service configuration
 type MatchProcessingConfig struct {
 	// Worker configuration
-	WorkerCount         int           `json:"worker_count"`
-	QueueSize           int           `json:"queue_size"`
-	ProcessingTimeout   time.Duration `json:"processing_timeout"`
-	RetryAttempts       int           `json:"retry_attempts"`
-	RetryDelay          time.Duration `json:"retry_delay"`
-	
+	WorkerCount       int           `json:"worker_count"`
+	QueueSize         int           `json:"queue_size"`
+	ProcessingTimeout time.Duration `json:"processing_timeout"`
+	RetryAttempts     int           `json:"retry_attempts"`
+	RetryDelay        time.Duration `json:"retry_delay"`
+
 	// Analysis configuration
-	DefaultAnalysisDepth string        `json:"default_analysis_depth"`
-	EnablePhaseAnalysis  bool          `json:"enable_phase_analysis"`
-	EnableKeyMoments     bool          `json:"enable_key_moments"`
-	EnableTeamAnalysis   bool          `json:"enable_team_analysis"`
-	
+	DefaultAnalysisDepth string `json:"default_analysis_depth"`
+	EnablePhaseAnalysis  bool   `json:"enable_phase_analysis"`
+	EnableKeyMoments     bool   `json:"enable_key_moments"`
+	EnableTeamAnalysis   bool   `json:"enable_team_analysis"`
+
 	// Performance settings
-	CacheResults         bool          `json:"cache_results"`
-	CacheExpiration      time.Duration `json:"cache_expiration"`
-	BatchSize            int           `json:"batch_size"`
-	
+	CacheResults    bool          `json:"cache_results"`
+	CacheExpiration time.Duration `json:"cache_expiration"`
+	BatchSize       int           `json:"batch_size"`
+
 	// Rate limiting
-	ProcessingRateLimit  int           `json:"processing_rate_limit"` // matches per minute
+	ProcessingRateLimit int `json:"processing_rate_limit"` // matches per minute
 }
 
 // MatchProcessingJob represents a match processing job
 type MatchProcessingJob struct {
-	ID              string                           `json:"id"`
-	MatchID         string                           `json:"match_id"`
-	PlayerPUUID     string                           `json:"player_puuid"`
-	Priority        int                              `json:"priority"`      // 1-10 scale
-	Options         *MatchProcessingOptions          `json:"options"`
-	CreatedAt       time.Time                        `json:"created_at"`
-	StartedAt       *time.Time                       `json:"started_at"`
-	CompletedAt     *time.Time                       `json:"completed_at"`
-	Status          string                           `json:"status"`        // "pending", "processing", "completed", "failed"
-	Result          *MatchProcessingResult           `json:"result"`
-	Error           string                           `json:"error"`
-	RetryCount      int                              `json:"retry_count"`
-	Callbacks       []func(*MatchProcessingResult)   `json:"-"`
+	ID          string                         `json:"id"`
+	MatchID     string                         `json:"match_id"`
+	PlayerPUUID string                         `json:"player_puuid"`
+	Priority    int                            `json:"priority"` // 1-10 scale
+	Options     *MatchProcessingOptions        `json:"options"`
+	CreatedAt   time.Time                      `json:"created_at"`
+	StartedAt   *time.Time                     `json:"started_at"`
+	CompletedAt *time.Time                     `json:"completed_at"`
+	Status      string                         `json:"status"` // "pending", "processing", "completed", "failed"
+	Result      *MatchProcessingResult         `json:"result"`
+	Error       string                         `json:"error"`
+	RetryCount  int                            `json:"retry_count"`
+	Callbacks   []func(*MatchProcessingResult) `json:"-"`
 }
 
 // MatchProcessingOptions contains processing options
@@ -87,45 +87,45 @@ type MatchProcessingOptions struct {
 
 // MatchProcessingResult contains the complete processing result
 type MatchProcessingResult struct {
-	JobID               string                        `json:"job_id"`
-	MatchAnalysis       *match.MatchAnalysisResult    `json:"match_analysis"`
-	AnalyticsData       *analytics.AnalyticsResult    `json:"analytics_data"`
-	ProcessingMetrics   *ProcessingMetrics            `json:"processing_metrics"`
-	Status              string                        `json:"status"`
-	ProcessedAt         time.Time                     `json:"processed_at"`
+	JobID             string                     `json:"job_id"`
+	MatchAnalysis     *match.MatchAnalysisResult `json:"match_analysis"`
+	AnalyticsData     *analytics.AnalyticsResult `json:"analytics_data"`
+	ProcessingMetrics *ProcessingMetrics         `json:"processing_metrics"`
+	Status            string                     `json:"status"`
+	ProcessedAt       time.Time                  `json:"processed_at"`
 }
 
 // ProcessingMetrics contains metrics about the processing job
 type ProcessingMetrics struct {
-	ProcessingTime      time.Duration `json:"processing_time"`
-	QueueTime           time.Duration `json:"queue_time"`
-	AnalysisTime        time.Duration `json:"analysis_time"`
-	DataRetrievalTime   time.Duration `json:"data_retrieval_time"`
-	RetryCount          int           `json:"retry_count"`
-	WorkerID            string        `json:"worker_id"`
+	ProcessingTime    time.Duration `json:"processing_time"`
+	QueueTime         time.Duration `json:"queue_time"`
+	AnalysisTime      time.Duration `json:"analysis_time"`
+	DataRetrievalTime time.Duration `json:"data_retrieval_time"`
+	RetryCount        int           `json:"retry_count"`
+	WorkerID          string        `json:"worker_id"`
 }
 
 // MatchBatchProcessingRequest contains batch processing parameters
 type MatchBatchProcessingRequest struct {
-	PlayerPUUID     string                   `json:"player_puuid"`
-	MatchIDs        []string                 `json:"match_ids"`
-	Options         *MatchProcessingOptions  `json:"options"`
-	Priority        int                      `json:"priority"`
-	CallbackURL     string                   `json:"callback_url"`
+	PlayerPUUID string                  `json:"player_puuid"`
+	MatchIDs    []string                `json:"match_ids"`
+	Options     *MatchProcessingOptions `json:"options"`
+	Priority    int                     `json:"priority"`
+	CallbackURL string                  `json:"callback_url"`
 }
 
 // MatchBatchProcessingResult contains batch processing results
 type MatchBatchProcessingResult struct {
-	BatchID         string                    `json:"batch_id"`
-	TotalMatches    int                       `json:"total_matches"`
-	ProcessedCount  int                       `json:"processed_count"`
-	SuccessCount    int                       `json:"success_count"`
-	FailureCount    int                       `json:"failure_count"`
-	Results         []*MatchProcessingResult  `json:"results"`
-	StartedAt       time.Time                 `json:"started_at"`
-	CompletedAt     *time.Time                `json:"completed_at"`
-	Status          string                    `json:"status"`
-	ProcessingStats *BatchProcessingStats     `json:"processing_stats"`
+	BatchID         string                   `json:"batch_id"`
+	TotalMatches    int                      `json:"total_matches"`
+	ProcessedCount  int                      `json:"processed_count"`
+	SuccessCount    int                      `json:"success_count"`
+	FailureCount    int                      `json:"failure_count"`
+	Results         []*MatchProcessingResult `json:"results"`
+	StartedAt       time.Time                `json:"started_at"`
+	CompletedAt     *time.Time               `json:"completed_at"`
+	Status          string                   `json:"status"`
+	ProcessingStats *BatchProcessingStats    `json:"processing_stats"`
 }
 
 // BatchProcessingStats contains batch processing statistics
@@ -153,7 +153,7 @@ func NewMatchProcessingService(
 	analyzerConfig.EnablePhaseAnalysis = config.EnablePhaseAnalysis
 	analyzerConfig.EnableKeyMomentDetection = config.EnableKeyMoments
 	analyzerConfig.EnableTeamAnalysis = config.EnableTeamAnalysis
-	
+
 	matchAnalyzer := match.NewMatchAnalyzer(analyzerConfig, analyticsEngine)
 
 	service := &MatchProcessingService{
@@ -256,7 +256,7 @@ func (s *MatchProcessingService) ProcessMatchBatch(ctx context.Context, request 
 		wg.Add(1)
 		go func(mID string) {
 			defer wg.Done()
-			semaphore <- struct{}{} // Acquire semaphore
+			semaphore <- struct{}{}        // Acquire semaphore
 			defer func() { <-semaphore }() // Release semaphore
 
 			result, err := s.ProcessMatchSync(ctx, mID, request.PlayerPUUID, request.Options)
@@ -336,7 +336,7 @@ func (s *MatchProcessingService) processJob(job *MatchProcessingJob, workerID st
 
 	// Process the match
 	result, err := s.doProcessMatch(ctx, job, workerID)
-	
+
 	completedAt := time.Now()
 	job.CompletedAt = &completedAt
 
@@ -345,7 +345,7 @@ func (s *MatchProcessingService) processJob(job *MatchProcessingJob, workerID st
 		if job.RetryCount < s.config.RetryAttempts {
 			job.RetryCount++
 			job.Status = "pending"
-			
+
 			// Retry after delay
 			go func() {
 				time.Sleep(s.config.RetryDelay)
@@ -384,7 +384,7 @@ func (s *MatchProcessingService) processJob(job *MatchProcessingJob, workerID st
 
 func (s *MatchProcessingService) doProcessMatch(ctx context.Context, job *MatchProcessingJob, workerID string) (*MatchProcessingResult, error) {
 	startTime := time.Now()
-	
+
 	// Retrieve match data from Riot API
 	dataRetrievalStart := time.Now()
 	matchData, err := s.riotService.GetMatchByID(ctx, job.MatchID)
@@ -474,12 +474,12 @@ func (s *MatchProcessingService) calculateBatchStats(batchResult *MatchBatchProc
 
 	var totalTime, fastestTime, slowestTime time.Duration
 	fastestTime = time.Hour // Initialize with a large value
-	
+
 	for _, result := range batchResult.Results {
 		if result.ProcessingMetrics != nil {
 			processingTime := result.ProcessingMetrics.ProcessingTime
 			totalTime += processingTime
-			
+
 			if processingTime < fastestTime {
 				fastestTime = processingTime
 			}
@@ -497,24 +497,24 @@ func (s *MatchProcessingService) calculateBatchStats(batchResult *MatchBatchProc
 		FastestProcess:        fastestTime,
 		SlowestProcess:        slowestTime,
 		TotalProcessingTime:   totalTime,
-		SuccessRate:          successRate,
-		RetryRate:            0.0, // Would be calculated based on retry statistics
+		SuccessRate:           successRate,
+		RetryRate:             0.0, // Would be calculated based on retry statistics
 	}
 }
 
 // Shutdown gracefully shuts down the match processing service
 func (s *MatchProcessingService) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down match processing service...")
-	
+
 	close(s.shutdown)
-	
+
 	// Wait for workers to finish with timeout
 	done := make(chan struct{})
 	go func() {
 		s.wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		log.Println("Match processing service shut down successfully")

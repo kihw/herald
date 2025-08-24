@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"herald.lol/internal/analytics"
-	"herald.lol/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // Herald.lol Gaming Analytics - Summoner Service Helper Methods
@@ -79,19 +79,19 @@ func (s *SummonerService) processLiveGame(liveGame *riot.LiveGame) *LiveGameInfo
 
 func (s *SummonerService) analyzeTeamComposition(participants []*LiveParticipant) *TeamComposition {
 	composition := &TeamComposition{
-		CompositionType: "Balanced", // Default
-		StrengthPhases:  []string{"Mid"},
-		WeakPhases:      []string{},
-		WinConditions:   []string{"Teamfight", "Objective Control"},
-		ThreatsToWatch:  []string{},
-		StrengthRating:  75.0, // Default rating
-		SynergyRating:   70.0,
+		CompositionType:   "Balanced", // Default
+		StrengthPhases:    []string{"Mid"},
+		WeakPhases:        []string{},
+		WinConditions:     []string{"Teamfight", "Objective Control"},
+		ThreatsToWatch:    []string{},
+		StrengthRating:    75.0, // Default rating
+		SynergyRating:     70.0,
 		FlexibilityRating: 80.0,
 	}
 
 	// In a real implementation, this would analyze champion synergies,
 	// power spikes, win conditions, etc. based on the champion pool
-	
+
 	return composition
 }
 
@@ -108,11 +108,11 @@ func (s *SummonerService) generateRecommendations(analysis *analytics.PlayerAnal
 	if analysis.CoreMetrics.CSPerMinute < 6.0 {
 		recommendations.ImmediateFocus = append(recommendations.ImmediateFocus, "Improve farming efficiency - focus on last-hitting practice")
 	}
-	
+
 	if analysis.CoreMetrics.AverageKDA < 2.0 {
 		recommendations.ImmediateFocus = append(recommendations.ImmediateFocus, "Work on positioning and death avoidance")
 	}
-	
+
 	if analysis.CoreMetrics.AverageVision < 15.0 {
 		recommendations.ImmediateFocus = append(recommendations.ImmediateFocus, "Increase ward placement and vision control")
 	}
@@ -130,25 +130,25 @@ func (s *SummonerService) generateRecommendations(analysis *analytics.PlayerAnal
 	// Generate skill priorities
 	recommendations.SkillPriorities = []SkillPriority{
 		{
-			Skill:           "Farming",
-			Priority:        s.getFarmingPriority(analysis.CoreMetrics.CSPerMinute),
-			CurrentLevel:    analysis.CoreMetrics.CSPerMinute * 10, // Scale to 0-100
-			TargetLevel:     70.0,
-			Improvement:     70.0 - (analysis.CoreMetrics.CSPerMinute * 10),
+			Skill:        "Farming",
+			Priority:     s.getFarmingPriority(analysis.CoreMetrics.CSPerMinute),
+			CurrentLevel: analysis.CoreMetrics.CSPerMinute * 10, // Scale to 0-100
+			TargetLevel:  70.0,
+			Improvement:  70.0 - (analysis.CoreMetrics.CSPerMinute * 10),
 		},
 		{
-			Skill:           "Positioning",
-			Priority:        s.getPositioningPriority(analysis.CoreMetrics.AverageKDA),
-			CurrentLevel:    min(analysis.CoreMetrics.AverageKDA * 25, 100), // Scale to 0-100
-			TargetLevel:     75.0,
-			Improvement:     75.0 - min(analysis.CoreMetrics.AverageKDA * 25, 100),
+			Skill:        "Positioning",
+			Priority:     s.getPositioningPriority(analysis.CoreMetrics.AverageKDA),
+			CurrentLevel: min(analysis.CoreMetrics.AverageKDA*25, 100), // Scale to 0-100
+			TargetLevel:  75.0,
+			Improvement:  75.0 - min(analysis.CoreMetrics.AverageKDA*25, 100),
 		},
 		{
-			Skill:           "Vision Control",
-			Priority:        s.getVisionPriority(analysis.CoreMetrics.AverageVision),
-			CurrentLevel:    min(analysis.CoreMetrics.AverageVision * 3, 100), // Scale to 0-100
-			TargetLevel:     80.0,
-			Improvement:     80.0 - min(analysis.CoreMetrics.AverageVision * 3, 100),
+			Skill:        "Vision Control",
+			Priority:     s.getVisionPriority(analysis.CoreMetrics.AverageVision),
+			CurrentLevel: min(analysis.CoreMetrics.AverageVision*3, 100), // Scale to 0-100
+			TargetLevel:  80.0,
+			Improvement:  80.0 - min(analysis.CoreMetrics.AverageVision*3, 100),
 		},
 	}
 
@@ -157,10 +157,10 @@ func (s *SummonerService) generateRecommendations(analysis *analytics.PlayerAnal
 
 	// Create training plan
 	recommendations.TrainingPlan = &TrainingPlanSummary{
-		Duration:    "2 weeks",
-		DailyTime:   "45 minutes",
-		KeyExercises: s.generateKeyExercises(recommendations.ImmediateFocus),
-		Milestones:  []string{"Improve CS/min by 1.0", "Reduce average deaths by 1", "Increase vision score by 5"},
+		Duration:       "2 weeks",
+		DailyTime:      "45 minutes",
+		KeyExercises:   s.generateKeyExercises(recommendations.ImmediateFocus),
+		Milestones:     []string{"Improve CS/min by 1.0", "Reduce average deaths by 1", "Increase vision score by 5"},
 		SuccessMetrics: []string{"Win 3 games in a row", "Achieve 7+ CS/min in ranked", "Place 15+ wards per game"},
 	}
 
@@ -181,10 +181,10 @@ func (s *SummonerService) compareSummoners(analysis1, analysis2 *analytics.Playe
 	metrics := map[string]struct {
 		val1, val2 float64
 	}{
-		"KDA":         {analysis1.CoreMetrics.AverageKDA, analysis2.CoreMetrics.AverageKDA},
-		"CS/min":      {analysis1.CoreMetrics.CSPerMinute, analysis2.CoreMetrics.CSPerMinute},
-		"Vision":      {analysis1.CoreMetrics.AverageVision, analysis2.CoreMetrics.AverageVision},
-		"Win Rate":    {analysis1.CoreMetrics.WinRate * 100, analysis2.CoreMetrics.WinRate * 100},
+		"KDA":          {analysis1.CoreMetrics.AverageKDA, analysis2.CoreMetrics.AverageKDA},
+		"CS/min":       {analysis1.CoreMetrics.CSPerMinute, analysis2.CoreMetrics.CSPerMinute},
+		"Vision":       {analysis1.CoreMetrics.AverageVision, analysis2.CoreMetrics.AverageVision},
+		"Win Rate":     {analysis1.CoreMetrics.WinRate * 100, analysis2.CoreMetrics.WinRate * 100},
 		"Damage Share": {analysis1.CoreMetrics.DamageShare * 100, analysis2.CoreMetrics.DamageShare * 100},
 	}
 
@@ -199,7 +199,7 @@ func (s *SummonerService) compareSummoners(analysis1, analysis2 *analytics.Playe
 			absDiff = -absDiff
 		}
 
-		if absDiff < 0.05 * values.val1 { // Within 5%
+		if absDiff < 0.05*values.val1 { // Within 5%
 			winner = "tie"
 		} else if difference > 0 {
 			winner = "summoner1"
@@ -210,9 +210,9 @@ func (s *SummonerService) compareSummoners(analysis1, analysis2 *analytics.Playe
 		}
 
 		significance := "minor"
-		if absDiff > 0.2 * values.val1 {
+		if absDiff > 0.2*values.val1 {
 			significance = "major"
-		} else if absDiff > 0.1 * values.val1 {
+		} else if absDiff > 0.1*values.val1 {
 			significance = "moderate"
 		}
 
@@ -387,18 +387,18 @@ func (s *SummonerService) createMetricTrend(startValue, endValue float64) *Metri
 	direction := "stable"
 	significance := "minor"
 
-	if change > 0.05 * startValue {
+	if change > 0.05*startValue {
 		direction = "up"
-		if change > 0.15 * startValue {
+		if change > 0.15*startValue {
 			significance = "major"
-		} else if change > 0.10 * startValue {
+		} else if change > 0.10*startValue {
 			significance = "moderate"
 		}
-	} else if change < -0.05 * startValue {
+	} else if change < -0.05*startValue {
 		direction = "down"
-		if change < -0.15 * startValue {
+		if change < -0.15*startValue {
 			significance = "major"
-		} else if change < -0.10 * startValue {
+		} else if change < -0.10*startValue {
 			significance = "moderate"
 		}
 	}
@@ -494,18 +494,18 @@ func (s *SummonerService) cacheAnalysis(ctx context.Context, request *SummonerAn
 }
 
 func (s *SummonerService) getCacheKey(request *SummonerAnalysisRequest) string {
-	return fmt.Sprintf("summoner_analysis:%s:%s:%s:%s", 
-		request.Region, strings.ToLower(request.SummonerName), 
+	return fmt.Sprintf("summoner_analysis:%s:%s:%s:%s",
+		request.Region, strings.ToLower(request.SummonerName),
 		request.AnalysisType, request.TimeFrame)
 }
 
 func (s *SummonerService) createProgressTracker(requestID string) *AnalysisProgressTracker {
 	return &AnalysisProgressTracker{
-		RequestID:   requestID,
-		StartedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
-		Progress:    0,
-		IsComplete:  false,
+		RequestID:  requestID,
+		StartedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
+		Progress:   0,
+		IsComplete: false,
 	}
 }
 
@@ -579,7 +579,7 @@ func (s *SummonerService) determineBestRole(roleMetrics map[string]*analytics.Ro
 
 func (s *SummonerService) generateKeyExercises(focuses []string) []string {
 	exercises := []string{}
-	
+
 	for _, focus := range focuses {
 		if strings.Contains(strings.ToLower(focus), "farm") {
 			exercises = append(exercises, "30 minutes CS practice in training mode daily")
@@ -598,7 +598,7 @@ func (s *SummonerService) generateKeyExercises(focuses []string) []string {
 func (s *SummonerService) estimateTimeToRank(analysis *analytics.PlayerAnalysis, currentRank string) string {
 	// Simplified estimation based on performance gap
 	gap := 75.0 - analysis.PerformanceScore // Target 75+ for next rank
-	
+
 	if gap <= 5 {
 		return "1-2 weeks"
 	} else if gap <= 15 {
@@ -622,14 +622,14 @@ func (s *SummonerService) generateComparisonSummary(result *ComparisonResult) st
 	if result.OverallWinner == "tie" {
 		return "Both summoners show similar overall performance with different strengths"
 	}
-	return fmt.Sprintf("Summoner %s shows stronger performance with %.1f%% advantage", 
+	return fmt.Sprintf("Summoner %s shows stronger performance with %.1f%% advantage",
 		result.OverallWinner, result.WinnerMargin)
 }
 
 func (s *SummonerService) generatePerformanceInsights(analysis *analytics.PlayerAnalysis) *PerformanceInsights {
 	return &PerformanceInsights{
-		CurrentForm:        "Stable",
-		ConsistencyRating:  75.0,
+		CurrentForm:       "Stable",
+		ConsistencyRating: 75.0,
 		ClutchFactor:      60.0,
 		AdaptabilityScore: 70.0,
 	}
@@ -637,8 +637,8 @@ func (s *SummonerService) generatePerformanceInsights(analysis *analytics.Player
 
 func (s *SummonerService) generateCoachingInsights(analysis *analytics.PlayerAnalysis) *CoachingInsights {
 	return &CoachingInsights{
-		LearningStyle:     "Practice-focused",
-		OptimalPlayTimes:  []string{"Evening", "Weekend"},
+		LearningStyle:      "Practice-focused",
+		OptimalPlayTimes:   []string{"Evening", "Weekend"},
 		RecommendedRoutine: "3 ranked games with 15min practice between",
 	}
 }
@@ -663,9 +663,9 @@ func (s *SummonerService) generateMetaInsights(analysis *analytics.PlayerAnalysi
 func (s *SummonerService) generatePersonalizedAdvice(analysis *analytics.PlayerAnalysis) []PersonalizedTip {
 	return []PersonalizedTip{
 		{
-			Tip:      "Focus on farming improvements to increase gold income",
-			Priority: 5,
-			Category: "Economy",
+			Tip:       "Focus on farming improvements to increase gold income",
+			Priority:  5,
+			Category:  "Economy",
 			Reasoning: "Your CS/min is below your rank average",
 		},
 	}

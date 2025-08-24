@@ -1,0 +1,523 @@
+syntax = "proto3";
+
+package herald.riot.v1;
+
+option go_package = "github.com/herald-lol/herald/backend/internal/grpc/gen/riot/v1;riotv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+// Riot API Integration service for Herald.lol
+service RiotService {
+  // Get summoner information
+  rpc GetSummoner(GetSummonerRequest) returns (GetSummonerResponse);
+  
+  // Get match history for a summoner
+  rpc GetMatchHistory(GetMatchHistoryRequest) returns (GetMatchHistoryResponse);
+  
+  // Get detailed match data
+  rpc GetMatchData(GetMatchDataRequest) returns (GetMatchDataResponse);
+  
+  // Get live match information
+  rpc GetLiveMatch(GetLiveMatchRequest) returns (GetLiveMatchResponse);
+  
+  // Get champion mastery data
+  rpc GetChampionMastery(GetChampionMasteryRequest) returns (GetChampionMasteryResponse);
+  
+  // Get ranked information
+  rpc GetRankedStats(GetRankedStatsRequest) returns (GetRankedStatsResponse);
+  
+  // Synchronize player data
+  rpc SyncPlayerData(SyncPlayerDataRequest) returns (SyncPlayerDataResponse);
+  
+  // Get API rate limit status
+  rpc GetRateLimit(GetRateLimitRequest) returns (GetRateLimitResponse);
+}
+
+message GetSummonerRequest {
+  string identifier = 1; // Can be name, PUUID, or summoner ID
+  string identifier_type = 2; // "name", "puuid", "summoner_id"
+  string region = 3;
+}
+
+message GetSummonerResponse {
+  Summoner summoner = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message GetMatchHistoryRequest {
+  string puuid = 1;
+  string region = 2;
+  optional int32 start_index = 3;
+  optional int32 count = 4;
+  optional string queue_type = 5;
+  optional google.protobuf.Timestamp start_time = 6;
+  optional google.protobuf.Timestamp end_time = 7;
+}
+
+message GetMatchHistoryResponse {
+  repeated string match_ids = 1;
+  int32 total_matches = 2;
+  ResponseMetadata metadata = 3;
+}
+
+message GetMatchDataRequest {
+  string match_id = 1;
+  string region = 2;
+  bool include_timeline = 3;
+}
+
+message GetMatchDataResponse {
+  RiotMatchData match_data = 1;
+  optional RiotMatchTimeline timeline = 2;
+  ResponseMetadata metadata = 3;
+}
+
+message GetLiveMatchRequest {
+  string summoner_id = 1;
+  string region = 2;
+}
+
+message GetLiveMatchResponse {
+  optional LiveGameInfo live_game = 1;
+  bool is_in_game = 2;
+  ResponseMetadata metadata = 3;
+}
+
+message GetChampionMasteryRequest {
+  string summoner_id = 1;
+  string region = 2;
+  optional int32 champion_id = 3; // If not provided, returns all masteries
+}
+
+message GetChampionMasteryResponse {
+  repeated ChampionMastery masteries = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message GetRankedStatsRequest {
+  string summoner_id = 1;
+  string region = 2;
+}
+
+message GetRankedStatsResponse {
+  repeated RankedEntry ranked_entries = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message SyncPlayerDataRequest {
+  string summoner_id = 1;
+  string region = 2;
+  SyncOptions options = 3;
+}
+
+message SyncPlayerDataResponse {
+  SyncResult result = 1;
+  SyncStats stats = 2;
+  ResponseMetadata metadata = 3;
+}
+
+message GetRateLimitRequest {
+  string region = 1;
+  optional string api_key_type = 2;
+}
+
+message GetRateLimitResponse {
+  RateLimitInfo rate_limit = 1;
+  repeated RateLimitBucket buckets = 2;
+  ResponseMetadata metadata = 3;
+}
+
+// Core Riot API Models
+
+message Summoner {
+  string id = 1;
+  string account_id = 2;
+  string puuid = 3;
+  string name = 4;
+  int32 profile_icon_id = 5;
+  int64 revision_date = 6;
+  int32 summoner_level = 7;
+  string region = 8;
+}
+
+message RiotMatchData {
+  MatchMetadata metadata = 1;
+  MatchInfo info = 2;
+}
+
+message MatchMetadata {
+  string data_version = 1;
+  string match_id = 2;
+  repeated string participants = 3; // PUUIDs
+}
+
+message MatchInfo {
+  int64 game_creation = 1;
+  int64 game_duration = 2;
+  int64 game_end_timestamp = 3;
+  int64 game_id = 4;
+  string game_mode = 5;
+  string game_name = 6;
+  int64 game_start_timestamp = 7;
+  string game_type = 8;
+  string game_version = 9;
+  int32 map_id = 10;
+  repeated RiotParticipant participants = 11;
+  string platform_id = 12;
+  int32 queue_id = 13;
+  repeated RiotTeam teams = 14;
+  string tournament_code = 15;
+}
+
+message RiotParticipant {
+  repeated int32 assists = 1;
+  int32 baron_kills = 2;
+  int32 bounty_level = 3;
+  int32 champ_experience = 4;
+  int32 champ_level = 5;
+  int32 champion_id = 6;
+  string champion_name = 7;
+  int32 champion_transform = 8;
+  int32 consumables_purchased = 9;
+  int32 damage_dealt_to_buildings = 10;
+  int32 damage_dealt_to_objectives = 11;
+  int32 damage_dealt_to_turrets = 12;
+  int32 damage_self_mitigated = 13;
+  repeated int32 deaths = 14;
+  int32 detector_wards_placed = 15;
+  int32 double_kills = 16;
+  int32 dragon_kills = 17;
+  bool eligible_for_progression = 18;
+  int32 first_blood_assist = 19;
+  bool first_blood_kill = 20;
+  bool first_tower_assist = 21;
+  bool first_tower_kill = 22;
+  bool game_ended_in_early_surrender = 23;
+  bool game_ended_in_surrender = 24;
+  int32 gold_earned = 25;
+  int32 gold_spent = 26;
+  string individual_position = 27;
+  int32 inhibitor_kills = 28;
+  int32 inhibitor_takedowns = 29;
+  int32 inhibitors_lost = 30;
+  int32 item0 = 31;
+  int32 item1 = 32;
+  int32 item2 = 33;
+  int32 item3 = 34;
+  int32 item4 = 35;
+  int32 item5 = 36;
+  int32 item6 = 37;
+  int32 items_purchased = 38;
+  int32 killing_sprees = 39;
+  repeated int32 kills = 40;
+  string lane = 41;
+  int32 largest_critical_strike = 42;
+  int32 largest_killing_spree = 43;
+  int32 largest_multi_kill = 44;
+  int32 longest_time_spent_living = 45;
+  int32 magic_damage_dealt = 46;
+  int32 magic_damage_dealt_to_champions = 47;
+  int32 magic_damage_taken = 48;
+  int32 neutral_minions_killed = 49;
+  int32 nexus_kills = 50;
+  int32 nexus_takedowns = 51;
+  int32 nexus_lost = 52;
+  int32 objectives_stolen = 53;
+  int32 objectives_stolen_assists = 54;
+  int32 participant_id = 55;
+  int32 penta_kills = 56;
+  PerksData perks = 57;
+  int32 physical_damage_dealt = 58;
+  int32 physical_damage_dealt_to_champions = 59;
+  int32 physical_damage_taken = 60;
+  int32 placement = 61;
+  int32 player_augment1 = 62;
+  int32 player_augment2 = 63;
+  int32 player_augment3 = 64;
+  int32 player_augment4 = 65;
+  int32 player_subteam_id = 66;
+  string puuid = 67;
+  int32 quadra_kills = 68;
+  string riot_id_name = 69;
+  string riot_id_tagline = 70;
+  string role = 71;
+  int32 sight_wards_bought_in_game = 72;
+  int32 spell1_casts = 73;
+  int32 spell2_casts = 74;
+  int32 spell3_casts = 75;
+  int32 spell4_casts = 76;
+  int32 summoner1_casts = 77;
+  int32 summoner1_id = 78;
+  int32 summoner2_casts = 79;
+  int32 summoner2_id = 80;
+  string summoner_id = 81;
+  int32 summoner_level = 82;
+  string summoner_name = 83;
+  bool team_early_surrendered = 84;
+  int32 team_id = 85;
+  string team_position = 86;
+  int32 time_c_cing_others = 87;
+  int32 time_played = 88;
+  int32 total_damage_dealt = 89;
+  int32 total_damage_dealt_to_champions = 90;
+  int32 total_damage_shielded_on_teammates = 91;
+  int32 total_damage_taken = 92;
+  int32 total_heal = 93;
+  int32 total_heals_on_teammates = 94;
+  int32 total_minions_killed = 95;
+  int32 total_time_cc_dealt = 96;
+  int32 total_time_spent_dead = 97;
+  int32 total_units_healed = 98;
+  int32 triple_kills = 99;
+  int32 true_damage_dealt = 100;
+  int32 true_damage_dealt_to_champions = 101;
+  int32 true_damage_taken = 102;
+  int32 turret_kills = 103;
+  int32 turret_takedowns = 104;
+  int32 turrets_lost = 105;
+  int32 unreal_kills = 106;
+  int32 vision_score = 107;
+  int32 vision_wards_bought_in_game = 108;
+  int32 wards_killed = 109;
+  int32 wards_placed = 110;
+  bool win = 111;
+}
+
+message PerksData {
+  PerkStats stat_perks = 1;
+  repeated PerkStyle styles = 2;
+}
+
+message PerkStats {
+  int32 defense = 1;
+  int32 flex = 2;
+  int32 offense = 3;
+}
+
+message PerkStyle {
+  string description = 1;
+  repeated PerkSelection selections = 2;
+  int32 style = 3;
+}
+
+message PerkSelection {
+  int32 perk = 1;
+  int32 var1 = 2;
+  int32 var2 = 3;
+  int32 var3 = 4;
+}
+
+message RiotTeam {
+  repeated BanData bans = 1;
+  RiotObjectives objectives = 2;
+  int32 team_id = 3;
+  bool win = 4;
+}
+
+message BanData {
+  int32 champion_id = 1;
+  int32 pick_turn = 2;
+}
+
+message RiotObjectives {
+  ObjectiveData baron = 1;
+  ObjectiveData champion = 2;
+  ObjectiveData dragon = 3;
+  ObjectiveData inhibitor = 4;
+  ObjectiveData rift_herald = 5;
+  ObjectiveData tower = 6;
+}
+
+message ObjectiveData {
+  bool first = 1;
+  int32 kills = 2;
+}
+
+message RiotMatchTimeline {
+  MatchTimelineMetadata metadata = 1;
+  MatchTimelineInfo info = 2;
+}
+
+message MatchTimelineMetadata {
+  string data_version = 1;
+  string match_id = 2;
+  repeated string participants = 3;
+}
+
+message MatchTimelineInfo {
+  int64 frame_interval = 1;
+  repeated TimelineFrame frames = 2;
+  int64 game_id = 3;
+  repeated string participants = 4;
+}
+
+message TimelineFrame {
+  repeated TimelineEvent events = 1;
+  repeated TimelineParticipantFrame participant_frames = 2;
+  int32 timestamp = 3;
+}
+
+message TimelineEvent {
+  int32 timestamp = 1;
+  string type = 2;
+  map<string, string> event_data = 3;
+}
+
+message TimelineParticipantFrame {
+  int32 champion_stats = 1;
+  int32 current_gold = 2;
+  int32 damage_stats = 3;
+  int32 gold_per_second = 4;
+  int32 jungle_minions_killed = 5;
+  int32 level = 6;
+  int32 minions_killed = 7;
+  int32 participant_id = 8;
+  TimelinePosition position = 9;
+  int32 time_enemy_spent_controlled = 10;
+  int32 total_gold = 11;
+  int32 xp = 12;
+}
+
+message TimelinePosition {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message LiveGameInfo {
+  repeated BannedChampion banned_champions = 1;
+  int64 game_id = 2;
+  int64 game_length = 3;
+  string game_mode = 4;
+  int64 game_queue_config_id = 5;
+  int64 game_start_time = 6;
+  string game_type = 7;
+  int64 map_id = 8;
+  LiveGameObserver observers = 9;
+  repeated LiveGameParticipant participants = 10;
+  string platform_id = 11;
+}
+
+message BannedChampion {
+  int32 champion_id = 1;
+  int32 pick_turn = 2;
+  int32 team_id = 3;
+}
+
+message LiveGameObserver {
+  string encryption_key = 1;
+}
+
+message LiveGameParticipant {
+  bool bot = 1;
+  int32 champion_id = 2;
+  LiveGameCustomization customization_objects = 3;
+  repeated LiveGameRune game_runes = 4;
+  int32 profile_icon_id = 5;
+  int32 spell1_id = 6;
+  int32 spell2_id = 7;
+  string summoner_id = 8;
+  string summoner_name = 9;
+  int32 team_id = 10;
+}
+
+message LiveGameCustomization {
+  string category = 1;
+  string content = 2;
+}
+
+message LiveGameRune {
+  int32 count = 1;
+  int32 rune_id = 2;
+}
+
+message ChampionMastery {
+  int32 champion_id = 1;
+  int32 champion_level = 2;
+  int32 champion_points = 3;
+  int64 champion_points_since_last_level = 4;
+  int64 champion_points_until_next_level = 5;
+  bool chest_granted = 6;
+  int64 last_play_time = 7;
+  string summoner_id = 8;
+  int32 tokens_earned = 9;
+}
+
+message RankedEntry {
+  string league_id = 1;
+  string summoner_id = 2;
+  string summoner_name = 3;
+  string queue_type = 4;
+  string tier = 5;
+  string rank = 6;
+  int32 league_points = 7;
+  int32 wins = 8;
+  int32 losses = 9;
+  bool hot_streak = 10;
+  bool veteran = 11;
+  bool fresh_blood = 12;
+  bool inactive = 13;
+  MiniSeriesDTO mini_series = 14;
+}
+
+message MiniSeriesDTO {
+  int32 losses = 1;
+  string progress = 2;
+  int32 target = 3;
+  int32 wins = 4;
+}
+
+// Sync and Rate Limiting
+
+message SyncOptions {
+  bool update_summoner_info = 1;
+  bool sync_match_history = 2;
+  bool sync_ranked_stats = 3;
+  bool sync_champion_mastery = 4;
+  int32 match_history_limit = 5;
+  bool force_refresh = 6;
+}
+
+message SyncResult {
+  bool success = 1;
+  string status = 2;
+  repeated string warnings = 3;
+  repeated string errors = 4;
+  SyncStats stats = 5;
+}
+
+message SyncStats {
+  int32 matches_synced = 1;
+  int32 masteries_updated = 2;
+  int32 ranked_entries_updated = 3;
+  google.protobuf.Duration sync_duration = 4;
+  google.protobuf.Timestamp last_sync = 5;
+  bool hit_rate_limit = 6;
+}
+
+message RateLimitInfo {
+  string region = 1;
+  string api_type = 2;
+  bool is_limited = 3;
+  google.protobuf.Timestamp reset_time = 4;
+  int32 remaining_requests = 5;
+  int32 total_requests = 6;
+}
+
+message RateLimitBucket {
+  string bucket_type = 1;
+  int32 limit = 2;
+  int32 remaining = 3;
+  google.protobuf.Timestamp reset_time = 4;
+  google.protobuf.Duration window = 5;
+}
+
+// Common response metadata
+message ResponseMetadata {
+  google.protobuf.Timestamp timestamp = 1;
+  google.protobuf.Duration response_time = 2;
+  string source = 3;
+  bool from_cache = 4;
+  string api_version = 5;
+  RateLimitInfo rate_limit = 6;
+}

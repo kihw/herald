@@ -65,10 +65,10 @@ func (ms *MapService) GetStrategicZones() []MapZone {
 
 // MapZone represents a zone on the League of Legends map
 type MapZone struct {
-	Name        string    `json:"name"`
-	Coordinates [][]int   `json:"coordinates"` // Polygon coordinates
-	Strategic   bool      `json:"strategic"`   // High-value zone
-	GamePhase   []string  `json:"game_phase"`  // When this zone is most important
+	Name        string   `json:"name"`
+	Coordinates [][]int  `json:"coordinates"` // Polygon coordinates
+	Strategic   bool     `json:"strategic"`   // High-value zone
+	GamePhase   []string `json:"game_phase"`  // When this zone is most important
 }
 
 // IsPointInZone checks if a coordinate is within a specific zone
@@ -91,7 +91,7 @@ func (ms *MapService) GetZoneForPoint(x, y int) string {
 func (ms *MapService) GetStrategicZonesForPhase(phase string) []MapZone {
 	zones := ms.GetStrategicZones()
 	var filteredZones []MapZone
-	
+
 	for _, zone := range zones {
 		if zone.Strategic {
 			for _, phaseStr := range zone.GamePhase {
@@ -102,7 +102,7 @@ func (ms *MapService) GetStrategicZonesForPhase(phase string) []MapZone {
 			}
 		}
 	}
-	
+
 	return filteredZones
 }
 
@@ -110,7 +110,7 @@ func (ms *MapService) GetStrategicZonesForPhase(phase string) []MapZone {
 func (ms *MapService) isPointInPolygon(x, y int, polygon [][]int) bool {
 	n := len(polygon)
 	inside := false
-	
+
 	j := n - 1
 	for i := 0; i < n; i++ {
 		if ((polygon[i][1] > y) != (polygon[j][1] > y)) &&
@@ -119,7 +119,7 @@ func (ms *MapService) isPointInPolygon(x, y int, polygon [][]int) bool {
 		}
 		j = i
 	}
-	
+
 	return inside
 }
 
@@ -127,7 +127,7 @@ func (ms *MapService) isPointInPolygon(x, y int, polygon [][]int) bool {
 func (ms *MapService) GetLaneForPosition(x, y int) string {
 	// Simplified lane detection based on map quadrants
 	centerX, centerY := 7435, 7435 // Map center
-	
+
 	if x < centerX-1000 && y > centerY+1000 {
 		return "top"
 	} else if x > centerX+1000 && y < centerY-1000 {
@@ -137,14 +137,14 @@ func (ms *MapService) GetLaneForPosition(x, y int) string {
 	} else if (x < centerX && y < centerY) || (x > centerX && y > centerY) {
 		return "jungle"
 	}
-	
+
 	return "unknown"
 }
 
 // GetMapSide determines if a position is on blue or red side
 func (ms *MapService) GetMapSide(x, y int) string {
 	centerX, centerY := 7435, 7435 // Map center
-	
+
 	// Blue side is generally bottom-left, red side is top-right
 	if x+y < centerX+centerY {
 		return "blue"
@@ -163,17 +163,17 @@ func (ms *MapService) CalculateDistance(x1, y1, x2, y2 int) float64 {
 func (ms *MapService) GetNearbyZones(x, y int, maxDistance float64) []string {
 	zones := ms.GetStrategicZones()
 	var nearbyZones []string
-	
+
 	for _, zone := range zones {
 		// Calculate center of zone
 		centerX, centerY := ms.getZoneCenter(zone)
 		distance := ms.CalculateDistance(x, y, centerX, centerY)
-		
+
 		if distance <= maxDistance*maxDistance { // Compare squared distances
 			nearbyZones = append(nearbyZones, zone.Name)
 		}
 	}
-	
+
 	return nearbyZones
 }
 
@@ -182,13 +182,13 @@ func (ms *MapService) getZoneCenter(zone MapZone) (int, int) {
 	if len(zone.Coordinates) == 0 {
 		return 0, 0
 	}
-	
+
 	sumX, sumY := 0, 0
 	for _, coord := range zone.Coordinates {
 		sumX += coord[0]
 		sumY += coord[1]
 	}
-	
+
 	return sumX / len(zone.Coordinates), sumY / len(zone.Coordinates)
 }
 

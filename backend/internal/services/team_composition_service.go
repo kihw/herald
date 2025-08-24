@@ -11,236 +11,228 @@ import (
 
 // TeamCompositionService provides advanced team composition optimization and analysis
 type TeamCompositionService struct {
-	db                   *gorm.DB
-	analyticsService     *AnalyticsService
-	metaService         *MetaAnalyticsService
+	db                     *gorm.DB
+	analyticsService       *AnalyticsService
+	metaService            *MetaAnalyticsService
 	matchPredictionService *MatchPredictionService
 }
 
 // NewTeamCompositionService creates a new team composition service
 func NewTeamCompositionService(db *gorm.DB, analyticsService *AnalyticsService, metaService *MetaAnalyticsService, matchPredictionService *MatchPredictionService) *TeamCompositionService {
 	return &TeamCompositionService{
-		db:                   db,
-		analyticsService:     analyticsService,
-		metaService:         metaService,
+		db:                     db,
+		analyticsService:       analyticsService,
+		metaService:            metaService,
 		matchPredictionService: matchPredictionService,
 	}
 }
 
 // TeamComposition represents an optimized team composition
 type TeamComposition struct {
-	ID                string                      `json:"id" gorm:"primaryKey"`
-	CompositionName   string                      `json:"composition_name"`
-	CompositionType   string                      `json:"composition_type"`   // team_fight, split_push, poke, etc.
-	Tier              string                      `json:"tier"`               // S+, S, A+, A, B+, B, C
-	
+	ID              string `json:"id" gorm:"primaryKey"`
+	CompositionName string `json:"composition_name"`
+	CompositionType string `json:"composition_type"` // team_fight, split_push, poke, etc.
+	Tier            string `json:"tier"`             // S+, S, A+, A, B+, B, C
+
 	// Champion Assignments
-	TopLaner          ChampionAssignment          `json:"top_laner" gorm:"embedded;embeddedPrefix:top_"`
-	Jungler           ChampionAssignment          `json:"jungler" gorm:"embedded;embeddedPrefix:jungle_"`
-	MidLaner          ChampionAssignment          `json:"mid_laner" gorm:"embedded;embeddedPrefix:mid_"`
-	ADCarry           ChampionAssignment          `json:"ad_carry" gorm:"embedded;embeddedPrefix:adc_"`
-	Support           ChampionAssignment          `json:"support" gorm:"embedded;embeddedPrefix:support_"`
-	
+	TopLaner ChampionAssignment `json:"top_laner" gorm:"embedded;embeddedPrefix:top_"`
+	Jungler  ChampionAssignment `json:"jungler" gorm:"embedded;embeddedPrefix:jungle_"`
+	MidLaner ChampionAssignment `json:"mid_laner" gorm:"embedded;embeddedPrefix:mid_"`
+	ADCarry  ChampionAssignment `json:"ad_carry" gorm:"embedded;embeddedPrefix:adc_"`
+	Support  ChampionAssignment `json:"support" gorm:"embedded;embeddedPrefix:support_"`
+
 	// Composition Analysis
-	OverallRating     float64                     `json:"overall_rating"`     // 0-100
-	SynergyScore      float64                     `json:"synergy_score"`      // 0-100
-	CounterResistance float64                     `json:"counter_resistance"` // 0-100
-	FlexibilityScore  float64                     `json:"flexibility_score"`  // 0-100
-	
+	OverallRating     float64 `json:"overall_rating"`     // 0-100
+	SynergyScore      float64 `json:"synergy_score"`      // 0-100
+	CounterResistance float64 `json:"counter_resistance"` // 0-100
+	FlexibilityScore  float64 `json:"flexibility_score"`  // 0-100
+
 	// Performance Metrics
-	WinRateData       WinRateAnalysis             `json:"win_rate_data" gorm:"embedded"`
-	ScalingProfile    CompositionScaling          `json:"scaling_profile" gorm:"embedded"`
-	PowerSpikes       []PowerSpikeData            `json:"power_spikes" gorm:"type:text"`
-	
+	WinRateData    WinRateAnalysis    `json:"win_rate_data" gorm:"embedded"`
+	ScalingProfile CompositionScaling `json:"scaling_profile" gorm:"embedded"`
+	PowerSpikes    []PowerSpikeData   `json:"power_spikes" gorm:"type:text"`
+
 	// Strategic Analysis
-	WinConditions     []CompositionWinCondition   `json:"win_conditions" gorm:"type:text"`
-	Weaknesses        []CompositionWeakness       `json:"weaknesses" gorm:"type:text"`
-	CounterComps      []string                    `json:"counter_comps" gorm:"type:text"`
-	SynergyComps      []string                    `json:"synergy_comps" gorm:"type:text"`
-	
+	WinConditions []CompositionWinCondition `json:"win_conditions" gorm:"type:text"`
+	Weaknesses    []CompositionWeakness     `json:"weaknesses" gorm:"type:text"`
+	CounterComps  []string                  `json:"counter_comps" gorm:"type:text"`
+	SynergyComps  []string                  `json:"synergy_comps" gorm:"type:text"`
+
 	// Meta Context
-	MetaRelevance     float64                     `json:"meta_relevance"`     // 0-100
-	PatchStability    float64                     `json:"patch_stability"`    // 0-100
-	TrendDirection    string                      `json:"trend_direction"`    // rising, stable, declining
-	
+	MetaRelevance  float64 `json:"meta_relevance"`  // 0-100
+	PatchStability float64 `json:"patch_stability"` // 0-100
+	TrendDirection string  `json:"trend_direction"` // rising, stable, declining
+
 	// Usage Statistics
-	PickRate          float64                     `json:"pick_rate"`          // 0-100
-	BanRate           float64                     `json:"ban_rate"`           // 0-100
-	ProPlayUsage      float64                     `json:"pro_play_usage"`     // 0-100
-	
+	PickRate     float64 `json:"pick_rate"`      // 0-100
+	BanRate      float64 `json:"ban_rate"`       // 0-100
+	ProPlayUsage float64 `json:"pro_play_usage"` // 0-100
+
 	// Optimization Context
-	OptimizedFor      []string                    `json:"optimized_for" gorm:"type:text"`       // rank, role, playstyle
-	RecommendedRanks  []string                    `json:"recommended_ranks" gorm:"type:text"`   // bronze, silver, gold, etc.
-	DifficultyRating  string                      `json:"difficulty_rating"`  // easy, medium, hard, expert
-	
+	OptimizedFor     []string `json:"optimized_for" gorm:"type:text"`     // rank, role, playstyle
+	RecommendedRanks []string `json:"recommended_ranks" gorm:"type:text"` // bronze, silver, gold, etc.
+	DifficultyRating string   `json:"difficulty_rating"`                  // easy, medium, hard, expert
+
 	// Metadata
-	CreatedAt         time.Time                   `json:"created_at"`
-	UpdatedAt         time.Time                   `json:"updated_at"`
-	LastAnalyzed      time.Time                   `json:"last_analyzed"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	LastAnalyzed time.Time `json:"last_analyzed"`
 }
 
 // ChampionAssignment represents a champion assigned to a specific role
 type ChampionAssignment struct {
-	ChampionName      string                      `json:"champion_name"`
-	ChampionID        int                         `json:"champion_id"`
-	Role              string                      `json:"role"`
-	Priority          int                         `json:"priority"`           // 1 = highest priority
-	
+	ChampionName string `json:"champion_name"`
+	ChampionID   int    `json:"champion_id"`
+	Role         string `json:"role"`
+	Priority     int    `json:"priority"` // 1 = highest priority
+
 	// Champion Analysis
-	RoleEfficiency    float64                     `json:"role_efficiency"`    // 0-100
-	MetaStrength      float64                     `json:"meta_strength"`      // 0-100
-	SynergyContrib    float64                     `json:"synergy_contrib"`    // 0-100
-	CounterResist     float64                     `json:"counter_resist"`     // 0-100
-	
+	RoleEfficiency float64 `json:"role_efficiency"` // 0-100
+	MetaStrength   float64 `json:"meta_strength"`   // 0-100
+	SynergyContrib float64 `json:"synergy_contrib"` // 0-100
+	CounterResist  float64 `json:"counter_resist"`  // 0-100
+
 	// Alternative Options
-	Alternatives      []AlternativeChampion       `json:"alternatives" gorm:"type:text"`
-	FlexOptions       []FlexOption                `json:"flex_options" gorm:"type:text"`
-	
+	Alternatives []AlternativeChampion `json:"alternatives" gorm:"type:text"`
+	FlexOptions  []FlexOption          `json:"flex_options" gorm:"type:text"`
+
 	// Performance Data
-	WinRate           float64                     `json:"win_rate"`           // 0-100
-	PickRate          float64                     `json:"pick_rate"`          // 0-100
-	BanRate           float64                     `json:"ban_rate"`           // 0-100
-	AvgKDA            float64                     `json:"avg_kda"`
-	AvgDamageShare    float64                     `json:"avg_damage_share"`   // 0-100
+	WinRate        float64 `json:"win_rate"`  // 0-100
+	PickRate       float64 `json:"pick_rate"` // 0-100
+	BanRate        float64 `json:"ban_rate"`  // 0-100
+	AvgKDA         float64 `json:"avg_kda"`
+	AvgDamageShare float64 `json:"avg_damage_share"` // 0-100
 }
 
 // AlternativeChampion represents alternative champion options for a role
 type AlternativeChampion struct {
-	ChampionName      string  `json:"champion_name"`
-	SimilarityScore   float64 `json:"similarity_score"`   // 0-100
-	StrengthRating    float64 `json:"strength_rating"`    // 0-100
-	SynergyScore      float64 `json:"synergy_score"`      // 0-100
-	Reasoning         string  `json:"reasoning"`
+	ChampionName    string  `json:"champion_name"`
+	SimilarityScore float64 `json:"similarity_score"` // 0-100
+	StrengthRating  float64 `json:"strength_rating"`  // 0-100
+	SynergyScore    float64 `json:"synergy_score"`    // 0-100
+	Reasoning       string  `json:"reasoning"`
 }
 
 // FlexOption represents flexible pick options
 type FlexOption struct {
-	AlternativeRole   string  `json:"alternative_role"`
-	FlexStrength      float64 `json:"flex_strength"`      // 0-100
-	RoleEfficiency    float64 `json:"role_efficiency"`    // 0-100
-	StrategicValue    string  `json:"strategic_value"`
+	AlternativeRole string  `json:"alternative_role"`
+	FlexStrength    float64 `json:"flex_strength"`   // 0-100
+	RoleEfficiency  float64 `json:"role_efficiency"` // 0-100
+	StrategicValue  string  `json:"strategic_value"`
 }
 
 // WinRateAnalysis contains comprehensive win rate data
 type WinRateAnalysis struct {
-	OverallWinRate    float64                     `json:"overall_win_rate"`   // 0-100
-	EarlyGameWR       float64                     `json:"early_game_wr"`      // 0-100
-	MidGameWR         float64                     `json:"mid_game_wr"`        // 0-100
-	LateGameWR        float64                     `json:"late_game_wr"`       // 0-100
-	RankBreakdown     []RankWinRate               `json:"rank_breakdown" gorm:"type:text"`
-	RegionVariance    []RegionWinRate             `json:"region_variance" gorm:"type:text"`
-	MatchupWinRates   []MatchupWinRate            `json:"matchup_winrates" gorm:"type:text"`
-	SampleSize        int                         `json:"sample_size"`
-	Confidence        float64                     `json:"confidence"`         // 0-100
+	OverallWinRate  float64          `json:"overall_win_rate"` // 0-100
+	EarlyGameWR     float64          `json:"early_game_wr"`    // 0-100
+	MidGameWR       float64          `json:"mid_game_wr"`      // 0-100
+	LateGameWR      float64          `json:"late_game_wr"`     // 0-100
+	RankBreakdown   []RankWinRate    `json:"rank_breakdown" gorm:"type:text"`
+	RegionVariance  []RegionWinRate  `json:"region_variance" gorm:"type:text"`
+	MatchupWinRates []MatchupWinRate `json:"matchup_winrates" gorm:"type:text"`
+	SampleSize      int              `json:"sample_size"`
+	Confidence      float64          `json:"confidence"` // 0-100
 }
 
 // RankWinRate represents win rate by rank tier
 type RankWinRate struct {
-	Rank              string  `json:"rank"`
-	WinRate           float64 `json:"win_rate"`       // 0-100
-	SampleSize        int     `json:"sample_size"`
-	Confidence        float64 `json:"confidence"`     // 0-100
+	Rank       string  `json:"rank"`
+	WinRate    float64 `json:"win_rate"` // 0-100
+	SampleSize int     `json:"sample_size"`
+	Confidence float64 `json:"confidence"` // 0-100
 }
 
 // RegionWinRate represents win rate by region
 type RegionWinRate struct {
-	Region            string  `json:"region"`
-	WinRate           float64 `json:"win_rate"`       // 0-100
-	SampleSize        int     `json:"sample_size"`
-	PopularityIndex   float64 `json:"popularity_index"` // 0-100
+	Region          string  `json:"region"`
+	WinRate         float64 `json:"win_rate"` // 0-100
+	SampleSize      int     `json:"sample_size"`
+	PopularityIndex float64 `json:"popularity_index"` // 0-100
 }
 
 // MatchupWinRate represents win rate against specific compositions
 type MatchupWinRate struct {
-	OpponentType      string  `json:"opponent_type"`
-	WinRate           float64 `json:"win_rate"`       // 0-100
-	SampleSize        int     `json:"sample_size"`
-	MatchupRating     string  `json:"matchup_rating"` // favored, even, unfavored
+	OpponentType  string  `json:"opponent_type"`
+	WinRate       float64 `json:"win_rate"` // 0-100
+	SampleSize    int     `json:"sample_size"`
+	MatchupRating string  `json:"matchup_rating"` // favored, even, unfavored
 }
 
 // CompositionScaling represents how the composition scales over time
 type CompositionScaling struct {
-	EarlyGameStrength float64  `json:"early_game_strength"` // 0-100 (0-15 min)
-	MidGameStrength   float64  `json:"mid_game_strength"`   // 0-100 (15-25 min)
-	LateGameStrength  float64  `json:"late_game_strength"`  // 0-100 (25+ min)
-	ScalingCurve      string   `json:"scaling_curve"`       // linear, exponential, plateau, spike
-	PeakTiming        int      `json:"peak_timing"`         // minute when comp peaks
-	FalloffPoint      int      `json:"falloff_point"`       // minute when comp starts declining
-	ConsistencyRating float64  `json:"consistency_rating"`  // 0-100
+	EarlyGameStrength float64 `json:"early_game_strength"` // 0-100 (0-15 min)
+	MidGameStrength   float64 `json:"mid_game_strength"`   // 0-100 (15-25 min)
+	LateGameStrength  float64 `json:"late_game_strength"`  // 0-100 (25+ min)
+	ScalingCurve      string  `json:"scaling_curve"`       // linear, exponential, plateau, spike
+	PeakTiming        int     `json:"peak_timing"`         // minute when comp peaks
+	FalloffPoint      int     `json:"falloff_point"`       // minute when comp starts declining
+	ConsistencyRating float64 `json:"consistency_rating"`  // 0-100
 }
 
 // PowerSpikeData represents significant power spikes
-type PowerSpikeData struct {
-	SpikeTiming       int      `json:"spike_timing"`        // minute mark
-	SpikeType         string   `json:"spike_type"`          // champion, item, level, objective
-	SpikeStrength     float64  `json:"spike_strength"`      // 0-100
-	Description       string   `json:"description"`
-	EnabledBy         []string `json:"enabled_by"`          // what enables this spike
-	CounterPlay       []string `json:"counter_play"`        // how opponents can counter
-}
 
 // CompositionWinCondition represents paths to victory
 type CompositionWinCondition struct {
-	Condition         string   `json:"condition"`
-	Probability       float64  `json:"probability"`         // 0-100
-	GamePhase         string   `json:"game_phase"`          // early, mid, late, any
-	Requirements      []string `json:"requirements"`
-	EnabledBy         []string `json:"enabled_by"`
-	CounteredBy       []string `json:"countered_by"`
-	SuccessRate       float64  `json:"success_rate"`        // 0-100
+	Condition    string   `json:"condition"`
+	Probability  float64  `json:"probability"` // 0-100
+	GamePhase    string   `json:"game_phase"`  // early, mid, late, any
+	Requirements []string `json:"requirements"`
+	EnabledBy    []string `json:"enabled_by"`
+	CounteredBy  []string `json:"countered_by"`
+	SuccessRate  float64  `json:"success_rate"` // 0-100
 }
 
 // CompositionWeakness represents vulnerabilities
 type CompositionWeakness struct {
 	Weakness          string   `json:"weakness"`
-	Severity          string   `json:"severity"`            // low, medium, high, critical
-	ExploitRate       float64  `json:"exploit_rate"`        // 0-100
-	GamePhase         string   `json:"game_phase"`          // when this weakness is most exploitable
-	Mitigation        []string `json:"mitigation"`          // how to minimize this weakness
-	CounterStrategies []string `json:"counter_strategies"`  // how opponents exploit this
+	Severity          string   `json:"severity"`           // low, medium, high, critical
+	ExploitRate       float64  `json:"exploit_rate"`       // 0-100
+	GamePhase         string   `json:"game_phase"`         // when this weakness is most exploitable
+	Mitigation        []string `json:"mitigation"`         // how to minimize this weakness
+	CounterStrategies []string `json:"counter_strategies"` // how opponents exploit this
 }
 
 // CompositionOptimizationRequest represents a request for composition optimization
 type CompositionOptimizationRequest struct {
-	OptimizationType  string                      `json:"optimization_type"`   // maximize_win_rate, meta_strength, synergy, etc.
-	Constraints       OptimizationConstraints     `json:"constraints"`
-	PlayerData        []PlayerOptimizationData    `json:"player_data"`
-	MetaContext       MetaOptimizationContext     `json:"meta_context"`
-	Preferences       OptimizationPreferences     `json:"preferences"`
+	OptimizationType string                   `json:"optimization_type"` // maximize_win_rate, meta_strength, synergy, etc.
+	Constraints      OptimizationConstraints  `json:"constraints"`
+	PlayerData       []PlayerOptimizationData `json:"player_data"`
+	MetaContext      MetaOptimizationContext  `json:"meta_context"`
+	Preferences      OptimizationPreferences  `json:"preferences"`
 }
 
 // OptimizationConstraints defines limitations for optimization
 type OptimizationConstraints struct {
-	BannedChampions   []string                    `json:"banned_champions"`
-	RequiredChampions []ChampionRoleRequirement   `json:"required_champions"`
-	ForbiddenRoles    []string                    `json:"forbidden_roles"`    // roles player can't/won't play
-	ChampionPool      map[string][]string         `json:"champion_pool"`      // role -> available champions
-	MaxDifficulty     string                      `json:"max_difficulty"`     // easy, medium, hard, expert
-	MinMetaRelevance  float64                     `json:"min_meta_relevance"` // 0-100
+	BannedChampions   []string                  `json:"banned_champions"`
+	RequiredChampions []ChampionRoleRequirement `json:"required_champions"`
+	ForbiddenRoles    []string                  `json:"forbidden_roles"`    // roles player can't/won't play
+	ChampionPool      map[string][]string       `json:"champion_pool"`      // role -> available champions
+	MaxDifficulty     string                    `json:"max_difficulty"`     // easy, medium, hard, expert
+	MinMetaRelevance  float64                   `json:"min_meta_relevance"` // 0-100
 }
 
 // ChampionRoleRequirement specifies required champion-role combinations
 type ChampionRoleRequirement struct {
-	ChampionName      string `json:"champion_name"`
-	Role              string `json:"role"`
-	Priority          int    `json:"priority"`     // 1 = must have, 2 = strongly preferred, etc.
+	ChampionName string `json:"champion_name"`
+	Role         string `json:"role"`
+	Priority     int    `json:"priority"` // 1 = must have, 2 = strongly preferred, etc.
 }
 
 // PlayerOptimizationData contains player-specific data for optimization
 type PlayerOptimizationData struct {
-	PlayerID          string                      `json:"player_id"`
-	Role              string                      `json:"role"`
-	ChampionMastery   []ChampionMasteryData       `json:"champion_mastery"`
-	PlayStyle         string                      `json:"play_style"`         // aggressive, passive, supportive, etc.
-	SkillLevel        float64                     `json:"skill_level"`        // 0-100
-	RoleFlexibility   []string                    `json:"role_flexibility"`   // other roles they can play
-	RecentPerformance RecentPerformanceData       `json:"recent_performance"`
+	PlayerID          string                `json:"player_id"`
+	Role              string                `json:"role"`
+	ChampionMastery   []ChampionMasteryData `json:"champion_mastery"`
+	PlayStyle         string                `json:"play_style"`       // aggressive, passive, supportive, etc.
+	SkillLevel        float64               `json:"skill_level"`      // 0-100
+	RoleFlexibility   []string              `json:"role_flexibility"` // other roles they can play
+	RecentPerformance RecentPerformanceData `json:"recent_performance"`
 }
 
 // ChampionMasteryData represents mastery on specific champions
 type ChampionMasteryData struct {
 	ChampionName      string  `json:"champion_name"`
-	MasteryLevel      int     `json:"mastery_level"`      // 1-7
+	MasteryLevel      int     `json:"mastery_level"` // 1-7
 	MasteryPoints     int     `json:"mastery_points"`
 	GamesPlayed       int     `json:"games_played"`
 	WinRate           float64 `json:"win_rate"`           // 0-100
@@ -250,81 +242,81 @@ type ChampionMasteryData struct {
 
 // RecentPerformanceData represents recent performance trends
 type RecentPerformanceData struct {
-	RecentGames       int     `json:"recent_games"`
-	WinRate           float64 `json:"win_rate"`           // 0-100
-	AvgKDA            float64 `json:"avg_kda"`
-	ConsistencyRating float64 `json:"consistency_rating"` // 0-100
-	FormTrend         string  `json:"form_trend"`         // improving, stable, declining
-	BestPerformingRole string `json:"best_performing_role"`
+	RecentGames        int     `json:"recent_games"`
+	WinRate            float64 `json:"win_rate"` // 0-100
+	AvgKDA             float64 `json:"avg_kda"`
+	ConsistencyRating  float64 `json:"consistency_rating"` // 0-100
+	FormTrend          string  `json:"form_trend"`         // improving, stable, declining
+	BestPerformingRole string  `json:"best_performing_role"`
 }
 
 // MetaOptimizationContext provides meta context for optimization
 type MetaOptimizationContext struct {
-	CurrentPatch      string             `json:"current_patch"`
-	Region            string             `json:"region"`
-	RankTier          string             `json:"rank_tier"`
-	GameMode          string             `json:"game_mode"`          // ranked, tournament, etc.
-	PriorityMeta      bool               `json:"priority_meta"`      // prioritize meta strength
-	AvoidBans         bool               `json:"avoid_bans"`         // avoid high ban rate champions
-	MetaStability     string             `json:"meta_stability"`     // stable, volatile, new
+	CurrentPatch  string `json:"current_patch"`
+	Region        string `json:"region"`
+	RankTier      string `json:"rank_tier"`
+	GameMode      string `json:"game_mode"`      // ranked, tournament, etc.
+	PriorityMeta  bool   `json:"priority_meta"`  // prioritize meta strength
+	AvoidBans     bool   `json:"avoid_bans"`     // avoid high ban rate champions
+	MetaStability string `json:"meta_stability"` // stable, volatile, new
 }
 
 // OptimizationPreferences contains user preferences for optimization
 type OptimizationPreferences struct {
-	PreferredStyle    string   `json:"preferred_style"`    // team_fight, split_push, poke, etc.
-	AggressionLevel   string   `json:"aggression_level"`   // passive, balanced, aggressive
-	ComplexityLevel   string   `json:"complexity_level"`   // simple, moderate, complex
-	LearningGoals     []string `json:"learning_goals"`     // improve_teamwork, learn_new_champs, etc.
-	TimeInvestment    string   `json:"time_investment"`    // low, medium, high
-	RiskTolerance     string   `json:"risk_tolerance"`     // conservative, balanced, risky
+	PreferredStyle  string   `json:"preferred_style"`  // team_fight, split_push, poke, etc.
+	AggressionLevel string   `json:"aggression_level"` // passive, balanced, aggressive
+	ComplexityLevel string   `json:"complexity_level"` // simple, moderate, complex
+	LearningGoals   []string `json:"learning_goals"`   // improve_teamwork, learn_new_champs, etc.
+	TimeInvestment  string   `json:"time_investment"`  // low, medium, high
+	RiskTolerance   string   `json:"risk_tolerance"`   // conservative, balanced, risky
 }
 
 // OptimizationResult represents the result of composition optimization
 type OptimizationResult struct {
-	OptimalCompositions []TeamComposition           `json:"optimal_compositions"`
-	OptimizationScore   float64                     `json:"optimization_score"`   // 0-100
-	AlternativeOptions  []TeamComposition           `json:"alternative_options"`
-	OptimizationReport  OptimizationReport          `json:"optimization_report"`
-	Recommendations     []OptimizationRecommendation `json:"recommendations"`
-	ConstraintsSatisfied bool                       `json:"constraints_satisfied"`
+	OptimalCompositions  []TeamComposition            `json:"optimal_compositions"`
+	OptimizationScore    float64                      `json:"optimization_score"` // 0-100
+	AlternativeOptions   []TeamComposition            `json:"alternative_options"`
+	OptimizationReport   OptimizationReport           `json:"optimization_report"`
+	Recommendations      []OptimizationRecommendation `json:"recommendations"`
+	ConstraintsSatisfied bool                         `json:"constraints_satisfied"`
 }
 
 // OptimizationReport provides detailed analysis of the optimization process
 type OptimizationReport struct {
-	OptimizationTime    float64                     `json:"optimization_time"`    // milliseconds
-	CompositionsEvaluated int                       `json:"compositions_evaluated"`
-	OptimizationMethod  string                      `json:"optimization_method"`  // genetic_algorithm, brute_force, etc.
-	ConvergenceScore    float64                     `json:"convergence_score"`    // 0-100
-	ConstraintsApplied  []ConstraintReport          `json:"constraints_applied"`
-	ImprovementAreas    []ImprovementArea           `json:"improvement_areas"`
-	ConfidenceLevel     float64                     `json:"confidence_level"`     // 0-100
+	OptimizationTime      float64            `json:"optimization_time"` // milliseconds
+	CompositionsEvaluated int                `json:"compositions_evaluated"`
+	OptimizationMethod    string             `json:"optimization_method"` // genetic_algorithm, brute_force, etc.
+	ConvergenceScore      float64            `json:"convergence_score"`   // 0-100
+	ConstraintsApplied    []ConstraintReport `json:"constraints_applied"`
+	ImprovementAreas      []ImprovementArea  `json:"improvement_areas"`
+	ConfidenceLevel       float64            `json:"confidence_level"` // 0-100
 }
 
 // ConstraintReport shows which constraints were applied
 type ConstraintReport struct {
-	ConstraintType      string   `json:"constraint_type"`
-	Applied             bool     `json:"applied"`
-	Impact              string   `json:"impact"`             // low, medium, high
-	LimitedOptions      []string `json:"limited_options"`
+	ConstraintType string   `json:"constraint_type"`
+	Applied        bool     `json:"applied"`
+	Impact         string   `json:"impact"` // low, medium, high
+	LimitedOptions []string `json:"limited_options"`
 }
 
 // ImprovementArea suggests areas for composition improvement
 type ImprovementArea struct {
-	Area                string   `json:"area"`
-	CurrentScore        float64  `json:"current_score"`      // 0-100
-	PotentialScore      float64  `json:"potential_score"`    // 0-100
+	Area                   string   `json:"area"`
+	CurrentScore           float64  `json:"current_score"`   // 0-100
+	PotentialScore         float64  `json:"potential_score"` // 0-100
 	ImprovementSuggestions []string `json:"improvement_suggestions"`
-	Priority            string   `json:"priority"`           // low, medium, high
+	Priority               string   `json:"priority"` // low, medium, high
 }
 
 // OptimizationRecommendation provides specific recommendations
 type OptimizationRecommendation struct {
-	Type                string   `json:"type"`               // champion_swap, role_change, strategy_adjust
+	Type                string   `json:"type"` // champion_swap, role_change, strategy_adjust
 	Description         string   `json:"description"`
 	ExpectedImprovement float64  `json:"expected_improvement"` // 0-100
-	Difficulty          string   `json:"difficulty"`         // easy, medium, hard
-	Implementation      []string `json:"implementation"`     // steps to implement
-	Priority            string   `json:"priority"`           // low, medium, high
+	Difficulty          string   `json:"difficulty"`           // easy, medium, hard
+	Implementation      []string `json:"implementation"`       // steps to implement
+	Priority            string   `json:"priority"`             // low, medium, high
 }
 
 // OptimizeComposition generates optimal team compositions based on constraints and preferences
@@ -498,7 +490,7 @@ func (s *TeamCompositionService) generateMetaOptimalCompositions(availableChampi
 						if combinations >= maxCombinations {
 							break
 						}
-						
+
 						comp := s.createComposition(top, jungle, mid, adc, support, "meta_optimal")
 						compositions = append(compositions, comp)
 						combinations++
@@ -552,12 +544,12 @@ func (s *TeamCompositionService) generateSynergyFocusedCompositions(availableCha
 		supportOptions := s.intersectChampions(availableChampions["SUPPORT"], group["SUPPORT"])
 
 		// Generate best combinations from this synergy group
-		if len(topOptions) > 0 && len(jungleOptions) > 0 && len(midOptions) > 0 && 
-		   len(adcOptions) > 0 && len(supportOptions) > 0 {
-			
+		if len(topOptions) > 0 && len(jungleOptions) > 0 && len(midOptions) > 0 &&
+			len(adcOptions) > 0 && len(supportOptions) > 0 {
+
 			// Take best option from each role for this synergy group
 			comp := s.createComposition(
-				topOptions[0], jungleOptions[0], midOptions[0], 
+				topOptions[0], jungleOptions[0], midOptions[0],
 				adcOptions[0], supportOptions[0], "synergy_focused")
 			compositions = append(compositions, comp)
 		}
@@ -572,11 +564,11 @@ func (s *TeamCompositionService) generateBalancedCompositions(availableChampions
 
 	// Define balanced champion archetypes for each role
 	balancedPicks := map[string][]string{
-		"TOP":     {"Garen", "Malphite", "Darius", "Ornn"},         // Mix of tank and damage
-		"JUNGLE":  {"Graves", "Ammu", "Lee Sin", "Rammus"},         // Mix of carry and utility
-		"MID":     {"Orianna", "Ahri", "Malzahar", "Syndra"},       // Mix of control and burst
-		"ADC":     {"Jinx", "Ezreal", "Ashe", "Caitlyn"},           // Mix of scaling and utility
-		"SUPPORT": {"Thresh", "Leona", "Soraka", "Braum"},          // Mix of engage and protection
+		"TOP":     {"Garen", "Malphite", "Darius", "Ornn"},   // Mix of tank and damage
+		"JUNGLE":  {"Graves", "Ammu", "Lee Sin", "Rammus"},   // Mix of carry and utility
+		"MID":     {"Orianna", "Ahri", "Malzahar", "Syndra"}, // Mix of control and burst
+		"ADC":     {"Jinx", "Ezreal", "Ashe", "Caitlyn"},     // Mix of scaling and utility
+		"SUPPORT": {"Thresh", "Leona", "Soraka", "Braum"},    // Mix of engage and protection
 	}
 
 	// Filter by available champions
@@ -644,7 +636,7 @@ func (s *TeamCompositionService) evaluateCompositions(compositions []TeamComposi
 	for i := range compositions {
 		score := s.calculateCompositionScore(&compositions[i], request)
 		compositions[i].OverallRating = score
-		
+
 		// Add additional analysis
 		s.analyzeCompositionSynergy(&compositions[i])
 		s.analyzeCompositionScaling(&compositions[i])
@@ -689,11 +681,11 @@ func (s *TeamCompositionService) calculateCompositionScore(comp *TeamComposition
 
 // OptimizationWeights defines weights for different optimization criteria
 type OptimizationWeights struct {
-	MetaWeight       float64
-	SynergyWeight    float64
-	ComfortWeight    float64
-	WinRateWeight    float64
-	DifficultyWeight float64
+	MetaWeight        float64
+	SynergyWeight     float64
+	ComfortWeight     float64
+	WinRateWeight     float64
+	DifficultyWeight  float64
 	FlexibilityWeight float64
 }
 
@@ -702,48 +694,48 @@ func (s *TeamCompositionService) getOptimizationWeights(optimizationType string)
 	switch optimizationType {
 	case "maximize_win_rate":
 		return OptimizationWeights{
-			MetaWeight:       0.3,
-			SynergyWeight:    0.2,
-			ComfortWeight:    0.1,
-			WinRateWeight:    0.4,
-			DifficultyWeight: 0.0,
+			MetaWeight:        0.3,
+			SynergyWeight:     0.2,
+			ComfortWeight:     0.1,
+			WinRateWeight:     0.4,
+			DifficultyWeight:  0.0,
 			FlexibilityWeight: 0.0,
 		}
 	case "meta_strength":
 		return OptimizationWeights{
-			MetaWeight:       0.5,
-			SynergyWeight:    0.2,
-			ComfortWeight:    0.1,
-			WinRateWeight:    0.2,
-			DifficultyWeight: 0.0,
+			MetaWeight:        0.5,
+			SynergyWeight:     0.2,
+			ComfortWeight:     0.1,
+			WinRateWeight:     0.2,
+			DifficultyWeight:  0.0,
 			FlexibilityWeight: 0.0,
 		}
 	case "synergy":
 		return OptimizationWeights{
-			MetaWeight:       0.2,
-			SynergyWeight:    0.4,
-			ComfortWeight:    0.2,
-			WinRateWeight:    0.2,
-			DifficultyWeight: 0.0,
+			MetaWeight:        0.2,
+			SynergyWeight:     0.4,
+			ComfortWeight:     0.2,
+			WinRateWeight:     0.2,
+			DifficultyWeight:  0.0,
 			FlexibilityWeight: 0.0,
 		}
 	case "comfort":
 		return OptimizationWeights{
-			MetaWeight:       0.15,
-			SynergyWeight:    0.15,
-			ComfortWeight:    0.5,
-			WinRateWeight:    0.15,
-			DifficultyWeight: 0.05,
+			MetaWeight:        0.15,
+			SynergyWeight:     0.15,
+			ComfortWeight:     0.5,
+			WinRateWeight:     0.15,
+			DifficultyWeight:  0.05,
 			FlexibilityWeight: 0.0,
 		}
 	case "balanced":
 	default:
 		return OptimizationWeights{
-			MetaWeight:       0.25,
-			SynergyWeight:    0.25,
-			ComfortWeight:    0.2,
-			WinRateWeight:    0.2,
-			DifficultyWeight: 0.05,
+			MetaWeight:        0.25,
+			SynergyWeight:     0.25,
+			ComfortWeight:     0.2,
+			WinRateWeight:     0.2,
+			DifficultyWeight:  0.05,
 			FlexibilityWeight: 0.05,
 		}
 	}
@@ -754,20 +746,20 @@ func (s *TeamCompositionService) getOptimizationWeights(optimizationType string)
 func (s *TeamCompositionService) calculateMetaScore(comp *TeamComposition, metaContext MetaOptimizationContext) float64 {
 	// This would analyze current meta strength of champions
 	// For now, return mock score
-	return 75.0 + float64((time.Now().UnixNano()%20))-10.0
+	return 75.0 + float64((time.Now().UnixNano() % 20)) - 10.0
 }
 
 func (s *TeamCompositionService) calculateSynergyScore(comp *TeamComposition) float64 {
 	// This would analyze champion synergies
 	// For now, return mock score based on composition type
 	baseScore := 70.0
-	
+
 	// Team fight compositions typically have good synergy
 	if comp.CompositionType == "team_fight" {
 		baseScore += 10.0
 	}
-	
-	variance := float64((time.Now().UnixNano()%20)) - 10.0
+
+	variance := float64((time.Now().UnixNano() % 20)) - 10.0
 	return math.Max(0, math.Min(100, baseScore+variance))
 }
 
@@ -775,10 +767,10 @@ func (s *TeamCompositionService) calculateComfortScore(comp *TeamComposition, pl
 	if len(playerData) == 0 {
 		return 50.0 // neutral score if no player data
 	}
-	
+
 	totalComfort := 0.0
 	playersFound := 0
-	
+
 	champions := []string{
 		comp.TopLaner.ChampionName,
 		comp.Jungler.ChampionName,
@@ -786,7 +778,7 @@ func (s *TeamCompositionService) calculateComfortScore(comp *TeamComposition, pl
 		comp.ADCarry.ChampionName,
 		comp.Support.ChampionName,
 	}
-	
+
 	for _, player := range playerData {
 		var roleChampion string
 		switch player.Role {
@@ -801,18 +793,18 @@ func (s *TeamCompositionService) calculateComfortScore(comp *TeamComposition, pl
 		case "SUPPORT":
 			roleChampion = comp.Support.ChampionName
 		}
-		
+
 		if roleChampion != "" {
 			comfort := s.getPlayerChampionComfort(player, roleChampion)
 			totalComfort += comfort
 			playersFound++
 		}
 	}
-	
+
 	if playersFound > 0 {
 		return totalComfort / float64(playersFound)
 	}
-	
+
 	return 50.0
 }
 
@@ -820,7 +812,7 @@ func (s *TeamCompositionService) calculateWinRateScore(comp *TeamComposition) fl
 	// This would look up actual win rates
 	// For now, return mock data
 	baseWinRate := 50.0
-	variance := float64((time.Now().UnixNano()%20)) - 10.0
+	variance := float64((time.Now().UnixNano() % 20)) - 10.0
 	return math.Max(30, math.Min(70, baseWinRate+variance))
 }
 
@@ -928,7 +920,7 @@ func (s *TeamCompositionService) satisfiesConstraints(comp TeamComposition, cons
 		comp.ADCarry.ChampionName,
 		comp.Support.ChampionName,
 	}
-	
+
 	// Check banned champions
 	for _, champion := range champions {
 		for _, banned := range constraints.BannedChampions {
@@ -937,7 +929,7 @@ func (s *TeamCompositionService) satisfiesConstraints(comp TeamComposition, cons
 			}
 		}
 	}
-	
+
 	return true
 }
 
@@ -984,9 +976,9 @@ func (s *TeamCompositionService) analyzeCompositionSynergy(comp *TeamComposition
 func (s *TeamCompositionService) analyzeCompositionScaling(comp *TeamComposition) {
 	// Analyze how the composition scales over time
 	comp.ScalingProfile = CompositionScaling{
-		EarlyGameStrength: 70.0 + float64((time.Now().UnixNano()%20))-10.0,
-		MidGameStrength:   75.0 + float64((time.Now().UnixNano()%20))-10.0,
-		LateGameStrength:  80.0 + float64((time.Now().UnixNano()%20))-10.0,
+		EarlyGameStrength: 70.0 + float64((time.Now().UnixNano() % 20)) - 10.0,
+		MidGameStrength:   75.0 + float64((time.Now().UnixNano() % 20)) - 10.0,
+		LateGameStrength:  80.0 + float64((time.Now().UnixNano() % 20)) - 10.0,
 		ScalingCurve:      "linear",
 		PeakTiming:        25,
 		FalloffPoint:      35,
@@ -998,11 +990,11 @@ func (s *TeamCompositionService) analyzeCompositionWeaknesses(comp *TeamComposit
 	// Identify composition weaknesses
 	comp.Weaknesses = []CompositionWeakness{
 		{
-			Weakness:      "Early game vulnerability",
-			Severity:      "medium",
-			ExploitRate:   65.0,
-			GamePhase:     "early",
-			Mitigation:    []string{"Safe laning", "Ward coverage", "Jungle protection"},
+			Weakness:          "Early game vulnerability",
+			Severity:          "medium",
+			ExploitRate:       65.0,
+			GamePhase:         "early",
+			Mitigation:        []string{"Safe laning", "Ward coverage", "Jungle protection"},
 			CounterStrategies: []string{"Early aggression", "Invades", "Lane pressure"},
 		},
 	}
@@ -1027,7 +1019,7 @@ func (s *TeamCompositionService) generateOptimizationReport(request CompositionO
 
 func (s *TeamCompositionService) generateOptimizationRecommendations(request CompositionOptimizationRequest, compositions []TeamComposition) []OptimizationRecommendation {
 	var recommendations []OptimizationRecommendation
-	
+
 	if len(compositions) > 0 {
 		recommendations = append(recommendations, OptimizationRecommendation{
 			Type:                "strategy_focus",
@@ -1038,7 +1030,7 @@ func (s *TeamCompositionService) generateOptimizationRecommendations(request Com
 			Priority:            "high",
 		})
 	}
-	
+
 	return recommendations
 }
 
@@ -1053,17 +1045,17 @@ func min(a, b int) int {
 // GetCompositionsByType retrieves compositions filtered by type and criteria
 func (s *TeamCompositionService) GetCompositionsByType(compositionType string, tier string, limit int) ([]*TeamComposition, error) {
 	var compositions []*TeamComposition
-	
+
 	query := s.db.Where("composition_type = ?", compositionType)
-	
+
 	if tier != "" {
 		query = query.Where("tier = ?", tier)
 	}
-	
+
 	err := query.Order("overall_rating DESC").
 		Limit(limit).
 		Find(&compositions).Error
-	
+
 	return compositions, err
 }
 
@@ -1081,6 +1073,6 @@ func (s *TeamCompositionService) GetCompositionWinRate(compositionID string) (*W
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &composition.WinRateData, nil
 }

@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // VisionAnalyticsService handles vision-related analytics and heatmap generation
@@ -18,54 +18,54 @@ type VisionAnalyticsService struct {
 
 // VisionAnalysis represents comprehensive vision analysis
 type VisionAnalysis struct {
-	PlayerID           string                     `json:"player_id"`
-	Champion           string                     `json:"champion,omitempty"`
-	Position           string                     `json:"position,omitempty"`
-	TimeRange          string                     `json:"time_range"`
-	
+	PlayerID  string `json:"player_id"`
+	Champion  string `json:"champion,omitempty"`
+	Position  string `json:"position,omitempty"`
+	TimeRange string `json:"time_range"`
+
 	// Core Vision Metrics
-	AverageVisionScore    float64                `json:"average_vision_score"`
-	MedianVisionScore     float64                `json:"median_vision_score"`
-	BestVisionScore       float64                `json:"best_vision_score"`
-	WorstVisionScore      float64                `json:"worst_vision_score"`
-	VisionScoreStdDev     float64                `json:"vision_score_std_dev"`
-	
+	AverageVisionScore float64 `json:"average_vision_score"`
+	MedianVisionScore  float64 `json:"median_vision_score"`
+	BestVisionScore    float64 `json:"best_vision_score"`
+	WorstVisionScore   float64 `json:"worst_vision_score"`
+	VisionScoreStdDev  float64 `json:"vision_score_std_dev"`
+
 	// Ward Statistics
-	AverageWardsPlaced    float64                `json:"average_wards_placed"`
-	AverageWardsKilled    float64                `json:"average_wards_killed"`
-	ControlWardsPerGame   float64                `json:"control_wards_per_game"`
-	WardEfficiency        float64                `json:"ward_efficiency"` // Wards killed / Wards placed
-	
+	AverageWardsPlaced  float64 `json:"average_wards_placed"`
+	AverageWardsKilled  float64 `json:"average_wards_killed"`
+	ControlWardsPerGame float64 `json:"control_wards_per_game"`
+	WardEfficiency      float64 `json:"ward_efficiency"` // Wards killed / Wards placed
+
 	// Vision Control Metrics
-	EarlyGameVision       VisionPhaseData        `json:"early_game_vision"`
-	MidGameVision         VisionPhaseData        `json:"mid_game_vision"`
-	LateGameVision        VisionPhaseData        `json:"late_game_vision"`
-	
+	EarlyGameVision VisionPhaseData `json:"early_game_vision"`
+	MidGameVision   VisionPhaseData `json:"mid_game_vision"`
+	LateGameVision  VisionPhaseData `json:"late_game_vision"`
+
 	// Comparative Analysis
-	RoleBenchmark         VisionBenchmark        `json:"role_benchmark"`
-	RankBenchmark         VisionBenchmark        `json:"rank_benchmark"`
-	GlobalBenchmark       VisionBenchmark        `json:"global_benchmark"`
-	
+	RoleBenchmark   VisionBenchmark `json:"role_benchmark"`
+	RankBenchmark   VisionBenchmark `json:"rank_benchmark"`
+	GlobalBenchmark VisionBenchmark `json:"global_benchmark"`
+
 	// Performance Analysis
-	VisionImpactScore     float64                `json:"vision_impact_score"` // 0-100
-	VisionRanking         VisionRanking          `json:"vision_ranking"`
-	
+	VisionImpactScore float64       `json:"vision_impact_score"` // 0-100
+	VisionRanking     VisionRanking `json:"vision_ranking"`
+
 	// Trend Analysis
-	TrendDirection        string                 `json:"trend_direction"`
-	TrendSlope            float64                `json:"trend_slope"`
-	TrendConfidence       float64                `json:"trend_confidence"`
-	
+	TrendDirection  string  `json:"trend_direction"`
+	TrendSlope      float64 `json:"trend_slope"`
+	TrendConfidence float64 `json:"trend_confidence"`
+
 	// Heatmap Data
-	WardHeatmaps          VisionHeatmaps         `json:"ward_heatmaps"`
-	
+	WardHeatmaps VisionHeatmaps `json:"ward_heatmaps"`
+
 	// Insights and Recommendations
-	StrengthAreas         []string               `json:"strength_areas"`
-	ImprovementAreas      []string               `json:"improvement_areas"`
-	Recommendations       []VisionRecommendation `json:"recommendations"`
-	
+	StrengthAreas    []string               `json:"strength_areas"`
+	ImprovementAreas []string               `json:"improvement_areas"`
+	Recommendations  []VisionRecommendation `json:"recommendations"`
+
 	// Match Performance
-	RecentMatches         []MatchVisionData      `json:"recent_matches"`
-	TrendData             []VisionTrendPoint     `json:"trend_data"`
+	RecentMatches []MatchVisionData  `json:"recent_matches"`
+	TrendData     []VisionTrendPoint `json:"trend_data"`
 }
 
 // VisionPhaseData represents vision metrics for a game phase
@@ -90,29 +90,29 @@ type VisionBenchmark struct {
 
 // VisionRanking represents player's vision ranking
 type VisionRanking struct {
-	OverallRank        int     `json:"overall_rank"`
-	RoleRank           int     `json:"role_rank"`
-	TierRank           int     `json:"tier_rank"`
-	PercentileOverall  float64 `json:"percentile_overall"`
-	PercentileInRole   float64 `json:"percentile_in_role"`
-	PercentileInTier   float64 `json:"percentile_in_tier"`
+	OverallRank       int     `json:"overall_rank"`
+	RoleRank          int     `json:"role_rank"`
+	TierRank          int     `json:"tier_rank"`
+	PercentileOverall float64 `json:"percentile_overall"`
+	PercentileInRole  float64 `json:"percentile_in_role"`
+	PercentileInTier  float64 `json:"percentile_in_tier"`
 }
 
 // VisionHeatmaps contains heatmap data for different ward types
 type VisionHeatmaps struct {
-	YellowWards   HeatmapData `json:"yellow_wards"`
-	ControlWards  HeatmapData `json:"control_wards"`
-	WardKills     HeatmapData `json:"ward_kills"`
+	YellowWards    HeatmapData `json:"yellow_wards"`
+	ControlWards   HeatmapData `json:"control_wards"`
+	WardKills      HeatmapData `json:"ward_kills"`
 	DeathLocations HeatmapData `json:"death_locations"`
-	VisionDenied  HeatmapData `json:"vision_denied"`
+	VisionDenied   HeatmapData `json:"vision_denied"`
 }
 
 // HeatmapData represents spatial heatmap information
 type HeatmapData struct {
-	MapSide    string        `json:"map_side"` // "blue", "red", "both"
+	MapSide    string         `json:"map_side"` // "blue", "red", "both"
 	DataPoints []HeatmapPoint `json:"data_points"`
 	Intensity  map[string]int `json:"intensity"` // Zone -> frequency
-	Coverage   float64       `json:"coverage_percent"`
+	Coverage   float64        `json:"coverage_percent"`
 }
 
 // HeatmapPoint represents a point on the heatmap
@@ -126,47 +126,47 @@ type HeatmapPoint struct {
 
 // VisionRecommendation represents actionable vision advice
 type VisionRecommendation struct {
-	Priority     string   `json:"priority"` // "high", "medium", "low"
-	Category     string   `json:"category"` // "warding", "dewarding", "positioning", "timing"
-	Title        string   `json:"title"`
-	Description  string   `json:"description"`
-	Impact       string   `json:"impact"`
-	GamePhase    []string `json:"game_phase"` // ["early", "mid", "late"]
-	VisualAid    string   `json:"visual_aid,omitempty"` // URL to visual guide
+	Priority    string   `json:"priority"` // "high", "medium", "low"
+	Category    string   `json:"category"` // "warding", "dewarding", "positioning", "timing"
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Impact      string   `json:"impact"`
+	GamePhase   []string `json:"game_phase"`           // ["early", "mid", "late"]
+	VisualAid   string   `json:"visual_aid,omitempty"` // URL to visual guide
 }
 
 // MatchVisionData represents vision data from a specific match
 type MatchVisionData struct {
-	MatchID           string    `json:"match_id"`
-	Champion          string    `json:"champion"`
-	Position          string    `json:"position"`
-	VisionScore       int       `json:"vision_score"`
-	WardsPlaced       int       `json:"wards_placed"`
-	WardsKilled       int       `json:"wards_killed"`
-	ControlWards      int       `json:"control_wards"`
-	GameDuration      int       `json:"game_duration"`
-	Result            string    `json:"result"`
-	Date              time.Time `json:"date"`
-	VisionEfficiency  float64   `json:"vision_efficiency"`
-	MapControl        float64   `json:"map_control_percent"`
+	MatchID          string    `json:"match_id"`
+	Champion         string    `json:"champion"`
+	Position         string    `json:"position"`
+	VisionScore      int       `json:"vision_score"`
+	WardsPlaced      int       `json:"wards_placed"`
+	WardsKilled      int       `json:"wards_killed"`
+	ControlWards     int       `json:"control_wards"`
+	GameDuration     int       `json:"game_duration"`
+	Result           string    `json:"result"`
+	Date             time.Time `json:"date"`
+	VisionEfficiency float64   `json:"vision_efficiency"`
+	MapControl       float64   `json:"map_control_percent"`
 }
 
 // VisionTrendPoint represents vision performance over time
 type VisionTrendPoint struct {
-	Date           time.Time `json:"date"`
-	VisionScore    float64   `json:"vision_score"`
-	WardsPlaced    float64   `json:"wards_placed"`
-	WardsKilled    float64   `json:"wards_killed"`
-	MovingAverage  float64   `json:"moving_average"`
-	Efficiency     float64   `json:"efficiency"`
+	Date          time.Time `json:"date"`
+	VisionScore   float64   `json:"vision_score"`
+	WardsPlaced   float64   `json:"wards_placed"`
+	WardsKilled   float64   `json:"wards_killed"`
+	MovingAverage float64   `json:"moving_average"`
+	Efficiency    float64   `json:"efficiency"`
 }
 
 // Ward placement zones for analysis
 type WardZone struct {
-	Name        string      `json:"name"`
-	Coordinates [][]int     `json:"coordinates"` // Polygon coordinates
-	Strategic   bool        `json:"strategic"`   // High-value zone
-	GamePhase   []string    `json:"game_phase"`  // When this zone is most important
+	Name        string   `json:"name"`
+	Coordinates [][]int  `json:"coordinates"` // Polygon coordinates
+	Strategic   bool     `json:"strategic"`   // High-value zone
+	GamePhase   []string `json:"game_phase"`  // When this zone is most important
 }
 
 // Map zones definition for League of Legends
@@ -686,10 +686,10 @@ func (vas *VisionAnalyticsService) calculateLinearRegression(values []float64) (
 	if len(values) < 2 {
 		return 0, 0
 	}
-	
+
 	n := float64(len(values))
 	sumX, sumY, sumXY, sumXX := 0.0, 0.0, 0.0, 0.0
-	
+
 	for i, y := range values {
 		x := float64(i)
 		sumX += x
@@ -697,29 +697,29 @@ func (vas *VisionAnalyticsService) calculateLinearRegression(values []float64) (
 		sumXY += x * y
 		sumXX += x * x
 	}
-	
+
 	denominator := n*sumXX - sumX*sumX
 	if denominator == 0 {
 		return 0, 0
 	}
-	
+
 	slope = (n*sumXY - sumX*sumY) / denominator
-	
+
 	// Calculate R-squared
 	meanY := sumY / n
 	ssTotal, ssRes := 0.0, 0.0
-	
+
 	for i, y := range values {
 		predicted := slope*float64(i) + (sumY-slope*sumX)/n
 		ssTotal += (y - meanY) * (y - meanY)
 		ssRes += (y - predicted) * (y - predicted)
 	}
-	
+
 	confidence = 1 - (ssRes / ssTotal)
 	if confidence < 0 {
 		confidence = 0
 	}
-	
+
 	return slope, confidence
 }
 
@@ -794,7 +794,7 @@ func (vas *VisionAnalyticsService) isPointInPolygon(x, y int, polygon [][]int) b
 	// Ray casting algorithm to determine if point is in polygon
 	n := len(polygon)
 	inside := false
-	
+
 	j := n - 1
 	for i := 0; i < n; i++ {
 		if ((polygon[i][1] > y) != (polygon[j][1] > y)) &&
@@ -803,14 +803,14 @@ func (vas *VisionAnalyticsService) isPointInPolygon(x, y int, polygon [][]int) b
 		}
 		j = i
 	}
-	
+
 	return inside
 }
 
 func (vas *VisionAnalyticsService) calculateWardWeight(ward models.WardPlacement) float64 {
 	// Calculate strategic weight of ward placement
 	weight := 1.0
-	
+
 	// Bonus for strategic zones
 	zone := vas.identifyZone(ward.X, ward.Y)
 	for _, mapZone := range MapZones {
@@ -819,7 +819,7 @@ func (vas *VisionAnalyticsService) calculateWardWeight(ward models.WardPlacement
 			break
 		}
 	}
-	
+
 	return weight
 }
 
@@ -827,7 +827,7 @@ func (vas *VisionAnalyticsService) aggregateHeatmapPoints(points []HeatmapPoint)
 	// Aggregate nearby points to reduce noise
 	aggregated := []HeatmapPoint{}
 	threshold := 200 // Distance threshold in game units
-	
+
 	for _, point := range points {
 		merged := false
 		for i, existing := range aggregated {
@@ -844,31 +844,31 @@ func (vas *VisionAnalyticsService) aggregateHeatmapPoints(points []HeatmapPoint)
 			aggregated = append(aggregated, point)
 		}
 	}
-	
+
 	return aggregated
 }
 
 func (vas *VisionAnalyticsService) calculateMapCoverage(points []HeatmapPoint) float64 {
 	// Calculate what percentage of strategic areas are covered
 	coveredZones := make(map[string]bool)
-	
+
 	for _, point := range points {
 		if point.Zone != "unknown" {
 			coveredZones[point.Zone] = true
 		}
 	}
-	
+
 	strategicZones := 0
 	for _, zone := range MapZones {
 		if zone.Strategic {
 			strategicZones++
 		}
 	}
-	
+
 	if strategicZones == 0 {
 		return 0
 	}
-	
+
 	return float64(len(coveredZones)) / float64(strategicZones) * 100
 }
 

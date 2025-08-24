@@ -29,48 +29,48 @@ func (m *GamingRBACMiddleware) RequireGamingPermission(permission string) gin.Ha
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming permission",
-				"permission": permission,
+				"error":           "Authentication required for gaming permission",
+				"permission":      permission,
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has required permission
 		hasPermission, err := m.rbacManager.HasPermission(c.Request.Context(), user.ID, permission)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to check gaming permission",
+				"error":      "Failed to check gaming permission",
 				"permission": permission,
 			})
 			c.Abort()
 			return
 		}
-		
+
 		if !hasPermission {
 			// Get user's available permissions for helpful error message
 			userPermissions, _ := m.rbacManager.GetUserPermissions(c.Request.Context(), user.ID)
-			
+
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming permissions",
-				"required_permission": permission,
+				"error":                 "Insufficient gaming permissions",
+				"required_permission":   permission,
 				"available_permissions": userPermissions,
-				"gaming_platform": "herald-lol",
-				"upgrade_info": m.getUpgradeInfo(permission),
+				"gaming_platform":       "herald-lol",
+				"upgrade_info":          m.getUpgradeInfo(permission),
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set permission context
 		c.Set("gaming_permission_verified", true)
 		c.Set("gaming_required_permission", permission)
-		
+
 		// Add permission headers
 		c.Header("X-Gaming-Permission-Verified", "true")
 		c.Header("X-Gaming-Required-Permission", permission)
-		
+
 		c.Next()
 	}
 }
@@ -81,14 +81,14 @@ func (m *GamingRBACMiddleware) RequireGamingRole(roleName string) gin.HandlerFun
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming role",
-				"role": roleName,
+				"error":           "Authentication required for gaming role",
+				"role":            roleName,
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Get user roles
 		userRoles, err := m.rbacManager.rbacStore.GetUserRoles(c.Request.Context(), user.ID)
 		if err != nil {
@@ -98,26 +98,26 @@ func (m *GamingRBACMiddleware) RequireGamingRole(roleName string) gin.HandlerFun
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has required role
 		hasRole := false
 		for _, userRole := range userRoles {
 			if !userRole.IsActive {
 				continue
 			}
-			
+
 			// Get role details
 			role, err := m.rbacManager.rbacStore.GetRole(c.Request.Context(), userRole.RoleID)
 			if err != nil {
 				continue
 			}
-			
+
 			if role.Name == roleName {
 				hasRole = true
 				break
 			}
 		}
-		
+
 		if !hasRole {
 			// Get user's available roles for helpful error message
 			var availableRoles []string
@@ -126,21 +126,21 @@ func (m *GamingRBACMiddleware) RequireGamingRole(roleName string) gin.HandlerFun
 					availableRoles = append(availableRoles, role.Name)
 				}
 			}
-			
+
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming role",
-				"required_role": roleName,
+				"error":           "Insufficient gaming role",
+				"required_role":   roleName,
 				"available_roles": availableRoles,
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set role context
 		c.Set("gaming_role_verified", true)
 		c.Set("gaming_required_role", roleName)
-		
+
 		c.Next()
 	}
 }
@@ -151,29 +151,29 @@ func (m *GamingRBACMiddleware) RequireGamingTeamRole(roleName string) gin.Handle
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming team role",
-				"role": roleName,
+				"error":           "Authentication required for gaming team role",
+				"role":            roleName,
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Get team ID from URL parameter
 		teamID := c.Param("teamId")
 		if teamID == "" {
 			teamID = c.GetHeader("X-Gaming-Team-ID")
 		}
-		
+
 		if teamID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Team ID required for gaming team role verification",
+				"error":           "Team ID required for gaming team role verification",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Get user team roles
 		teamRoles, err := m.rbacManager.rbacStore.GetUserTeamRoles(c.Request.Context(), user.ID)
 		if err != nil {
@@ -183,43 +183,43 @@ func (m *GamingRBACMiddleware) RequireGamingTeamRole(roleName string) gin.Handle
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has required team role
 		hasTeamRole := false
 		for _, teamRole := range teamRoles {
 			if !teamRole.IsActive || teamRole.TeamID != teamID {
 				continue
 			}
-			
+
 			// Get role details
 			role, err := m.rbacManager.rbacStore.GetRole(c.Request.Context(), teamRole.RoleID)
 			if err != nil {
 				continue
 			}
-			
+
 			if role.Name == roleName {
 				hasTeamRole = true
 				c.Set("gaming_team_role", teamRole)
 				break
 			}
 		}
-		
+
 		if !hasTeamRole {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming team role",
-				"required_role": roleName,
-				"team_id": teamID,
+				"error":           "Insufficient gaming team role",
+				"required_role":   roleName,
+				"team_id":         teamID,
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set team context
 		c.Set("gaming_team_role_verified", true)
 		c.Set("gaming_team_id", teamID)
 		c.Set("gaming_required_team_role", roleName)
-		
+
 		c.Next()
 	}
 }
@@ -230,49 +230,49 @@ func (m *GamingRBACMiddleware) RequireAnyGamingPermission(permissions ...string)
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming permissions",
+				"error":                "Authentication required for gaming permissions",
 				"required_permissions": permissions,
-				"gaming_platform": "herald-lol",
+				"gaming_platform":      "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has any of the required permissions
 		hasAnyPermission := false
 		var grantedPermission string
-		
+
 		for _, permission := range permissions {
 			hasPermission, err := m.rbacManager.HasPermission(c.Request.Context(), user.ID, permission)
 			if err != nil {
 				continue // Skip permission check errors
 			}
-			
+
 			if hasPermission {
 				hasAnyPermission = true
 				grantedPermission = permission
 				break
 			}
 		}
-		
+
 		if !hasAnyPermission {
 			userPermissions, _ := m.rbacManager.GetUserPermissions(c.Request.Context(), user.ID)
-			
+
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming permissions",
-				"required_any_of": permissions,
+				"error":                 "Insufficient gaming permissions",
+				"required_any_of":       permissions,
 				"available_permissions": userPermissions,
-				"gaming_platform": "herald-lol",
+				"gaming_platform":       "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set permission context
 		c.Set("gaming_permission_verified", true)
 		c.Set("gaming_granted_permission", grantedPermission)
 		c.Set("gaming_required_permissions", permissions)
-		
+
 		c.Next()
 	}
 }
@@ -283,18 +283,18 @@ func (m *GamingRBACMiddleware) RequireAllGamingPermissions(permissions ...string
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming permissions",
+				"error":                "Authentication required for gaming permissions",
 				"required_permissions": permissions,
-				"gaming_platform": "herald-lol",
+				"gaming_platform":      "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has all required permissions
 		var missingPermissions []string
 		var grantedPermissions []string
-		
+
 		for _, permission := range permissions {
 			hasPermission, err := m.rbacManager.HasPermission(c.Request.Context(), user.ID, permission)
 			if err != nil || !hasPermission {
@@ -303,22 +303,22 @@ func (m *GamingRBACMiddleware) RequireAllGamingPermissions(permissions ...string
 				grantedPermissions = append(grantedPermissions, permission)
 			}
 		}
-		
+
 		if len(missingPermissions) > 0 {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming permissions",
+				"error":               "Insufficient gaming permissions",
 				"missing_permissions": missingPermissions,
 				"granted_permissions": grantedPermissions,
-				"gaming_platform": "herald-lol",
+				"gaming_platform":     "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set permission context
 		c.Set("gaming_permissions_verified", true)
 		c.Set("gaming_granted_permissions", grantedPermissions)
-		
+
 		c.Next()
 	}
 }
@@ -329,36 +329,36 @@ func (m *GamingRBACMiddleware) RequireSubscriptionTier(minTier string) gin.Handl
 		user, exists := GetGamingUser(c)
 		if !exists {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Authentication required for gaming subscription check",
+				"error":           "Authentication required for gaming subscription check",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Get user subscription tier
 		userTier := "free" // Default tier
 		if user.GamingProfile != nil && user.GamingProfile.SubscriptionTier != "" {
 			userTier = user.GamingProfile.SubscriptionTier
 		}
-		
+
 		// Check if user meets minimum tier requirement
 		if !m.meetsTierRequirement(userTier, minTier) {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming subscription tier",
-				"current_tier": userTier,
-				"required_tier": minTier,
+				"error":           "Insufficient gaming subscription tier",
+				"current_tier":    userTier,
+				"required_tier":   minTier,
 				"gaming_platform": "herald-lol",
-				"upgrade_url": "https://herald.lol/upgrade?tier=" + minTier,
+				"upgrade_url":     "https://herald.lol/upgrade?tier=" + minTier,
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Set subscription context
 		c.Set("gaming_subscription_verified", true)
 		c.Set("gaming_subscription_tier", userTier)
-		
+
 		c.Next()
 	}
 }
@@ -371,9 +371,9 @@ func (m *GamingRBACMiddleware) EnrichGamingContext() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		
+
 		ctx := context.Background()
-		
+
 		// Get user permissions (async to avoid blocking)
 		go func() {
 			permissions, err := m.rbacManager.GetUserPermissions(ctx, user.ID)
@@ -381,7 +381,7 @@ func (m *GamingRBACMiddleware) EnrichGamingContext() gin.HandlerFunc {
 				c.Set("gaming_user_permissions", permissions)
 			}
 		}()
-		
+
 		// Get user roles
 		userRoles, err := m.rbacManager.rbacStore.GetUserRoles(ctx, user.ID)
 		if err == nil {
@@ -393,13 +393,13 @@ func (m *GamingRBACMiddleware) EnrichGamingContext() gin.HandlerFunc {
 			}
 			c.Set("gaming_user_roles", roleNames)
 		}
-		
+
 		// Get team roles
 		teamRoles, err := m.rbacManager.rbacStore.GetUserTeamRoles(ctx, user.ID)
 		if err == nil {
 			c.Set("gaming_user_team_roles", teamRoles)
 		}
-		
+
 		c.Next()
 	}
 }
@@ -448,14 +448,14 @@ func (m *GamingRBACMiddleware) meetsTierRequirement(userTier, minTier string) bo
 		"pro":        2,
 		"enterprise": 3,
 	}
-	
+
 	userLevel, userExists := tierLevels[userTier]
 	minLevel, minExists := tierLevels[minTier]
-	
+
 	if !userExists || !minExists {
 		return false
 	}
-	
+
 	return userLevel >= minLevel
 }
 
@@ -465,24 +465,24 @@ func (m *GamingRBACMiddleware) getUpgradeInfo(permission string) map[string]stri
 		"upgrade_url": "https://herald.lol/upgrade",
 		"contact":     "support@herald.lol",
 	}
-	
+
 	// Map permissions to required tiers
 	permissionTiers := map[string]string{
 		"gaming:analytics:advanced": "premium",
 		"gaming:analytics:export":   "pro",
-		"api:extended":             "premium",
-		"api:unlimited":            "enterprise",
-		"team:manage:players":      "pro",
-		"team:manage:settings":     "pro",
-		"admin:users:manage":       "enterprise",
-		"admin:roles:manage":       "enterprise",
+		"api:extended":              "premium",
+		"api:unlimited":             "enterprise",
+		"team:manage:players":       "pro",
+		"team:manage:settings":      "pro",
+		"admin:users:manage":        "enterprise",
+		"admin:roles:manage":        "enterprise",
 	}
-	
+
 	if requiredTier, exists := permissionTiers[permission]; exists {
 		upgradeInfo["required_tier"] = requiredTier
 		upgradeInfo["upgrade_url"] = "https://herald.lol/upgrade?tier=" + requiredTier
 	}
-	
+
 	return upgradeInfo
 }
 
@@ -527,7 +527,7 @@ func HasGamingPermissionInContext(c *gin.Context, permission string) bool {
 					return requiredPermStr == permission
 				}
 			}
-			
+
 			// Check granted permissions for any/all permission middleware
 			if grantedPerms, exists := c.Get("gaming_granted_permissions"); exists {
 				if grantedSlice, ok := grantedPerms.([]string); ok {
@@ -559,14 +559,14 @@ func IsGamingAdmin(c *gin.Context) bool {
 	if !exists {
 		return false
 	}
-	
+
 	adminPermissions := []string{
 		"admin:users:manage",
-		"admin:roles:manage", 
+		"admin:roles:manage",
 		"admin:gaming:manage",
 		"admin:system:manage",
 	}
-	
+
 	for _, adminPerm := range adminPermissions {
 		for _, userPerm := range permissions {
 			if userPerm == adminPerm {
@@ -574,7 +574,7 @@ func IsGamingAdmin(c *gin.Context) bool {
 			}
 		}
 	}
-	
+
 	return false
 }
 
@@ -584,9 +584,9 @@ func IsTeamManager(c *gin.Context, teamID string) bool {
 	if !exists {
 		return false
 	}
-	
+
 	managerRoles := []string{"team:manager", "team:captain"}
-	
+
 	for _, teamRole := range teamRoles {
 		if teamRole.TeamID == teamID && teamRole.IsActive {
 			// Get role name (this would require role lookup in real implementation)
@@ -597,6 +597,6 @@ func IsTeamManager(c *gin.Context, teamID string) bool {
 			}
 		}
 	}
-	
+
 	return false
 }

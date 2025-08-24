@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type CoachingHandler struct {
@@ -27,13 +27,13 @@ func (h *CoachingHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		coaching.POST("/insights/generate", h.GenerateCoachingInsights)
 		coaching.GET("/insights/:summoner_id", h.GetCoachingInsights)
 		coaching.GET("/overview/:summoner_id", h.GetCoachingOverview)
-		
+
 		// Personalized tips
 		coaching.GET("/tips/:summoner_id", h.GetPersonalizedTips)
 		coaching.POST("/tips/:tip_id/feedback", h.SubmitTipFeedback)
 		coaching.PUT("/tips/:tip_id/status", h.UpdateTipStatus)
 		coaching.GET("/tips/daily/:summoner_id", h.GetDailyTips)
-		
+
 		// Improvement plans
 		coaching.GET("/plans/:summoner_id", h.GetImprovementPlans)
 		coaching.POST("/plans/create", h.CreateImprovementPlan)
@@ -41,68 +41,68 @@ func (h *CoachingHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		coaching.POST("/plans/:plan_id/start", h.StartImprovementPlan)
 		coaching.POST("/plans/:plan_id/complete", h.CompleteImprovementPlan)
 		coaching.GET("/plans/:plan_id/progress", h.GetPlanProgress)
-		
+
 		// Practice routines
 		coaching.GET("/routines/:summoner_id", h.GetPracticeRoutines)
 		coaching.POST("/routines/create", h.CreatePracticeRoutine)
 		coaching.PUT("/routines/:routine_id", h.UpdatePracticeRoutine)
 		coaching.DELETE("/routines/:routine_id", h.DeletePracticeRoutine)
 		coaching.POST("/routines/:routine_id/start", h.StartPracticeSession)
-		
+
 		// Practice sessions
 		coaching.GET("/sessions/:summoner_id", h.GetPracticeSessions)
 		coaching.POST("/sessions/complete", h.CompletePracticeSession)
 		coaching.GET("/sessions/stats/:summoner_id", h.GetPracticeStats)
-		
+
 		// Tactical advice
 		coaching.GET("/tactical/:summoner_id", h.GetTacticalAdvice)
 		coaching.GET("/tactical/situational", h.GetSituationalAdvice)
 		coaching.POST("/tactical/:advice_id/applied", h.MarkAdviceApplied)
 		coaching.POST("/tactical/:advice_id/rate", h.RateAdvice)
-		
+
 		// Strategic guidance
 		coaching.GET("/strategic/:summoner_id", h.GetStrategicGuidance)
 		coaching.GET("/strategic/concepts/:level", h.GetStrategicConcepts)
 		coaching.POST("/strategic/:guidance_id/mastery", h.UpdateStrategyMastery)
-		
+
 		// Mental coaching
 		coaching.GET("/mental/:summoner_id", h.GetMentalCoaching)
 		coaching.POST("/mental/plan/create", h.CreateMentalCoachingPlan)
 		coaching.PUT("/mental/plan/:plan_id", h.UpdateMentalCoachingPlan)
 		coaching.POST("/mental/tilt-report", h.ReportTiltIncident)
 		coaching.GET("/mental/techniques", h.GetMentalTechniques)
-		
+
 		// Performance goals
 		coaching.GET("/goals/:summoner_id", h.GetPerformanceGoals)
 		coaching.POST("/goals/create", h.CreatePerformanceGoal)
 		coaching.PUT("/goals/:goal_id", h.UpdatePerformanceGoal)
 		coaching.POST("/goals/:goal_id/milestone", h.MarkGoalMilestone)
 		coaching.DELETE("/goals/:goal_id", h.DeletePerformanceGoal)
-		
+
 		// Match analysis insights
 		coaching.GET("/match-analysis/:summoner_id", h.GetMatchAnalysisInsights)
 		coaching.GET("/match-analysis/:summoner_id/:match_id", h.GetMatchSpecificInsights)
 		coaching.POST("/match-analysis/:insight_id/reviewed", h.MarkInsightReviewed)
-		
+
 		// Champion coaching
 		coaching.GET("/champion/:summoner_id/:champion", h.GetChampionCoaching)
 		coaching.GET("/champion/tips/:summoner_id/:champion/:role", h.GetChampionSpecificTips)
 		coaching.POST("/champion/mastery/update", h.UpdateChampionMastery)
-		
+
 		// Coaching schedule
 		coaching.GET("/schedule/:summoner_id", h.GetCoachingSchedule)
 		coaching.POST("/schedule/create", h.CreateCoachingSchedule)
 		coaching.PUT("/schedule/:schedule_id", h.UpdateCoachingSchedule)
-		
+
 		// Progress tracking
 		coaching.GET("/progress/:summoner_id", h.GetProgressTracking)
 		coaching.POST("/progress/record", h.RecordProgress)
 		coaching.GET("/progress/analytics/:summoner_id", h.GetProgressAnalytics)
-		
+
 		// AI coaching assistant
 		coaching.POST("/assistant/question", h.AskCoachingQuestion)
 		coaching.GET("/assistant/suggestions/:summoner_id", h.GetAISuggestions)
-		
+
 		// Coaching resources
 		coaching.GET("/resources", h.GetCoachingResources)
 		coaching.GET("/resources/:category", h.GetResourcesByCategory)
@@ -115,11 +115,11 @@ func (h *CoachingHandler) GenerateCoachingInsights(c *gin.Context) {
 		SummonerID     string `json:"summonerId" binding:"required"`
 		InsightType    string `json:"insightType"`
 		AnalysisPeriod struct {
-			StartDate   string `json:"startDate"`
-			EndDate     string `json:"endDate"`
-			PeriodType  string `json:"periodType"` // recent, week, month, season
-			GamesCount  int    `json:"gamesCount"`
-			RankedOnly  bool   `json:"rankedOnly"`
+			StartDate  string `json:"startDate"`
+			EndDate    string `json:"endDate"`
+			PeriodType string `json:"periodType"` // recent, week, month, season
+			GamesCount int    `json:"gamesCount"`
+			RankedOnly bool   `json:"rankedOnly"`
 		} `json:"analysisPeriod"`
 		FocusAreas []string `json:"focusAreas"` // specific areas to focus on
 	}
@@ -195,7 +195,7 @@ func (h *CoachingHandler) GetCoachingInsights(c *gin.Context) {
 
 	insightType := c.Query("insightType")
 	limitStr := c.DefaultQuery("limit", "10")
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = 10
@@ -206,18 +206,18 @@ func (h *CoachingHandler) GetCoachingInsights(c *gin.Context) {
 		"summonerId": summonerID,
 		"insights": []gin.H{
 			{
-				"id": "insight_001",
-				"type": "tactical",
-				"title": "Wave Management Improvement Opportunity",
+				"id":         "insight_001",
+				"type":       "tactical",
+				"title":      "Wave Management Improvement Opportunity",
 				"confidence": 87.5,
-				"createdAt": time.Now().AddDate(0, 0, -1),
+				"createdAt":  time.Now().AddDate(0, 0, -1),
 			},
 			{
-				"id": "insight_002", 
-				"type": "mental",
-				"title": "Tilt Management Recommendations",
+				"id":         "insight_002",
+				"type":       "mental",
+				"title":      "Tilt Management Recommendations",
 				"confidence": 92.3,
-				"createdAt": time.Now().AddDate(0, 0, -2),
+				"createdAt":  time.Now().AddDate(0, 0, -2),
 			},
 		},
 		"totalCount": 2,
@@ -236,19 +236,19 @@ func (h *CoachingHandler) GetCoachingOverview(c *gin.Context) {
 
 	// Mock overview data
 	overview := gin.H{
-		"summonerId": summonerID,
-		"currentLevel": "intermediate",
-		"skillRating": 72.5,
-		"improvementRate": 1.2,
-		"mainStrengths": []string{"Mechanical skill", "Champion mastery"},
+		"summonerId":         summonerID,
+		"currentLevel":       "intermediate",
+		"skillRating":        72.5,
+		"improvementRate":    1.2,
+		"mainStrengths":      []string{"Mechanical skill", "Champion mastery"},
 		"criticalWeaknesses": []string{"Wave management", "Vision control"},
-		"activePlans": 2,
-		"completedGoals": 3,
-		"practiceHours": 24.5,
-		"nextMilestone": "Achieve consistent 7+ CS/min",
-		"coachingFocus": []string{"Tactical improvement", "Mental coaching"},
-		"confidenceLevel": 85.2,
-		"lastAnalysis": time.Now().AddDate(0, 0, -3),
+		"activePlans":        2,
+		"completedGoals":     3,
+		"practiceHours":      24.5,
+		"nextMilestone":      "Achieve consistent 7+ CS/min",
+		"coachingFocus":      []string{"Tactical improvement", "Mental coaching"},
+		"confidenceLevel":    85.2,
+		"lastAnalysis":       time.Now().AddDate(0, 0, -3),
 	}
 
 	c.JSON(http.StatusOK, overview)
@@ -274,35 +274,35 @@ func (h *CoachingHandler) GetPersonalizedTips(c *gin.Context) {
 	// Mock tips data
 	tips := []gin.H{
 		{
-			"tipId": "tip_001",
-			"category": "tactical",
-			"type": "quick_tip",
-			"title": "Optimize Your Back Timing",
-			"content": "Back when you have enough gold for a meaningful item purchase and the wave is pushing away from you. This maximizes your gold efficiency and minimizes CS loss.",
-			"relevance": 95.5,
+			"tipId":      "tip_001",
+			"category":   "tactical",
+			"type":       "quick_tip",
+			"title":      "Optimize Your Back Timing",
+			"content":    "Back when you have enough gold for a meaningful item purchase and the wave is pushing away from you. This maximizes your gold efficiency and minimizes CS loss.",
+			"relevance":  95.5,
 			"actionable": true,
 			"difficulty": "easy",
 			"expected": gin.H{
-				"impactArea": "Gold efficiency",
+				"impactArea":  "Gold efficiency",
 				"improvement": 8.5,
-				"timeline": "immediate",
-				"confidence": 88.2,
+				"timeline":    "immediate",
+				"confidence":  88.2,
 			},
 		},
 		{
-			"tipId": "tip_002",
-			"category": "mental", 
-			"type": "deep_insight",
-			"title": "Tilt Recovery Technique",
-			"content": "When you feel yourself getting tilted, take 3 deep breaths and focus on one specific improvement goal for the current game. This redirects negative energy into productive focus.",
-			"relevance": 82.3,
+			"tipId":      "tip_002",
+			"category":   "mental",
+			"type":       "deep_insight",
+			"title":      "Tilt Recovery Technique",
+			"content":    "When you feel yourself getting tilted, take 3 deep breaths and focus on one specific improvement goal for the current game. This redirects negative energy into productive focus.",
+			"relevance":  82.3,
 			"actionable": true,
 			"difficulty": "moderate",
 			"expected": gin.H{
-				"impactArea": "Mental resilience",
+				"impactArea":  "Mental resilience",
 				"improvement": 15.2,
-				"timeline": "days",
-				"confidence": 79.1,
+				"timeline":    "days",
+				"confidence":  79.1,
 			},
 		},
 	}
@@ -312,7 +312,7 @@ func (h *CoachingHandler) GetPersonalizedTips(c *gin.Context) {
 	for _, tip := range tips {
 		includeCategory := category == "" || tip["category"] == category
 		includeType := tipType == "" || tip["type"] == tipType
-		
+
 		if includeCategory && includeType && len(filteredTips) < limit {
 			filteredTips = append(filteredTips, tip)
 		}
@@ -320,11 +320,11 @@ func (h *CoachingHandler) GetPersonalizedTips(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summonerId": summonerID,
-		"tips": filteredTips,
+		"tips":       filteredTips,
 		"filters": gin.H{
 			"category": category,
-			"type": tipType,
-			"limit": limit,
+			"type":     tipType,
+			"limit":    limit,
 		},
 		"totalCount": len(filteredTips),
 	})
@@ -352,20 +352,20 @@ func (h *CoachingHandler) CreateImprovementPlan(c *gin.Context) {
 	planID := "plan_" + strconv.FormatInt(time.Now().Unix(), 10)
 
 	c.JSON(http.StatusOK, gin.H{
-		"planId": planID,
-		"message": "Improvement plan created successfully",
+		"planId":     planID,
+		"message":    "Improvement plan created successfully",
 		"summonerId": request.SummonerID,
-		"planType": request.PlanType,
-		"title": request.Title,
-		"duration": request.Duration,
-		"createdAt": time.Now(),
+		"planType":   request.PlanType,
+		"title":      request.Title,
+		"duration":   request.Duration,
+		"createdAt":  time.Now(),
 	})
 }
 
 // StartPracticeSession starts a new practice session
 func (h *CoachingHandler) StartPracticeSession(c *gin.Context) {
 	routineID := c.Param("routine_id")
-	
+
 	var request struct {
 		SummonerID      string   `json:"summonerId" binding:"required"`
 		SessionType     string   `json:"sessionType" binding:"required"`
@@ -383,14 +383,14 @@ func (h *CoachingHandler) StartPracticeSession(c *gin.Context) {
 	sessionID := "session_" + strconv.FormatInt(time.Now().Unix(), 10)
 
 	c.JSON(http.StatusOK, gin.H{
-		"sessionId": sessionID,
-		"routineId": routineID,
-		"message": "Practice session started",
-		"summonerId": request.SummonerID,
+		"sessionId":   sessionID,
+		"routineId":   routineID,
+		"message":     "Practice session started",
+		"summonerId":  request.SummonerID,
 		"sessionType": request.SessionType,
-		"startedAt": time.Now(),
-		"focusAreas": request.FocusAreas,
-		"goals": request.Goals,
+		"startedAt":   time.Now(),
+		"focusAreas":  request.FocusAreas,
+		"goals":       request.Goals,
 	})
 }
 
@@ -414,28 +414,28 @@ func (h *CoachingHandler) GetTacticalAdvice(c *gin.Context) {
 	// Mock tactical advice data
 	advice := []gin.H{
 		{
-			"adviceId": "advice_001",
-			"category": "laning",
-			"situation": "Enemy jungler ganking while you're pushed up",
-			"problem": "Getting caught in ganks due to poor positioning",
-			"solution": "Maintain better map awareness and ward timing. Back off when you see the jungler disappear from map for more than 15 seconds.",
-			"reasoning": "Most ganks happen when laners are overextended without vision. Early warning gives time to escape.",
+			"adviceId":   "advice_001",
+			"category":   "laning",
+			"situation":  "Enemy jungler ganking while you're pushed up",
+			"problem":    "Getting caught in ganks due to poor positioning",
+			"solution":   "Maintain better map awareness and ward timing. Back off when you see the jungler disappear from map for more than 15 seconds.",
+			"reasoning":  "Most ganks happen when laners are overextended without vision. Early warning gives time to escape.",
 			"difficulty": "moderate",
-			"impact": 75.5,
-			"frequency": "common",
-			"urgency": "high",
+			"impact":     75.5,
+			"frequency":  "common",
+			"urgency":    "high",
 		},
 		{
-			"adviceId": "advice_002",
-			"category": "teamfighting", 
-			"situation": "Team engaging 4v5 while you're split pushing",
-			"problem": "Team takes unfavorable fights without you",
-			"solution": "Communicate your position and timing clearly. Set up vision around objectives before split pushing.",
-			"reasoning": "Coordination prevents team from engaging when numbers disadvantage is too high.",
+			"adviceId":   "advice_002",
+			"category":   "teamfighting",
+			"situation":  "Team engaging 4v5 while you're split pushing",
+			"problem":    "Team takes unfavorable fights without you",
+			"solution":   "Communicate your position and timing clearly. Set up vision around objectives before split pushing.",
+			"reasoning":  "Coordination prevents team from engaging when numbers disadvantage is too high.",
 			"difficulty": "hard",
-			"impact": 82.3,
-			"frequency": "moderate",
-			"urgency": "medium",
+			"impact":     82.3,
+			"frequency":  "moderate",
+			"urgency":    "medium",
 		},
 	}
 
@@ -444,7 +444,7 @@ func (h *CoachingHandler) GetTacticalAdvice(c *gin.Context) {
 	for _, adv := range advice {
 		includeCategory := category == "" || adv["category"] == category
 		includeUrgency := urgency == "" || adv["urgency"] == urgency
-		
+
 		if includeCategory && includeUrgency && len(filteredAdvice) < limit {
 			filteredAdvice = append(filteredAdvice, adv)
 		}
@@ -452,11 +452,11 @@ func (h *CoachingHandler) GetTacticalAdvice(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summonerId": summonerID,
-		"advice": filteredAdvice,
+		"advice":     filteredAdvice,
 		"filters": gin.H{
 			"category": category,
-			"urgency": urgency,
-			"limit": limit,
+			"urgency":  urgency,
+			"limit":    limit,
 		},
 	})
 }
@@ -469,36 +469,36 @@ func (h *CoachingHandler) GetPerformanceGoals(c *gin.Context) {
 		return
 	}
 
-	status := c.Query("status") // active, completed, paused, failed
+	status := c.Query("status")     // active, completed, paused, failed
 	goalType := c.Query("goalType") // rank, skill_metric, champion_mastery, habit
-	
+
 	// Mock goals data
 	goals := []gin.H{
 		{
-			"id": 1,
-			"goalType": "rank",
-			"title": "Reach Gold Rank",
+			"id":          1,
+			"goalType":    "rank",
+			"title":       "Reach Gold Rank",
 			"description": "Climb from Silver II to Gold IV",
-			"target": "Gold IV",
-			"current": "Silver II",
-			"progress": 65.5,
-			"timeline": "6 weeks",
-			"priority": "high",
-			"status": "active",
-			"achieved": false,
+			"target":      "Gold IV",
+			"current":     "Silver II",
+			"progress":    65.5,
+			"timeline":    "6 weeks",
+			"priority":    "high",
+			"status":      "active",
+			"achieved":    false,
 		},
 		{
-			"id": 2,
-			"goalType": "skill_metric",
-			"title": "Improve CS/min to 7.5+",
+			"id":          2,
+			"goalType":    "skill_metric",
+			"title":       "Improve CS/min to 7.5+",
 			"description": "Achieve consistent 7.5+ CS/min in ranked games",
-			"target": "7.5",
-			"current": "6.8",
-			"progress": 78.2,
-			"timeline": "4 weeks",
-			"priority": "medium",
-			"status": "active",
-			"achieved": false,
+			"target":      "7.5",
+			"current":     "6.8",
+			"progress":    78.2,
+			"timeline":    "4 weeks",
+			"priority":    "medium",
+			"status":      "active",
+			"achieved":    false,
 		},
 	}
 
@@ -507,7 +507,7 @@ func (h *CoachingHandler) GetPerformanceGoals(c *gin.Context) {
 	for _, goal := range goals {
 		includeStatus := status == "" || goal["status"] == status
 		includeType := goalType == "" || goal["goalType"] == goalType
-		
+
 		if includeStatus && includeType {
 			filteredGoals = append(filteredGoals, goal)
 		}
@@ -515,9 +515,9 @@ func (h *CoachingHandler) GetPerformanceGoals(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summonerId": summonerID,
-		"goals": filteredGoals,
+		"goals":      filteredGoals,
 		"filters": gin.H{
-			"status": status,
+			"status":   status,
 			"goalType": goalType,
 		},
 	})
@@ -545,13 +545,13 @@ func (h *CoachingHandler) CreatePerformanceGoal(c *gin.Context) {
 	goalID := time.Now().Unix()
 
 	c.JSON(http.StatusOK, gin.H{
-		"goalId": goalID,
-		"message": "Performance goal created successfully",
+		"goalId":     goalID,
+		"message":    "Performance goal created successfully",
 		"summonerId": request.SummonerID,
-		"goalType": request.GoalType,
-		"title": request.Title,
-		"target": request.Target,
-		"createdAt": time.Now(),
+		"goalType":   request.GoalType,
+		"title":      request.Title,
+		"target":     request.Target,
+		"createdAt":  time.Now(),
 	})
 }
 
@@ -568,34 +568,34 @@ func (h *CoachingHandler) GetMentalCoaching(c *gin.Context) {
 		"summonerId": summonerID,
 		"mentalState": gin.H{
 			"currentState": "good",
-			"confidence": 75.5,
-			"focusLevel": 82.3,
-			"stressLevel": 35.2,
-			"motivation": 88.1,
+			"confidence":   75.5,
+			"focusLevel":   82.3,
+			"stressLevel":  35.2,
+			"motivation":   88.1,
 		},
 		"tiltTriggers": []gin.H{
 			{
-				"trigger": "Jungle ganks while low health",
-				"frequency": "common",
-				"severity": "high",
+				"trigger":    "Jungle ganks while low health",
+				"frequency":  "common",
+				"severity":   "high",
 				"mitigation": []string{"Better map awareness", "Earlier recall timing"},
 			},
 			{
-				"trigger": "Teammates not following calls",
-				"frequency": "moderate",
-				"severity": "medium", 
+				"trigger":    "Teammates not following calls",
+				"frequency":  "moderate",
+				"severity":   "medium",
 				"mitigation": []string{"Clearer communication", "Lead by example"},
 			},
 		},
 		"techniques": []gin.H{
 			{
-				"technique": "4-7-8 Breathing",
-				"description": "Inhale for 4, hold for 7, exhale for 8 to reduce stress",
+				"technique":     "4-7-8 Breathing",
+				"description":   "Inhale for 4, hold for 7, exhale for 8 to reduce stress",
 				"effectiveness": 85.2,
 			},
 			{
-				"technique": "Pre-game Visualization",
-				"description": "Visualize successful plays before starting ranked",
+				"technique":     "Pre-game Visualization",
+				"description":   "Visualize successful plays before starting ranked",
 				"effectiveness": 78.9,
 			},
 		},
@@ -625,16 +625,16 @@ func (h *CoachingHandler) AskCoachingQuestion(c *gin.Context) {
 
 	// Mock AI response - in real implementation this would use AI/ML
 	response := gin.H{
-		"questionId": time.Now().Unix(),
-		"question": request.Question,
-		"answer": "Based on your current skill level and recent performance, I recommend focusing on wave management fundamentals. This will improve your laning phase and provide better opportunities for roaming and objective control.",
-		"confidence": 87.5,
+		"questionId":  time.Now().Unix(),
+		"question":    request.Question,
+		"answer":      "Based on your current skill level and recent performance, I recommend focusing on wave management fundamentals. This will improve your laning phase and provide better opportunities for roaming and objective control.",
+		"confidence":  87.5,
 		"relatedTips": []string{"tip_001", "tip_005", "tip_012"},
 		"resources": []gin.H{
 			{
-				"type": "guide",
+				"type":  "guide",
 				"title": "Wave Management Fundamentals",
-				"url": "/resources/wave-management-guide",
+				"url":   "/resources/wave-management-guide",
 			},
 		},
 		"followUpQuestions": []string{

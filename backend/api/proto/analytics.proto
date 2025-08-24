@@ -1,0 +1,383 @@
+syntax = "proto3";
+
+package herald.analytics.v1;
+
+option go_package = "github.com/herald-lol/herald/backend/internal/grpc/gen/analytics/v1;analyticsv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+// Analytics gRPC service for Herald.lol gaming platform
+service AnalyticsService {
+  // Get comprehensive player analytics
+  rpc GetPlayerAnalytics(GetPlayerAnalyticsRequest) returns (GetPlayerAnalyticsResponse);
+  
+  // Get real-time match analytics
+  rpc GetMatchAnalytics(GetMatchAnalyticsRequest) returns (GetMatchAnalyticsResponse);
+  
+  // Get champion-specific analytics
+  rpc GetChampionAnalytics(GetChampionAnalyticsRequest) returns (GetChampionAnalyticsResponse);
+  
+  // Stream real-time analytics updates
+  rpc StreamAnalytics(StreamAnalyticsRequest) returns (stream AnalyticsEvent);
+  
+  // Batch process analytics data
+  rpc BatchProcessAnalytics(BatchProcessAnalyticsRequest) returns (BatchProcessAnalyticsResponse);
+}
+
+message GetPlayerAnalyticsRequest {
+  string player_id = 1;
+  string time_range = 2;
+  optional string champion = 3;
+  optional string position = 4;
+  optional string region = 5;
+}
+
+message GetPlayerAnalyticsResponse {
+  PlayerAnalytics analytics = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message GetMatchAnalyticsRequest {
+  string match_id = 1;
+  optional string player_id = 2;
+  bool include_timeline = 3;
+}
+
+message GetMatchAnalyticsResponse {
+  MatchAnalytics analytics = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message GetChampionAnalyticsRequest {
+  string player_id = 1;
+  string champion = 2;
+  string time_range = 3;
+  optional string position = 4;
+}
+
+message GetChampionAnalyticsResponse {
+  ChampionAnalytics analytics = 1;
+  ResponseMetadata metadata = 2;
+}
+
+message StreamAnalyticsRequest {
+  string player_id = 1;
+  repeated string event_types = 2;
+  optional google.protobuf.Duration update_interval = 3;
+}
+
+message AnalyticsEvent {
+  string event_id = 1;
+  string event_type = 2;
+  string player_id = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  map<string, string> data = 5;
+}
+
+message BatchProcessAnalyticsRequest {
+  repeated string match_ids = 1;
+  ProcessingOptions options = 2;
+}
+
+message BatchProcessAnalyticsResponse {
+  repeated ProcessingResult results = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Core Analytics Models
+
+message PlayerAnalytics {
+  string player_id = 1;
+  string summoner_name = 2;
+  string region = 3;
+  PlayerStats stats = 4;
+  PlayerTrends trends = 5;
+  repeated ChampionSummary top_champions = 6;
+  PlayerRankings rankings = 7;
+  google.protobuf.Timestamp last_updated = 8;
+}
+
+message PlayerStats {
+  double overall_rating = 1;
+  double win_rate = 2;
+  double kda_ratio = 3;
+  double cs_per_minute = 4;
+  double damage_per_minute = 5;
+  double gold_per_minute = 6;
+  double vision_score_per_minute = 7;
+  int32 total_games = 8;
+  PlayerRankInfo rank_info = 9;
+}
+
+message PlayerTrends {
+  TrendData rating_trend = 1;
+  TrendData winrate_trend = 2;
+  TrendData kda_trend = 3;
+  TrendData performance_trend = 4;
+  string trend_direction = 5;
+  double trend_confidence = 6;
+}
+
+message TrendData {
+  repeated TrendPoint points = 1;
+  double slope = 2;
+  double correlation = 3;
+}
+
+message TrendPoint {
+  google.protobuf.Timestamp timestamp = 1;
+  double value = 2;
+}
+
+message ChampionSummary {
+  string champion = 1;
+  int32 games_played = 2;
+  double win_rate = 3;
+  double kda = 4;
+  double rating = 5;
+  double mastery_points = 6;
+  int32 mastery_level = 7;
+}
+
+message PlayerRankings {
+  RankPosition overall_rank = 1;
+  RankPosition champion_rank = 2;
+  RankPosition position_rank = 3;
+  int32 percentile = 4;
+}
+
+message RankPosition {
+  string tier = 1;
+  string division = 2;
+  int32 lp = 3;
+  bool is_provisional = 4;
+}
+
+message PlayerRankInfo {
+  string current_rank = 1;
+  int32 lp = 2;
+  string peak_rank = 3;
+  int32 wins = 4;
+  int32 losses = 5;
+  bool in_promos = 6;
+}
+
+message MatchAnalytics {
+  string match_id = 1;
+  string game_mode = 2;
+  google.protobuf.Duration match_duration = 3;
+  repeated PlayerMatchData players = 4;
+  TeamAnalytics blue_team = 5;
+  TeamAnalytics red_team = 6;
+  MatchOutcome outcome = 7;
+  MatchMeta meta = 8;
+}
+
+message PlayerMatchData {
+  string player_id = 1;
+  string champion = 2;
+  string position = 3;
+  PlayerMatchStats stats = 4;
+  PlayerMatchPerformance performance = 5;
+  PlayerMatchTimeline timeline = 6;
+}
+
+message PlayerMatchStats {
+  int32 kills = 1;
+  int32 deaths = 2;
+  int32 assists = 3;
+  int32 cs = 4;
+  int32 gold_earned = 5;
+  int32 damage_dealt = 6;
+  int32 damage_taken = 7;
+  int32 vision_score = 8;
+  repeated string items = 9;
+  string primary_rune = 10;
+  string secondary_rune = 11;
+}
+
+message PlayerMatchPerformance {
+  double rating = 1;
+  double kda = 2;
+  double cs_per_minute = 3;
+  double damage_share = 4;
+  double kill_participation = 5;
+  double early_game_rating = 6;
+  double mid_game_rating = 7;
+  double late_game_rating = 8;
+}
+
+message PlayerMatchTimeline {
+  repeated TimelineEvent events = 1;
+  repeated PowerSpike power_spikes = 2;
+}
+
+message TimelineEvent {
+  google.protobuf.Duration timestamp = 1;
+  string event_type = 2;
+  string position = 3;
+  map<string, string> data = 4;
+}
+
+message PowerSpike {
+  google.protobuf.Duration timestamp = 1;
+  string spike_type = 2;
+  double power_rating = 3;
+  string reason = 4;
+}
+
+message TeamAnalytics {
+  string team_side = 1;
+  TeamStats stats = 2;
+  TeamComposition composition = 3;
+  TeamObjectives objectives = 4;
+}
+
+message TeamStats {
+  int32 total_kills = 1;
+  int32 total_deaths = 2;
+  int32 total_assists = 3;
+  int32 total_gold = 4;
+  int32 total_damage = 5;
+  double avg_level = 6;
+}
+
+message TeamComposition {
+  repeated string champions = 1;
+  double team_fight_rating = 2;
+  double siege_rating = 3;
+  double pick_rating = 4;
+  double scaling_rating = 5;
+}
+
+message TeamObjectives {
+  int32 towers = 1;
+  int32 dragons = 2;
+  int32 barons = 3;
+  int32 heralds = 4;
+  bool elder_dragon = 5;
+}
+
+message MatchOutcome {
+  string winning_team = 1;
+  google.protobuf.Duration match_duration = 2;
+  string victory_condition = 3;
+  bool was_surrender = 4;
+}
+
+message MatchMeta {
+  string patch_version = 1;
+  google.protobuf.Timestamp match_date = 2;
+  string queue_type = 3;
+  string region = 4;
+  string season = 5;
+}
+
+message ChampionAnalytics {
+  string player_id = 1;
+  string champion = 2;
+  ChampionStats stats = 3;
+  ChampionPerformance performance = 4;
+  ChampionMastery mastery = 5;
+  repeated ChampionMatchup matchups = 6;
+  ChampionRecommendations recommendations = 7;
+}
+
+message ChampionStats {
+  int32 games_played = 1;
+  double win_rate = 2;
+  double avg_kda = 3;
+  double avg_cs_per_min = 4;
+  double avg_damage_per_min = 5;
+  double avg_gold_per_min = 6;
+  double avg_vision_score = 7;
+}
+
+message ChampionPerformance {
+  double overall_rating = 1;
+  double mechanics_rating = 2;
+  double positioning_rating = 3;
+  double decision_making_rating = 4;
+  double early_game_rating = 5;
+  double mid_game_rating = 6;
+  double late_game_rating = 7;
+}
+
+message ChampionMastery {
+  int32 mastery_level = 1;
+  int64 mastery_points = 2;
+  string mastery_tier = 3;
+  double play_rate = 4;
+  string recent_form = 5;
+}
+
+message ChampionMatchup {
+  string opponent_champion = 1;
+  int32 games_played = 2;
+  double win_rate = 3;
+  double avg_cs_diff = 4;
+  double lane_phase_rating = 5;
+  repeated string common_mistakes = 6;
+}
+
+message ChampionRecommendations {
+  repeated PlayStyleRecommendation play_style = 1;
+  repeated BuildRecommendation builds = 2;
+  repeated RuneRecommendation runes = 3;
+  repeated TrainingRecommendation training = 4;
+}
+
+message PlayStyleRecommendation {
+  string title = 1;
+  string description = 2;
+  string priority = 3;
+  double expected_improvement = 4;
+}
+
+message BuildRecommendation {
+  repeated string items = 1;
+  double win_rate = 2;
+  double play_rate = 3;
+  string situation = 4;
+}
+
+message RuneRecommendation {
+  string primary_tree = 1;
+  string secondary_tree = 2;
+  repeated string keystone_options = 3;
+  double optimality_score = 4;
+}
+
+message TrainingRecommendation {
+  string title = 1;
+  string description = 2;
+  string duration = 3;
+  string frequency = 4;
+  string expected_timeline = 5;
+}
+
+// Processing and Metadata
+
+message ProcessingOptions {
+  bool include_timeline = 1;
+  bool include_advanced_stats = 2;
+  bool force_refresh = 3;
+  int32 batch_size = 4;
+}
+
+message ProcessingResult {
+  string identifier = 1;
+  bool success = 2;
+  optional string error_message = 3;
+  google.protobuf.Timestamp processed_at = 4;
+  map<string, string> metadata = 5;
+}
+
+message ResponseMetadata {
+  google.protobuf.Timestamp generated_at = 1;
+  google.protobuf.Duration processing_time = 2;
+  string cache_status = 3;
+  string api_version = 4;
+  int32 data_freshness_seconds = 5;
+}

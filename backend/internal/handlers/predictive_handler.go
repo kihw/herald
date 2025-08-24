@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type PredictiveHandler struct {
@@ -26,15 +26,15 @@ func (h *PredictiveHandler) RegisterRoutes(r *gin.RouterGroup) {
 		predictive.GET("/performance/:summoner_id", h.GetPerformancePrediction)
 		predictive.GET("/rank-progression/:summoner_id", h.GetRankProgressionPrediction)
 		predictive.GET("/skill-development/:summoner_id", h.GetSkillDevelopmentForecast)
-		
+
 		// Champion Recommendations
 		predictive.GET("/champion-recommendations/:summoner_id", h.GetChampionRecommendations)
 		predictive.GET("/meta-adaptation/:summoner_id", h.GetMetaAdaptationForecast)
-		
+
 		// Team Analytics
 		predictive.GET("/team-performance/:team_id", h.GetTeamPerformancePrediction)
 		predictive.GET("/team-synergy/:team_id", h.GetTeamSynergyAnalysis)
-		
+
 		// Career Analytics
 		predictive.GET("/career-trajectory/:summoner_id", h.GetCareerTrajectoryForecast)
 		predictive.GET("/player-potential/:summoner_id", h.GetPlayerPotentialAssessment)
@@ -66,7 +66,7 @@ func (h *PredictiveHandler) GetPerformancePrediction(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate performance prediction",
+			"error":   "Failed to generate performance prediction",
 			"details": err.Error(),
 		})
 		return
@@ -74,7 +74,7 @@ func (h *PredictiveHandler) GetPerformancePrediction(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"prediction": prediction,
+		"prediction":  prediction,
 	})
 }
 
@@ -91,7 +91,7 @@ func (h *PredictiveHandler) GetRankProgressionPrediction(c *gin.Context) {
 	// Parse query parameters
 	targetRank := c.Query("target_rank")
 	timeframeStr := c.DefaultQuery("timeframe_days", "30")
-	
+
 	timeframeDays, err := strconv.Atoi(timeframeStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -107,7 +107,7 @@ func (h *PredictiveHandler) GetRankProgressionPrediction(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate rank progression prediction",
+			"error":   "Failed to generate rank progression prediction",
 			"details": err.Error(),
 		})
 		return
@@ -115,7 +115,7 @@ func (h *PredictiveHandler) GetRankProgressionPrediction(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"prediction": prediction,
+		"prediction":  prediction,
 	})
 }
 
@@ -132,7 +132,7 @@ func (h *PredictiveHandler) GetSkillDevelopmentForecast(c *gin.Context) {
 	// Parse query parameters
 	skillCategory := c.Query("skill_category")
 	forecastPeriodStr := c.DefaultQuery("forecast_period_days", "90")
-	
+
 	forecastPeriod, err := strconv.Atoi(forecastPeriodStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -148,7 +148,7 @@ func (h *PredictiveHandler) GetSkillDevelopmentForecast(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate skill development forecast",
+			"error":   "Failed to generate skill development forecast",
 			"details": err.Error(),
 		})
 		return
@@ -156,7 +156,7 @@ func (h *PredictiveHandler) GetSkillDevelopmentForecast(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"forecast": forecast,
+		"forecast":    forecast,
 	})
 }
 
@@ -175,7 +175,7 @@ func (h *PredictiveHandler) GetChampionRecommendations(c *gin.Context) {
 	playstyle := c.Query("playstyle")
 	metaFocus := c.DefaultQuery("meta_focus", "current")
 	limitStr := c.DefaultQuery("limit", "10")
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -193,14 +193,14 @@ func (h *PredictiveHandler) GetChampionRecommendations(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate champion recommendations",
+			"error":   "Failed to generate champion recommendations",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"summoner_id": summonerID,
+		"summoner_id":     summonerID,
 		"recommendations": recommendations,
 	})
 }
@@ -226,7 +226,7 @@ func (h *PredictiveHandler) GetMetaAdaptationForecast(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate meta adaptation forecast",
+			"error":   "Failed to generate meta adaptation forecast",
 			"details": err.Error(),
 		})
 		return
@@ -234,7 +234,7 @@ func (h *PredictiveHandler) GetMetaAdaptationForecast(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"forecast": forecast,
+		"forecast":    forecast,
 	})
 }
 
@@ -252,7 +252,7 @@ func (h *PredictiveHandler) GetTeamPerformancePrediction(c *gin.Context) {
 	gameType := c.DefaultQuery("game_type", "ranked")
 	predictionScope := c.DefaultQuery("prediction_scope", "next_games")
 	gamesCountStr := c.DefaultQuery("games_count", "10")
-	
+
 	gamesCount, err := strconv.Atoi(gamesCountStr)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -269,14 +269,14 @@ func (h *PredictiveHandler) GetTeamPerformancePrediction(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate team performance prediction",
+			"error":   "Failed to generate team performance prediction",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"team_id": teamID,
+		"team_id":    teamID,
 		"prediction": prediction,
 	})
 }
@@ -302,14 +302,14 @@ func (h *PredictiveHandler) GetTeamSynergyAnalysis(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate team synergy analysis",
+			"error":   "Failed to generate team synergy analysis",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"team_id": teamID,
+		"team_id":  teamID,
 		"analysis": analysis,
 	})
 }
@@ -337,7 +337,7 @@ func (h *PredictiveHandler) GetCareerTrajectoryForecast(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate career trajectory forecast",
+			"error":   "Failed to generate career trajectory forecast",
 			"details": err.Error(),
 		})
 		return
@@ -345,7 +345,7 @@ func (h *PredictiveHandler) GetCareerTrajectoryForecast(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"forecast": forecast,
+		"forecast":    forecast,
 	})
 }
 
@@ -372,7 +372,7 @@ func (h *PredictiveHandler) GetPlayerPotentialAssessment(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate player potential assessment",
+			"error":   "Failed to generate player potential assessment",
 			"details": err.Error(),
 		})
 		return
@@ -380,6 +380,6 @@ func (h *PredictiveHandler) GetPlayerPotentialAssessment(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"summoner_id": summonerID,
-		"assessment": assessment,
+		"assessment":  assessment,
 	})
 }

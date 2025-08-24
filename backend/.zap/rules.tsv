@@ -1,0 +1,51 @@
+# OWASP ZAP Scan Rules for Herald.lol Gaming Analytics
+# Gaming-specific security rules and exclusions
+
+# Ignore health check endpoints for certain tests
+IGNORE	SCAN	10023	/health
+IGNORE	SCAN	10023	/ready
+IGNORE	SCAN	10023	/metrics
+
+# Gaming API specific rules
+IGNORE	SCAN	10015	/analytics/.*	# Ignore charset issues for gaming data
+IGNORE	SCAN	10027	/gaming/.*		# Information Disclosure for gaming endpoints
+
+# Riot API integration exclusions  
+IGNORE	SCAN	10202	/riot/.*		# Absence of Anti-CSRF tokens for external API
+IGNORE	SCAN	10038	/riot/.*		# Content Security Policy issues for API integration
+
+# WebSocket gaming connections
+IGNORE	SCAN	10047	/ws			# HttpOnly flag for WebSocket connections
+IGNORE	SCAN	10011	/ws			# Cookie Security for real-time connections
+
+# gRPC endpoints
+IGNORE	SCAN	90033	:50051		# Loosely Scoped Cookie for gRPC
+
+# Performance monitoring endpoints
+IGNORE	SCAN	10096	/metrics		# Timestamp Disclosure for Prometheus metrics
+IGNORE	SCAN	10027	/debug/.*		# Information Disclosure for debug endpoints (dev only)
+
+# Gaming analytics specific
+SCAN	SCAN	40012	/analytics/.*	# Cross Site Scripting for gaming data
+SCAN	SCAN	40014	/analytics/.*	# Cross Site Scripting (Persistent) 
+SCAN	SCAN	40016	/analytics/.*	# Cross Site Scripting (Persistent) - Prime
+SCAN	SCAN	90019	/analytics/.*	# Server Side Code Injection for gaming queries
+
+# Player data protection
+SCAN	SCAN	10015	/players/.*	# Incomplete or No Cache-control
+SCAN	SCAN	10017	/players/.*	# Cross-Domain JavaScript Source File Inclusion
+SCAN	SCAN	10020	/players/.*	# X-Frame-Options Header
+
+# Match data endpoints  
+SCAN	SCAN	40018	/matches/.*	# SQL Injection for match queries
+SCAN	SCAN	90020	/matches/.*	# Remote OS Command Injection
+
+# Authentication endpoints
+SCAN	SCAN	10010	/auth/.*		# Cookie No HttpOnly Flag
+SCAN	SCAN	10011	/auth/.*		# Cookie Without Secure Flag  
+SCAN	SCAN	10012	/auth/.*		# Password Autocomplete
+SCAN	SCAN	10017	/auth/.*		# Cross-Domain JavaScript Source File Inclusion
+
+# API rate limiting tests
+SCAN	SCAN	20019	/api/.*		# External Redirect for API endpoints
+SCAN	SCAN	90001	/api/.*		# Insecure HTTP Method for APIs

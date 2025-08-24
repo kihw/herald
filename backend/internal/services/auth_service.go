@@ -2,14 +2,14 @@ package services
 
 import (
 	"errors"
-	"time"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	
-	"github.com/herald-lol/backend/internal/config"
-	"github.com/herald-lol/backend/internal/models"
+	"time"
+
+	"github.com/herald-lol/herald/backend/internal/config"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 type AuthService struct {
@@ -18,10 +18,10 @@ type AuthService struct {
 }
 
 type AuthClaims struct {
-	UserID   uuid.UUID `json:"user_id"`
-	Username string    `json:"username"`
-	Email    string    `json:"email"`
-	IsPremium bool     `json:"is_premium"`
+	UserID    uuid.UUID `json:"user_id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	IsPremium bool      `json:"is_premium"`
 	jwt.RegisteredClaims
 }
 
@@ -109,27 +109,27 @@ func (s *AuthService) Register(req RegisterRequest) (*AuthResponse, error) {
 
 	// Create default preferences
 	preferences := models.UserPreferences{
-		UserID:                      user.ID,
-		Theme:                       "dark",
-		CompactMode:                 false,
-		ShowDetailedStats:           true,
-		DefaultTimeframe:           "7d",
-		EmailNotifications:         true,
-		PushNotifications:          true,
-		MatchNotifications:         true,
-		RankChangeNotifications:    true,
-		AutoSyncMatches:            true,
-		SyncInterval:               300,
-		IncludeNormalGames:         true,
-		IncludeARAMGames:           true,
-		PublicProfile:              true,
-		ShowInLeaderboards:         true,
-		AllowDataExport:            true,
-		ReceiveAICoaching:          true,
-		SkillLevel:                 "intermediate",
-		PreferredCoachingStyle:     "balanced",
-		CreatedAt:                  time.Now(),
-		UpdatedAt:                  time.Now(),
+		UserID:                  user.ID,
+		Theme:                   "dark",
+		CompactMode:             false,
+		ShowDetailedStats:       true,
+		DefaultTimeframe:        "7d",
+		EmailNotifications:      true,
+		PushNotifications:       true,
+		MatchNotifications:      true,
+		RankChangeNotifications: true,
+		AutoSyncMatches:         true,
+		SyncInterval:            300,
+		IncludeNormalGames:      true,
+		IncludeARAMGames:        true,
+		PublicProfile:           true,
+		ShowInLeaderboards:      true,
+		AllowDataExport:         true,
+		ReceiveAICoaching:       true,
+		SkillLevel:              "intermediate",
+		PreferredCoachingStyle:  "balanced",
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
 	}
 
 	if err := tx.Create(&preferences).Error; err != nil {
@@ -318,7 +318,7 @@ func (s *AuthService) ChangePassword(userID uuid.UUID, currentPassword, newPassw
 	// Update password
 	user.PasswordHash = string(hashedPassword)
 	user.UpdatedAt = time.Now()
-	
+
 	return s.db.Save(&user).Error
 }
 
@@ -332,19 +332,19 @@ func (s *AuthService) ResetPassword(email string) error {
 
 	// TODO: Generate reset token and send email
 	// For now, just log that a reset was requested
-	
+
 	return nil
 }
 
 // generateTokens generates access and refresh tokens for a user
 func (s *AuthService) generateTokens(user models.User) (string, string, error) {
 	now := time.Now()
-	
+
 	// Access token claims
 	accessClaims := AuthClaims{
-		UserID:   user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		UserID:    user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
 		IsPremium: user.IsPremium,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.JWT.Expiration)),
@@ -357,9 +357,9 @@ func (s *AuthService) generateTokens(user models.User) (string, string, error) {
 
 	// Refresh token claims (longer expiration)
 	refreshClaims := AuthClaims{
-		UserID:   user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		UserID:    user.ID,
+		Username:  user.Username,
+		Email:     user.Email,
 		IsPremium: user.IsPremium,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(s.config.JWT.Expiration * 7)), // 7x longer
@@ -392,11 +392,11 @@ func (s *AuthService) validatePasswordStrength(password string) error {
 	if len(password) < 6 {
 		return ErrWeakPassword
 	}
-	
+
 	// TODO: Add more password strength validation
 	// - Check for common passwords
 	// - Require mix of letters, numbers, symbols
 	// - Check against breach databases
-	
+
 	return nil
 }

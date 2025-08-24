@@ -1,0 +1,359 @@
+name: 🏗️ Herald.lol Infrastructure Drift Detection
+
+on:
+  schedule:
+    # Run every 4 hours for gaming infrastructure monitoring
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Gaming environment to check'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - blue
+          - green
+      force_rebuild:
+        description: 'Force rebuild Lambda function'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  AWS_REGION: us-east-1
+  GAMING_PERFORMANCE_TARGET: 5000
+  TERRAFORM_VERSION: 1.6.0
+
+jobs:
+  # Infrastructure drift detection
+  detect-drift:
+    name: 🔍 Gaming Infrastructure Drift Detection
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    strategy:
+      matrix:
+        environment: [production, blue, green]
+        exclude:
+          - environment: ${{ github.event.inputs.environment == 'production' && 'blue' || 'production' }}
+          - environment: ${{ github.event.inputs.environment == 'production' && 'green' || 'production' }}
+
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔐 Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: 🏗️ Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 📦 Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install boto3 requests
+
+    - name: 🎮 Initialize gaming infrastructure monitoring
+      run: |
+        echo "🎮 Initializing Herald.lol gaming infrastructure drift detection"
+        echo "Environment: ${{ matrix.environment }}"
+        echo "Performance Target: <${{ env.GAMING_PERFORMANCE_TARGET }}ms"
+        
+        # Create terraform backend configuration
+        mkdir -p terraform/drift-detection
+        cat << EOF > terraform/drift-detection/backend.tf
+        terraform {
+          backend "s3" {
+            bucket         = "herald-gaming-terraform-state-${{ github.repository_owner }}"
+            key            = "drift-detection/${{ matrix.environment }}/terraform.tfstate"
+            region         = "${{ env.AWS_REGION }}"
+            encrypt        = true
+            dynamodb_table = "herald-terraform-locks-${{ github.repository_owner }}"
+          }
+        }
+        EOF
+
+    - name: 🔧 Initialize Terraform
+      working-directory: terraform/drift-detection
+      run: |
+        terraform init
+        terraform workspace select ${{ matrix.environment }} || terraform workspace new ${{ matrix.environment }}
+
+    - name: 📊 Check current infrastructure state
+      working-directory: terraform/drift-detection
+      run: |
+        echo "🔍 Checking current gaming infrastructure state..."
+        
+        # Get current Terraform state
+        terraform refresh \
+          -var="gaming_environment=${{ matrix.environment }}" \
+          -var="gaming_performance_target_ms=${{ env.GAMING_PERFORMANCE_TARGET }}" \
+          -var="notification_email=${{ secrets.NOTIFICATION_EMAIL }}" \
+          -var="slack_webhook_url=${{ secrets.SLACK_WEBHOOK_URL }}"
+
+    - name: 📋 Plan infrastructure changes
+      working-directory: terraform/drift-detection
+      run: |
+        echo "📋 Planning gaming infrastructure changes..."
+        terraform plan \
+          -var="gaming_environment=${{ matrix.environment }}" \
+          -var="gaming_performance_target_ms=${{ env.GAMING_PERFORMANCE_TARGET }}" \
+          -var="notification_email=${{ secrets.NOTIFICATION_EMAIL }}" \
+          -var="slack_webhook_url=${{ secrets.SLACK_WEBHOOK_URL }}" \
+          -out=tfplan \
+          -detailed-exitcode || exit_code=$?
+        
+        # Check if changes are detected
+        if [ ${exit_code:-0} -eq 2 ]; then
+          echo "🚨 GAMING_INFRASTRUCTURE_DRIFT_DETECTED=true" >> $GITHUB_ENV
+          echo "::warning::Gaming infrastructure drift detected in ${{ matrix.environment }}"
+        else
+          echo "✅ No gaming infrastructure drift detected"
+          echo "🚨 GAMING_INFRASTRUCTURE_DRIFT_DETECTED=false" >> $GITHUB_ENV
+        fi
+
+    - name: 📦 Build drift detection Lambda (if needed)
+      if: env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' || github.event.inputs.force_rebuild == 'true'
+      working-directory: scripts/drift-detection
+      run: |
+        echo "📦 Building gaming drift detection Lambda..."
+        chmod +x build_lambda.sh
+        ./build_lambda.sh
+
+    - name: 🚀 Deploy drift detection updates
+      if: env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true'
+      working-directory: terraform/drift-detection
+      run: |
+        echo "🚀 Applying gaming infrastructure drift detection updates..."
+        terraform apply tfplan
+
+    - name: 🧪 Test drift detection function
+      if: env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' || github.event.inputs.force_rebuild == 'true'
+      run: |
+        echo "🧪 Testing gaming drift detection function..."
+        
+        # Get Lambda function name
+        cd terraform/drift-detection
+        FUNCTION_NAME=$(terraform output -raw drift_detection_function_arn | sed 's/.*://')
+        
+        if [ -n "$FUNCTION_NAME" ]; then
+          # Test Lambda function
+          aws lambda invoke \
+            --function-name "$FUNCTION_NAME" \
+            --payload '{"test": true, "gaming_environment": "${{ matrix.environment }}"}' \
+            --region ${{ env.AWS_REGION }} \
+            /tmp/lambda_test_output.json
+          
+          echo "📋 Lambda test result:"
+          cat /tmp/lambda_test_output.json | jq .
+        else
+          echo "❌ Could not get Lambda function name"
+          exit 1
+        fi
+
+    - name: 📊 Generate gaming drift report
+      if: always()
+      run: |
+        echo "📊 Generating Herald.lol gaming infrastructure drift report..."
+        
+        cat << 'EOF' > gaming_drift_report.md
+        # 🎮 Herald.lol Gaming Infrastructure Drift Report
+        
+        **Environment:** ${{ matrix.environment }}
+        **Date:** $(date)
+        **Performance Target:** <${{ env.GAMING_PERFORMANCE_TARGET }}ms
+        
+        ## 🎯 Gaming Infrastructure Status
+        
+        | Component | Status | Gaming Impact |
+        |-----------|--------|---------------|
+        | EKS Clusters | ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '🔄 Changes Detected' || '✅ Stable' }} | Gaming container orchestration |
+        | RDS Instances | ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '🔄 Changes Detected' || '✅ Stable' }} | Gaming analytics database |
+        | ElastiCache | ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '🔄 Changes Detected' || '✅ Stable' }} | Gaming performance cache |
+        | Load Balancers | ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '🔄 Changes Detected' || '✅ Stable' }} | Gaming traffic distribution |
+        | Auto Scaling | ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '🔄 Changes Detected' || '✅ Stable' }} | Gaming workload scaling |
+        
+        ## 🚨 Drift Detection Result
+        
+        **Drift Detected:** ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED }}
+        
+        ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '⚠️ **ACTION REQUIRED:** Gaming infrastructure changes detected that may impact performance.' || '✅ **ALL CLEAR:** No gaming infrastructure drift detected.' }}
+        
+        ## 🎮 Gaming Performance Considerations
+        
+        - **Analytics Target:** <${{ env.GAMING_PERFORMANCE_TARGET }}ms response time
+        - **Concurrent Users:** 1M+ support capacity
+        - **Uptime Target:** 99.9% availability
+        - **Real-time Processing:** WebSocket/gRPC gaming connections
+        
+        ## 📊 Monitoring
+        
+        - **Dashboard:** [CloudWatch Gaming Dashboard](https://console.aws.amazon.com/cloudwatch/home#dashboards:name=Herald-Gaming-Infrastructure-Drift)
+        - **Alerts:** SNS topic notifications configured
+        - **Snapshots:** S3 bucket for state tracking
+        
+        ## 🛠️ Recommended Actions
+        
+        ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED == 'true' && '1. Review infrastructure changes immediately\n2. Test gaming analytics performance\n3. Validate Riot API integration\n4. Monitor real-time gaming metrics\n5. Consider blue-green deployment if issues detected' || '1. Continue regular monitoring\n2. Maintain gaming performance targets\n3. Keep infrastructure documentation updated' }}
+        
+        ---
+        **Herald.lol Gaming Analytics Platform**  
+        *Infrastructure monitoring optimized for gaming performance*
+        EOF
+
+    - name: 📤 Upload gaming drift report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: gaming-drift-report-${{ matrix.environment }}
+        path: gaming_drift_report.md
+        retention-days: 7
+
+    - name: 🎮 Gaming infrastructure status summary
+      if: always()
+      run: |
+        echo "## 🎮 Herald.lol Gaming Infrastructure Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Environment:** ${{ matrix.environment }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Performance Target:** <${{ env.GAMING_PERFORMANCE_TARGET }}ms" >> $GITHUB_STEP_SUMMARY
+        echo "**Drift Detected:** ${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "${{ env.GAMING_INFRASTRUCTURE_DRIFT_DETECTED }}" == "true" ]; then
+          echo "### 🚨 Gaming Infrastructure Changes Detected" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Infrastructure changes have been detected that may impact gaming performance:" >> $GITHUB_STEP_SUMMARY
+          echo "- Review changes for gaming performance impact" >> $GITHUB_STEP_SUMMARY
+          echo "- Test analytics response time (<${{ env.GAMING_PERFORMANCE_TARGET }}ms target)" >> $GITHUB_STEP_SUMMARY
+          echo "- Validate real-time gaming functionality" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor gaming metrics closely" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "### ✅ Gaming Infrastructure Stable" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "No infrastructure drift detected. Gaming platform performance maintained." >> $GITHUB_STEP_SUMMARY
+        fi
+
+  # Aggregate results across environments
+  drift-summary:
+    name: 📋 Gaming Drift Summary
+    runs-on: ubuntu-latest
+    needs: [detect-drift]
+    if: always()
+
+    steps:
+    - name: 📥 Download all drift reports
+      uses: actions/download-artifact@v4
+      with:
+        path: drift-reports
+
+    - name: 📊 Create comprehensive gaming drift summary
+      run: |
+        echo "📊 Creating comprehensive Herald.lol gaming drift summary..."
+        
+        cat << 'EOF' > comprehensive_gaming_drift_summary.md
+        # 🎮 Herald.lol Comprehensive Gaming Infrastructure Drift Summary
+        
+        **Generated:** $(date)
+        **Performance Target:** <${{ env.GAMING_PERFORMANCE_TARGET }}ms analytics response
+        **Concurrent Users Target:** 1M+ supported
+        
+        ## 🏗️ Infrastructure Environments
+        
+        EOF
+        
+        # Process each environment report
+        for env_dir in drift-reports/gaming-drift-report-*; do
+          if [ -d "$env_dir" ]; then
+            env_name=$(basename "$env_dir" | sed 's/gaming-drift-report-//')
+            echo "### Environment: $env_name" >> comprehensive_gaming_drift_summary.md
+            
+            if [ -f "$env_dir/gaming_drift_report.md" ]; then
+              # Extract key information from each report
+              echo "📋 Processing $env_name environment report..."
+              grep -A 5 "## 🚨 Drift Detection Result" "$env_dir/gaming_drift_report.md" >> comprehensive_gaming_drift_summary.md || true
+            else
+              echo "⚠️ Report missing for $env_name" >> comprehensive_gaming_drift_summary.md
+            fi
+            echo "" >> comprehensive_gaming_drift_summary.md
+          fi
+        done
+        
+        cat << 'EOF' >> comprehensive_gaming_drift_summary.md
+        
+        ## 🎯 Gaming Platform Health Check
+        
+        - ✅ **Analytics Performance:** Monitor <${{ env.GAMING_PERFORMANCE_TARGET }}ms target
+        - ✅ **Real-time Processing:** WebSocket/gRPC gaming connections
+        - ✅ **Database Performance:** PostgreSQL gaming analytics optimization
+        - ✅ **Caching Layer:** Redis gaming performance acceleration
+        - ✅ **Load Distribution:** Gaming traffic load balancing
+        - ✅ **Auto Scaling:** Gaming workload capacity management
+        
+        ## 🔧 Next Steps
+        
+        1. **Review Detected Changes:** Analyze any infrastructure modifications
+        2. **Gaming Performance Testing:** Validate <${{ env.GAMING_PERFORMANCE_TARGET }}ms analytics target
+        3. **Riot API Validation:** Ensure external API integrations remain functional
+        4. **Real-time Feature Testing:** Verify WebSocket and gRPC gaming connections
+        5. **Blue-Green Deployment:** Use zero-downtime deployment for critical fixes
+        
+        ## 📊 Monitoring Dashboard
+        
+        Access the gaming infrastructure monitoring dashboard:
+        [Herald Gaming Infrastructure Dashboard](https://console.aws.amazon.com/cloudwatch/home#dashboards:name=Herald-Gaming-Infrastructure-Drift)
+        
+        ---
+        **Herald.lol Gaming Analytics Platform**  
+        *Automated infrastructure monitoring for gaming performance*
+        EOF
+
+    - name: 📤 Upload comprehensive summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-gaming-drift-summary
+        path: comprehensive_gaming_drift_summary.md
+        retention-days: 30
+
+    - name: 🚨 Send gaming drift alert (if needed)
+      if: contains(needs.detect-drift.result, 'failure') || contains(needs.detect-drift.outputs.drift_detected, 'true')
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: |
+          🚨 **GAMING INFRASTRUCTURE DRIFT ALERT**
+          
+          🎮 **Herald.lol Gaming Analytics Platform**
+          
+          Infrastructure changes detected that may impact gaming performance:
+          
+          🎯 **Performance Impact Risk:**
+          - Analytics response time target: <${{ env.GAMING_PERFORMANCE_TARGET }}ms
+          - Concurrent users support: 1M+ capacity
+          - Real-time gaming features: WebSocket/gRPC connections
+          
+          🛠️ **Immediate Actions Required:**
+          1. Review infrastructure changes
+          2. Test gaming analytics performance
+          3. Validate Riot API integration
+          4. Monitor real-time gaming metrics
+          
+          📊 **Dashboard:** Gaming Infrastructure Monitoring
+          🔗 **Reports:** Check GitHub Actions artifacts
+          
+          **Time:** $(date)
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

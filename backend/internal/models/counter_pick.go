@@ -2,8 +2,8 @@
 package models
 
 import (
-	"time"
 	"gorm.io/gorm"
+	"time"
 )
 
 // CounterPickAnalysis represents a counter-pick analysis result
@@ -35,8 +35,8 @@ type CounterPickSuggestion struct {
 	Flexibility         float64   `json:"flexibility"`
 	SafetyRating        float64   `json:"safetyRating"`
 	MatchupDifficulty   string    `json:"matchupDifficulty"`
-	CounterReasons      string    `gorm:"type:text" json:"counterReasons"` // JSON array as text
-	PlayingTips         string    `gorm:"type:text" json:"playingTips"`    // JSON array as text
+	CounterReasons      string    `gorm:"type:text" json:"counterReasons"`      // JSON array as text
+	PlayingTips         string    `gorm:"type:text" json:"playingTips"`         // JSON array as text
 	ItemRecommendations string    `gorm:"type:text" json:"itemRecommendations"` // JSON array as text
 	CreatedAt           time.Time `json:"createdAt"`
 	UpdatedAt           time.Time `json:"updatedAt"`
@@ -54,10 +54,10 @@ type LaneCounterData struct {
 	AllInPotential    float64   `json:"allInPotential"`
 	RoamingPotential  float64   `json:"roamingPotential"`
 	ScalingComparison string    `json:"scalingComparison"`
-	KeyFactors        string    `gorm:"type:text" json:"keyFactors"`       // JSON array as text
-	PlayingTips       string    `gorm:"type:text" json:"playingTips"`      // JSON array as text
-	WardingTips       string    `gorm:"type:text" json:"wardingTips"`      // JSON array as text
-	TradingPatterns   string    `gorm:"type:text" json:"tradingPatterns"`  // JSON array as text
+	KeyFactors        string    `gorm:"type:text" json:"keyFactors"`      // JSON array as text
+	PlayingTips       string    `gorm:"type:text" json:"playingTips"`     // JSON array as text
+	WardingTips       string    `gorm:"type:text" json:"wardingTips"`     // JSON array as text
+	TradingPatterns   string    `gorm:"type:text" json:"tradingPatterns"` // JSON array as text
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 
@@ -69,8 +69,8 @@ type LaneCounterData struct {
 type TeamFightCounterData struct {
 	ID               uint      `gorm:"primaryKey" json:"id"`
 	AnalysisID       string    `gorm:"not null;index" json:"analysisId"`
-	CounterType      string    `gorm:"not null" json:"counterType"` // engage, disengage, peel, burst, etc.
-	Effectiveness    float64   `json:"effectiveness"`               // 0-100
+	CounterType      string    `gorm:"not null" json:"counterType"`       // engage, disengage, peel, burst, etc.
+	Effectiveness    float64   `json:"effectiveness"`                     // 0-100
 	Positioning      string    `gorm:"type:text" json:"positioning"`      // JSON array as text
 	ComboCounters    string    `gorm:"type:text" json:"comboCounters"`    // JSON array as text
 	TeamCoordination string    `gorm:"type:text" json:"teamCoordination"` // JSON array as text
@@ -105,7 +105,7 @@ type PlayStyleCounterData struct {
 	AnalysisID      string    `gorm:"not null;index" json:"analysisId"`
 	TargetPlayStyle string    `gorm:"not null" json:"targetPlayStyle"`
 	CounterStrategy string    `gorm:"not null" json:"counterStrategy"`
-	RiskLevel       string    `json:"riskLevel"` // low, medium, high
+	RiskLevel       string    `json:"riskLevel"`                      // low, medium, high
 	KeyPrinciples   string    `gorm:"type:text" json:"keyPrinciples"` // JSON array as text
 	Timing          string    `gorm:"type:text" json:"timing"`        // JSON array as text
 	TeamSupport     string    `gorm:"type:text" json:"teamSupport"`   // JSON array as text
@@ -128,15 +128,15 @@ type MultiTargetCounterAnalysis struct {
 
 // UniversalCounterSuggestion represents champions that counter multiple targets
 type UniversalCounterSuggestion struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	AnalysisID      string    `gorm:"not null;index" json:"analysisId"`
-	Champion        string    `gorm:"not null;index" json:"champion"`
-	AverageStrength float64   `json:"averageStrength"`
-	Versatility     float64   `json:"versatility"`
-	CountersTargets string    `gorm:"type:text" json:"countersTargets"` // JSON array as text
-	RecommendReasons string   `gorm:"type:text" json:"recommendReasons"` // JSON array as text
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	AnalysisID       string    `gorm:"not null;index" json:"analysisId"`
+	Champion         string    `gorm:"not null;index" json:"champion"`
+	AverageStrength  float64   `json:"averageStrength"`
+	Versatility      float64   `json:"versatility"`
+	CountersTargets  string    `gorm:"type:text" json:"countersTargets"`  // JSON array as text
+	RecommendReasons string    `gorm:"type:text" json:"recommendReasons"` // JSON array as text
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 
 	// Foreign key
 	Analysis MultiTargetCounterAnalysis `gorm:"foreignKey:AnalysisID;references:ID" json:"analysis,omitempty"`
@@ -193,41 +193,41 @@ type BanRecommendation struct {
 
 // CounterPickMetrics represents performance metrics for counter picks
 type CounterPickMetrics struct {
-	ID              uint      `gorm:"primaryKey" json:"id"`
-	Champion        string    `gorm:"not null;index" json:"champion"`
-	TargetChampion  string    `gorm:"not null;index" json:"targetChampion"`
-	Role            string    `gorm:"not null;index" json:"role"`
-	GameMode        string    `gorm:"not null;index" json:"gameMode"`
-	Patch           string    `gorm:"not null;index" json:"patch"`
-	SampleSize      int       `json:"sampleSize"`
-	WinRate         float64   `json:"winRate"`
-	LaneWinRate     float64   `json:"laneWinRate"`
-	KDA             float64   `json:"kda"`
-	DamageShare     float64   `json:"damageShare"`
-	GoldDifferential float64  `json:"goldDifferential"`
-	CSAdvantage     float64   `json:"csAdvantage"`
-	VisionScore     float64   `json:"visionScore"`
-	CounterStrength float64   `json:"counterStrength"` // Calculated overall strength
-	Confidence      float64   `json:"confidence"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
+	ID               uint      `gorm:"primaryKey" json:"id"`
+	Champion         string    `gorm:"not null;index" json:"champion"`
+	TargetChampion   string    `gorm:"not null;index" json:"targetChampion"`
+	Role             string    `gorm:"not null;index" json:"role"`
+	GameMode         string    `gorm:"not null;index" json:"gameMode"`
+	Patch            string    `gorm:"not null;index" json:"patch"`
+	SampleSize       int       `json:"sampleSize"`
+	WinRate          float64   `json:"winRate"`
+	LaneWinRate      float64   `json:"laneWinRate"`
+	KDA              float64   `json:"kda"`
+	DamageShare      float64   `json:"damageShare"`
+	GoldDifferential float64   `json:"goldDifferential"`
+	CSAdvantage      float64   `json:"csAdvantage"`
+	VisionScore      float64   `json:"visionScore"`
+	CounterStrength  float64   `json:"counterStrength"` // Calculated overall strength
+	Confidence       float64   `json:"confidence"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
 
 // CounterPickHistory represents historical counter pick performance
 type CounterPickHistory struct {
-	ID             uint      `gorm:"primaryKey" json:"id"`
-	UserID         uint      `gorm:"not null;index" json:"userId"`
-	SummonerID     string    `gorm:"not null;index" json:"summonerId"`
-	Champion       string    `gorm:"not null;index" json:"champion"`
-	TargetChampion string    `gorm:"not null;index" json:"targetChampion"`
-	Role           string    `gorm:"not null" json:"role"`
-	GameMode       string    `gorm:"not null" json:"gameMode"`
-	MatchID        string    `gorm:"not null;unique;index" json:"matchId"`
-	Result         string    `gorm:"not null" json:"result"` // win, loss
-	Performance    float64   `json:"performance"`            // 0-100 performance score
-	PredictedStrength float64 `json:"predictedStrength"`    // What we predicted
-	ActualStrength    float64 `json:"actualStrength"`       // What actually happened
-	Accuracy          float64 `json:"accuracy"`             // How accurate our prediction was
+	ID                uint      `gorm:"primaryKey" json:"id"`
+	UserID            uint      `gorm:"not null;index" json:"userId"`
+	SummonerID        string    `gorm:"not null;index" json:"summonerId"`
+	Champion          string    `gorm:"not null;index" json:"champion"`
+	TargetChampion    string    `gorm:"not null;index" json:"targetChampion"`
+	Role              string    `gorm:"not null" json:"role"`
+	GameMode          string    `gorm:"not null" json:"gameMode"`
+	MatchID           string    `gorm:"not null;unique;index" json:"matchId"`
+	Result            string    `gorm:"not null" json:"result"` // win, loss
+	Performance       float64   `json:"performance"`            // 0-100 performance score
+	PredictedStrength float64   `json:"predictedStrength"`      // What we predicted
+	ActualStrength    float64   `json:"actualStrength"`         // What actually happened
+	Accuracy          float64   `json:"accuracy"`               // How accurate our prediction was
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
 

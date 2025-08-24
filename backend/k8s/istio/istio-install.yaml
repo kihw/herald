@@ -1,0 +1,400 @@
+# Herald.lol Gaming Analytics Platform - Istio Service Mesh Configuration
+# Istio installation and configuration for secure inter-service communication
+
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: herald-gaming-control-plane
+  namespace: istio-system
+spec:
+  # Gaming-optimized Istio configuration
+  values:
+    global:
+      # Enable tracing for gaming analytics
+      tracer:
+        zipkin:
+          address: jaeger-collector.istio-system:9411
+      
+      # Gaming performance optimizations
+      proxy:
+        # Reduce resource overhead for gaming workloads
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 256Mi
+        
+        # Enable gaming-specific features
+        privileged: false
+        readinessInitialDelaySeconds: 1
+        readinessPeriodSeconds: 2
+        
+        # Gaming workload optimizations
+        concurrency: 2
+        
+      # Certificate management
+      meshConfig:
+        defaultConfig:
+          # Low-latency proxy settings for gaming
+          proxyStatsMatcher:
+            inclusionRegexps:
+            - ".*circuit_breakers.*"
+            - ".*upstream_rq_retry.*"
+            - ".*_cx_.*"
+            - ".*_rq_.*"
+            exclusionRegexps:
+            - ".*osconfig.*"
+          
+          # Gaming connection settings
+          holdApplicationUntilProxyStarts: true
+          
+          # Telemetry for gaming metrics
+          proxyMetadata:
+            PILOT_ENABLE_CROSS_CLUSTER_WORKLOAD_ENTRY: true
+            PILOT_ENABLE_ALPHA_GATEWAY_API: true
+            PILOT_ENABLE_WORKLOAD_ENTRY_CROSS_CLUSTER: true
+        
+        # Gaming-specific mesh configuration
+        trustDomain: herald.gaming
+        defaultProviders:
+          metrics:
+          - prometheus
+          tracing:
+          - jaeger
+          accessLogging:
+          - envoy
+        
+        # Extension providers for gaming telemetry
+        extensionProviders:
+        - name: prometheus
+          prometheus:
+            configOverride:
+              metric_relabeling_configs:
+              - source_labels: [__name__]
+                regex: 'istio_.*'
+                target_label: istio_metric
+        
+        - name: jaeger
+          zipkin:
+            service: jaeger-collector.istio-system
+            port: 9411
+        
+        - name: envoy
+          envoyFileAccessLog:
+            path: "/dev/stdout"
+            format: |
+              {
+                "timestamp": "%START_TIME%",
+                "method": "%REQ(:METHOD)%",
+                "path": "%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%",
+                "protocol": "%PROTOCOL%",
+                "response_code": "%RESPONSE_CODE%",
+                "response_flags": "%RESPONSE_FLAGS%",
+                "bytes_received": "%BYTES_RECEIVED%",
+                "bytes_sent": "%BYTES_SENT%",
+                "duration": "%DURATION%",
+                "upstream_service_time": "%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%",
+                "x_forwarded_for": "%REQ(X-FORWARDED-FOR)%",
+                "user_agent": "%REQ(USER-AGENT)%",
+                "request_id": "%REQ(X-REQUEST-ID)%",
+                "authority": "%REQ(:AUTHORITY)%",
+                "upstream_host": "%UPSTREAM_HOST%",
+                "gaming_session_id": "%REQ(X-GAMING-SESSION-ID)%",
+                "player_id": "%REQ(X-PLAYER-ID)%"
+              }
+  
+  # Components configuration for gaming workloads
+  components:
+    pilot:
+      k8s:
+        # Pilot resources for gaming control plane
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        
+        # Gaming-specific environment variables
+        env:
+          # Reduce pilot memory usage
+          - name: PILOT_ENABLE_ALPHA_GATEWAY_API
+            value: "true"
+          - name: PILOT_ENABLE_CROSS_CLUSTER_WORKLOAD_ENTRY
+            value: "true"
+          - name: EXTERNAL_ISTIOD
+            value: "false"
+          # Gaming-specific pilot settings
+          - name: PILOT_ENABLE_WORKLOAD_ENTRY_CROSS_CLUSTER
+            value: "true"
+    
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        # Gaming traffic ingress optimization
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+          limits:
+            cpu: 1000m
+            memory: 512Mi
+        
+        # Gaming ingress gateway configuration
+        service:
+          type: LoadBalancer
+          annotations:
+            service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+            service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+            service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+            service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+          ports:
+          - port: 15021
+            targetPort: 15021
+            name: status-port
+            protocol: TCP
+          - port: 80
+            targetPort: 8080
+            name: http2
+            protocol: TCP
+          - port: 443
+            targetPort: 8443
+            name: https
+            protocol: TCP
+          # Gaming WebSocket support
+          - port: 8080
+            targetPort: 8080
+            name: gaming-ws
+            protocol: TCP
+        
+        # Gaming ingress deployment settings
+        nodeSelector:
+          kubernetes.io/arch: amd64
+          node.kubernetes.io/instance-type: c5.large
+        
+        # Gaming traffic tolerations
+        tolerations:
+        - key: gaming-workload
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+
+---
+# Gaming Namespace for Istio injection
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: herald-gaming
+  labels:
+    istio-injection: enabled
+    name: herald-gaming
+    gaming-platform: herald
+    environment: production
+
+---
+# Gaming PeerAuthentication for secure communication
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: herald-gaming-mtls
+  namespace: herald-gaming
+spec:
+  # Enforce mTLS for all gaming services
+  mtls:
+    mode: STRICT
+
+---
+# Gaming AuthorizationPolicy for service-to-service security
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: herald-gaming-authz
+  namespace: herald-gaming
+spec:
+  # Allow authenticated gaming services
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/herald-gaming/sa/herald-gaming-service"]
+  - to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
+
+---
+# DestinationRule for gaming services circuit breaker
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: herald-gaming-circuit-breaker
+  namespace: herald-gaming
+spec:
+  host: "*.herald-gaming.svc.cluster.local"
+  trafficPolicy:
+    # Gaming-optimized connection pool
+    connectionPool:
+      tcp:
+        maxConnections: 100
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 7200s
+          interval: 75s
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 10
+        maxRetries: 3
+        consecutiveGatewayErrors: 5
+        # Gaming request timeouts
+        h2UpgradePolicy: UPGRADE
+        useClientProtocol: true
+    
+    # Circuit breaker for gaming reliability
+    outlierDetection:
+      consecutive5xxErrors: 5
+      consecutiveGatewayErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+      minHealthPercent: 30
+      splitExternalLocalOriginErrors: true
+    
+    # Load balancing for gaming workloads
+    loadBalancer:
+      simple: LEAST_CONN
+
+---
+# VirtualService for gaming API routing
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: herald-gaming-api
+  namespace: herald-gaming
+spec:
+  hosts:
+  - herald-gaming-api
+  http:
+  # Gaming API routes with retry policies
+  - match:
+    - uri:
+        prefix: "/api/v1/gaming"
+    route:
+    - destination:
+        host: herald-gaming-api
+        subset: stable
+      weight: 90
+    - destination:
+        host: herald-gaming-api
+        subset: canary
+      weight: 10
+    # Gaming-specific retry policy
+    retries:
+      attempts: 3
+      perTryTimeout: 2s
+      retryOn: gateway-error,connect-failure,refused-stream
+      retryRemoteLocalities: true
+    
+    # Gaming request timeout
+    timeout: 10s
+    
+    # Gaming fault injection for testing
+    fault:
+      delay:
+        percentage:
+          value: 0.1
+        fixedDelay: 5ms
+
+---
+# Gateway for gaming external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: herald-gaming-gateway
+  namespace: herald-gaming
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  # HTTPS gaming traffic
+  - port:
+      number: 443
+      name: https-gaming
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: herald-gaming-tls
+    hosts:
+    - "api.herald.lol"
+    - "gaming.herald.lol"
+  
+  # HTTP gaming traffic (redirect to HTTPS)
+  - port:
+      number: 80
+      name: http-gaming
+      protocol: HTTP
+    hosts:
+    - "api.herald.lol"
+    - "gaming.herald.lol"
+    tls:
+      httpsRedirect: true
+  
+  # Gaming WebSocket traffic
+  - port:
+      number: 8080
+      name: gaming-websocket
+      protocol: HTTP
+    hosts:
+    - "ws.herald.lol"
+
+---
+# ServiceEntry for external gaming APIs (Riot Games)
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: riot-games-api
+  namespace: herald-gaming
+spec:
+  hosts:
+  - na1.api.riotgames.com
+  - americas.api.riotgames.com
+  - europe.api.riotgames.com
+  - asia.api.riotgames.com
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  location: MESH_EXTERNAL
+  resolution: DNS
+
+---
+# Telemetry configuration for gaming metrics
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: herald-gaming-telemetry
+  namespace: herald-gaming
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+  - overrides:
+    - match:
+        metric: ALL_METRICS
+      tagOverrides:
+        gaming_service:
+          value: "herald-analytics"
+        gaming_version:
+          value: "v1.0.0"
+  
+  # Gaming-specific access logging
+  accessLogging:
+  - providers:
+    - name: envoy
+  
+  # Gaming distributed tracing
+  tracing:
+  - providers:
+    - name: jaeger

@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/herald-lol/backend/internal/analytics"
-	"github.com/herald-lol/backend/internal/match"
-	"github.com/herald-lol/backend/internal/riot"
-	"github.com/herald-lol/backend/internal/summoner"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/match"
+	"github.com/herald-lol/herald/backend/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/summoner"
 )
 
 // Herald.lol Gaming Analytics - Data Export Service
@@ -16,22 +16,22 @@ import (
 
 // ExportService handles exporting gaming data in various formats
 type ExportService struct {
-	config              *ExportConfig
-	analyticsEngine     *analytics.AnalyticsEngine
-	matchAnalyzer       *match.MatchAnalyzer
-	summonerService     *summoner.SummonerService
-	
+	config          *ExportConfig
+	analyticsEngine *analytics.AnalyticsEngine
+	matchAnalyzer   *match.MatchAnalyzer
+	summonerService *summoner.SummonerService
+
 	// Export processors
-	csvProcessor        *CSVProcessor
-	jsonProcessor       *JSONProcessor
-	xlsxProcessor       *XLSXProcessor
-	pdfProcessor        *PDFProcessor
-	chartProcessor      *ChartProcessor
-	
+	csvProcessor   *CSVProcessor
+	jsonProcessor  *JSONProcessor
+	xlsxProcessor  *XLSXProcessor
+	pdfProcessor   *PDFProcessor
+	chartProcessor *ChartProcessor
+
 	// Cache and storage
-	exportCache         map[string]*CachedExport
-	compressionEnabled  bool
-	encryptionEnabled   bool
+	exportCache        map[string]*CachedExport
+	compressionEnabled bool
+	encryptionEnabled  bool
 }
 
 // NewExportService creates a new export service
@@ -42,13 +42,13 @@ func NewExportService(
 	summonerService *summoner.SummonerService,
 ) *ExportService {
 	service := &ExportService{
-		config:              config,
-		analyticsEngine:     analyticsEngine,
-		matchAnalyzer:       matchAnalyzer,
-		summonerService:     summonerService,
-		exportCache:         make(map[string]*CachedExport),
-		compressionEnabled:  config.EnableCompression,
-		encryptionEnabled:   config.EnableEncryption,
+		config:             config,
+		analyticsEngine:    analyticsEngine,
+		matchAnalyzer:      matchAnalyzer,
+		summonerService:    summonerService,
+		exportCache:        make(map[string]*CachedExport),
+		compressionEnabled: config.EnableCompression,
+		encryptionEnabled:  config.EnableEncryption,
 	}
 
 	// Initialize processors
@@ -84,7 +84,7 @@ func (s *ExportService) ExportPlayerAnalytics(ctx context.Context, request *Play
 
 	// Generate export ID
 	exportID := s.generateExportID()
-	
+
 	// Collect player data
 	playerData, err := s.collectPlayerData(ctx, request)
 	if err != nil {
@@ -94,7 +94,7 @@ func (s *ExportService) ExportPlayerAnalytics(ctx context.Context, request *Play
 	// Export data in requested format
 	var exportedData []byte
 	var fileName string
-	
+
 	switch request.Format {
 	case "csv":
 		exportedData, fileName, err = s.csvProcessor.ExportPlayerData(playerData, request)
@@ -144,11 +144,11 @@ func (s *ExportService) ExportPlayerAnalytics(ctx context.Context, request *Play
 		CreatedAt:   time.Now(),
 		ExpiresAt:   time.Now().Add(s.config.ExportTTL),
 		Metadata: &ExportMetadata{
-			PlayerPUUID:   request.PlayerPUUID,
-			TimeRange:     request.TimeRange,
-			DataPoints:    len(playerData.Matches),
-			Compressed:    s.compressionEnabled,
-			Encrypted:     s.encryptionEnabled,
+			PlayerPUUID: request.PlayerPUUID,
+			TimeRange:   request.TimeRange,
+			DataPoints:  len(playerData.Matches),
+			Compressed:  s.compressionEnabled,
+			Encrypted:   s.encryptionEnabled,
 		},
 	}
 
@@ -420,7 +420,7 @@ func (s *ExportService) GetExportStatus(ctx context.Context, exportID string) (*
 			if s.isCacheExpired(cached) {
 				status = "expired"
 			}
-			
+
 			return &ExportStatus{
 				ExportID:    exportID,
 				Status:      status,
@@ -440,13 +440,13 @@ func (s *ExportService) GetExportStatus(ctx context.Context, exportID string) (*
 	}
 
 	return &ExportStatus{
-		ExportID:    exportID,
-		Status:      exportInfo.Status,
-		Progress:    exportInfo.Progress,
-		FileSize:    exportInfo.FileSize,
-		DownloadURL: exportInfo.DownloadURL,
-		CreatedAt:   exportInfo.CreatedAt,
-		ExpiresAt:   exportInfo.ExpiresAt,
+		ExportID:     exportID,
+		Status:       exportInfo.Status,
+		Progress:     exportInfo.Progress,
+		FileSize:     exportInfo.FileSize,
+		DownloadURL:  exportInfo.DownloadURL,
+		CreatedAt:    exportInfo.CreatedAt,
+		ExpiresAt:    exportInfo.ExpiresAt,
 		ErrorMessage: exportInfo.ErrorMessage,
 	}, nil
 }
@@ -539,11 +539,11 @@ func (s *ExportService) GetSupportedFormats() []ExportFormat {
 func (s *ExportService) collectPlayerData(ctx context.Context, request *PlayerExportRequest) (*PlayerExportData, error) {
 	// Collect summoner analytics
 	summonerAnalysis, err := s.summonerService.GetSummonerAnalysis(ctx, &summoner.SummonerAnalysisRequest{
-		Region:      request.Region,
+		Region:       request.Region,
 		SummonerName: request.SummonerName,
-		PlayerPUUID: request.PlayerPUUID,
-		TimeRange:   request.TimeRange,
-		GameModes:   request.GameModes,
+		PlayerPUUID:  request.PlayerPUUID,
+		TimeRange:    request.TimeRange,
+		GameModes:    request.GameModes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get summoner analysis: %w", err)
@@ -580,11 +580,11 @@ func (s *ExportService) collectPlayerData(ctx context.Context, request *PlayerEx
 			Rank:         summonerAnalysis.CurrentRank.Tier,
 			LP:           summonerAnalysis.CurrentRank.LeaguePoints,
 		},
-		Summary:     summonerAnalysis.PerformanceSummary,
-		Matches:     matches,
-		TimeRange:   request.TimeRange,
-		ExportedAt:  time.Now(),
-		TotalGames:  len(matches),
+		Summary:    summonerAnalysis.PerformanceSummary,
+		Matches:    matches,
+		TimeRange:  request.TimeRange,
+		ExportedAt: time.Now(),
+		TotalGames: len(matches),
 	}, nil
 }
 
@@ -603,36 +603,36 @@ func (s *ExportService) collectMatchData(ctx context.Context, request *MatchExpo
 	}
 
 	return &MatchExportData{
-		MatchID:       request.MatchID,
-		Champion:      matchAnalysis.MatchInfo.Champion,
-		Role:          matchAnalysis.MatchInfo.Role,
-		Result:        matchAnalysis.MatchInfo.Result,
-		Duration:      matchAnalysis.MatchInfo.Duration,
-		Performance:   matchAnalysis.Performance,
-		PhaseAnalysis: matchAnalysis.PhaseAnalysis,
-		KeyMoments:    matchAnalysis.KeyMoments,
-		TeamAnalysis:  matchAnalysis.TeamAnalysis,
-		Insights:      matchAnalysis.Insights,
+		MatchID:               request.MatchID,
+		Champion:              matchAnalysis.MatchInfo.Champion,
+		Role:                  matchAnalysis.MatchInfo.Role,
+		Result:                matchAnalysis.MatchInfo.Result,
+		Duration:              matchAnalysis.MatchInfo.Duration,
+		Performance:           matchAnalysis.Performance,
+		PhaseAnalysis:         matchAnalysis.PhaseAnalysis,
+		KeyMoments:            matchAnalysis.KeyMoments,
+		TeamAnalysis:          matchAnalysis.TeamAnalysis,
+		Insights:              matchAnalysis.Insights,
 		LearningOpportunities: matchAnalysis.LearningOpportunities,
-		OverallRating: matchAnalysis.OverallRating,
+		OverallRating:         matchAnalysis.OverallRating,
 	}, nil
 }
 
 func (s *ExportService) collectTeamData(ctx context.Context, request *TeamExportRequest) (*TeamExportData, error) {
 	// Collect data for each team member
 	players := []*PlayerExportData{}
-	
+
 	for _, playerPUUID := range request.PlayerPUUIDs {
 		playerData, err := s.collectPlayerData(ctx, &PlayerExportRequest{
-			PlayerPUUID:  playerPUUID,
-			TimeRange:    request.TimeRange,
-			GameModes:    request.GameModes,
-			MatchIDs:     request.SharedMatchIDs,
+			PlayerPUUID: playerPUUID,
+			TimeRange:   request.TimeRange,
+			GameModes:   request.GameModes,
+			MatchIDs:    request.SharedMatchIDs,
 		})
 		if err != nil {
 			continue // Skip failed players
 		}
-		
+
 		players = append(players, playerData)
 	}
 
@@ -651,10 +651,10 @@ func (s *ExportService) collectTeamData(ctx context.Context, request *TeamExport
 func (s *ExportService) collectChampionData(ctx context.Context, request *ChampionExportRequest) (*ChampionExportData, error) {
 	// Get champion performance history
 	championAnalysis, err := s.analyticsEngine.AnalyzeChampionPerformance(ctx, &analytics.ChampionAnalysisRequest{
-		PlayerPUUID:   request.PlayerPUUID,
-		ChampionName:  request.ChampionName,
-		TimeRange:     request.TimeRange,
-		GameModes:     request.GameModes,
+		PlayerPUUID:  request.PlayerPUUID,
+		ChampionName: request.ChampionName,
+		TimeRange:    request.TimeRange,
+		GameModes:    request.GameModes,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to analyze champion: %w", err)
@@ -676,14 +676,14 @@ func (s *ExportService) collectChampionData(ctx context.Context, request *Champi
 func (s *ExportService) buildCustomReport(ctx context.Context, request *CustomReportRequest) (*CustomReportData, error) {
 	// Execute custom query based on report specifications
 	data := &CustomReportData{
-		ReportName:  request.ReportName,
-		Description: request.Description,
-		Parameters:  request.Parameters,
-		Columns:     request.Columns,
-		DataRows:    []map[string]interface{}{},
-		Filters:     request.Filters,
+		ReportName:   request.ReportName,
+		Description:  request.Description,
+		Parameters:   request.Parameters,
+		Columns:      request.Columns,
+		DataRows:     []map[string]interface{}{},
+		Filters:      request.Filters,
 		Aggregations: request.Aggregations,
-		GeneratedAt: time.Now(),
+		GeneratedAt:  time.Now(),
 	}
 
 	// This would typically execute against a data warehouse or analytics database

@@ -92,14 +92,14 @@ func DefaultAnalyticsConfig() *AnalyticsConfig {
 		},
 
 		MetricWeights: &MetricWeights{
-			KDA:              0.25,  // KDA is important but not everything
-			CSPerMinute:      0.20,  // Farming efficiency
-			VisionScore:      0.15,  // Team utility
-			DamageShare:      0.20,  // Combat contribution
-			GoldEfficiency:   0.10,  // Economic play
-			WinRate:          0.35,  // Most important - winning games
-			ObjectiveControl: 0.10,  // Strategic play
-			Positioning:      0.15,  // Mechanical skill
+			KDA:              0.25, // KDA is important but not everything
+			CSPerMinute:      0.20, // Farming efficiency
+			VisionScore:      0.15, // Team utility
+			DamageShare:      0.20, // Combat contribution
+			GoldEfficiency:   0.10, // Economic play
+			WinRate:          0.35, // Most important - winning games
+			ObjectiveControl: 0.10, // Strategic play
+			Positioning:      0.15, // Mechanical skill
 		},
 
 		MinMatchesRequired:  10,
@@ -127,98 +127,94 @@ func DefaultAnalyticsConfig() *AnalyticsConfig {
 			"Teemo":      "TOP",
 			"Tryndamere": "TOP",
 			"Urgot":      "TOP",
-			"Vayne":      "TOP",
 			"Wukong":     "TOP",
 			"Yorick":     "TOP",
 
 			// Jungle Champions
-			"Amumu":      "JUNGLE",
-			"Diana":      "JUNGLE",
-			"Ekko":       "JUNGLE",
-			"Elise":      "JUNGLE",
-			"Evelynn":    "JUNGLE",
+			"Amumu":        "JUNGLE",
+			"Diana":        "JUNGLE",
+			"Ekko":         "JUNGLE",
+			"Elise":        "JUNGLE",
+			"Evelynn":      "JUNGLE",
 			"Fiddlesticks": "JUNGLE",
-			"Graves":     "JUNGLE",
-			"Hecarim":    "JUNGLE",
-			"Ivern":      "JUNGLE",
-			"Jarvan IV":  "JUNGLE",
-			"Jax":        "JUNGLE",
-			"Kayn":       "JUNGLE",
-			"Kha'Zix":    "JUNGLE",
-			"Kindred":    "JUNGLE",
-			"Lee Sin":    "JUNGLE",
-			"Lillia":     "JUNGLE",
-			"Master Yi":  "JUNGLE",
-			"Nidalee":    "JUNGLE",
-			"Nocturne":   "JUNGLE",
-			"Nunu":       "JUNGLE",
-			"Olaf":       "JUNGLE",
-			"Rammus":     "JUNGLE",
-			"Rek'Sai":    "JUNGLE",
-			"Rengar":     "JUNGLE",
-			"Sejuani":    "JUNGLE",
-			"Shaco":      "JUNGLE",
-			"Shyvana":    "JUNGLE",
-			"Skarner":    "JUNGLE",
-			"Taliyah":    "JUNGLE",
-			"Trundle":    "JUNGLE",
-			"Udyr":       "JUNGLE",
-			"Vi":         "JUNGLE",
-			"Volibear":   "JUNGLE",
-			"Warwick":    "JUNGLE",
-			"Xin Zhao":   "JUNGLE",
-			"Zac":        "JUNGLE",
+			"Graves":       "JUNGLE",
+			"Hecarim":      "JUNGLE",
+			"Ivern":        "JUNGLE",
+			"Jarvan IV":    "JUNGLE",
+			"Kayn":         "JUNGLE",
+			"Kha'Zix":      "JUNGLE",
+			"Kindred":      "JUNGLE",
+			"Lee Sin":      "JUNGLE",
+			"Lillia":       "JUNGLE",
+			"Master Yi":    "JUNGLE",
+			"Nidalee":      "JUNGLE",
+			"Nocturne":     "JUNGLE",
+			"Nunu":         "JUNGLE",
+			"Olaf":         "JUNGLE",
+			"Rammus":       "JUNGLE",
+			"Rek'Sai":      "JUNGLE",
+			"Rengar":       "JUNGLE",
+			"Sejuani":      "JUNGLE",
+			"Shaco":        "JUNGLE",
+			"Shyvana":      "JUNGLE",
+			"Skarner":      "JUNGLE",
+			"Taliyah":      "JUNGLE",
+			"Trundle":      "JUNGLE",
+			"Udyr":         "JUNGLE",
+			"Vi":           "JUNGLE",
+			"Volibear":     "JUNGLE",
+			"Warwick":      "JUNGLE",
+			"Xin Zhao":     "JUNGLE",
+			"Zac":          "JUNGLE",
 
 			// Mid Lane Champions
-			"Ahri":       "MIDDLE",
-			"Akali":      "MIDDLE",
-			"Anivia":     "MIDDLE",
-			"Annie":      "MIDDLE",
-			"Azir":       "MIDDLE",
-			"Cassiopeia": "MIDDLE",
-			"Diana":      "MIDDLE",
-			"Fizz":       "MIDDLE",
-			"Galio":      "MIDDLE",
-			"Irelia":     "MIDDLE",
-			"Kassadin":   "MIDDLE",
-			"Katarina":   "MIDDLE",
-			"LeBlanc":    "MIDDLE",
-			"Lissandra":  "MIDDLE",
-			"Lux":        "MIDDLE",
-			"Malzahar":   "MIDDLE",
-			"Orianna":    "MIDDLE",
-			"Ryze":       "MIDDLE",
-			"Syndra":     "MIDDLE",
-			"Talon":      "MIDDLE",
+			"Ahri":         "MIDDLE",
+			"Akali":        "MIDDLE",
+			"Anivia":       "MIDDLE",
+			"Annie":        "MIDDLE",
+			"Azir":         "MIDDLE",
+			"Cassiopeia":   "MIDDLE",
+			"Fizz":         "MIDDLE",
+			"Galio":        "MIDDLE",
+			"Kassadin":     "MIDDLE",
+			"Katarina":     "MIDDLE",
+			"LeBlanc":      "MIDDLE",
+			"Lissandra":    "MIDDLE",
+			"Lux":          "MIDDLE",
+			"Malzahar":     "MIDDLE",
+			"Orianna":      "MIDDLE",
+			"Ryze":         "MIDDLE",
+			"Syndra":       "MIDDLE",
+			"Talon":        "MIDDLE",
 			"Twisted Fate": "MIDDLE",
-			"Veigar":     "MIDDLE",
-			"Viktor":     "MIDDLE",
-			"Yasuo":      "MIDDLE",
-			"Yone":       "MIDDLE",
-			"Zed":        "MIDDLE",
-			"Ziggs":      "MIDDLE",
-			"Zoe":        "MIDDLE",
+			"Veigar":       "MIDDLE",
+			"Viktor":       "MIDDLE",
+			"Yasuo":        "MIDDLE",
+			"Yone":         "MIDDLE",
+			"Zed":          "MIDDLE",
+			"Ziggs":        "MIDDLE",
+			"Zoe":          "MIDDLE",
 
 			// ADC Champions
-			"Aphelios":   "BOTTOM",
-			"Ashe":       "BOTTOM",
-			"Caitlyn":    "BOTTOM",
-			"Draven":     "BOTTOM",
-			"Ezreal":     "BOTTOM",
-			"Jhin":       "BOTTOM",
-			"Jinx":       "BOTTOM",
-			"Kai'Sa":     "BOTTOM",
-			"Kalista":    "BOTTOM",
-			"Kog'Maw":    "BOTTOM",
-			"Lucian":     "BOTTOM",
+			"Aphelios":     "BOTTOM",
+			"Ashe":         "BOTTOM",
+			"Caitlyn":      "BOTTOM",
+			"Draven":       "BOTTOM",
+			"Ezreal":       "BOTTOM",
+			"Jhin":         "BOTTOM",
+			"Jinx":         "BOTTOM",
+			"Kai'Sa":       "BOTTOM",
+			"Kalista":      "BOTTOM",
+			"Kog'Maw":      "BOTTOM",
+			"Lucian":       "BOTTOM",
 			"Miss Fortune": "BOTTOM",
-			"Samira":     "BOTTOM",
-			"Sivir":      "BOTTOM",
-			"Tristana":   "BOTTOM",
-			"Twitch":     "BOTTOM",
-			"Varus":      "BOTTOM",
-			"Vayne":      "BOTTOM",
-			"Xayah":      "BOTTOM",
+			"Samira":       "BOTTOM",
+			"Sivir":        "BOTTOM",
+			"Tristana":     "BOTTOM",
+			"Twitch":       "BOTTOM",
+			"Varus":        "BOTTOM",
+			"Vayne":        "BOTTOM",
+			"Xayah":        "BOTTOM",
 
 			// Support Champions
 			"Alistar":    "SUPPORT",
@@ -230,7 +226,6 @@ func DefaultAnalyticsConfig() *AnalyticsConfig {
 			"Karma":      "SUPPORT",
 			"Leona":      "SUPPORT",
 			"Lulu":       "SUPPORT",
-			"Lux":        "SUPPORT",
 			"Morgana":    "SUPPORT",
 			"Nami":       "SUPPORT",
 			"Nautilus":   "SUPPORT",
@@ -302,42 +297,42 @@ func DefaultAnalyticsConfig() *AnalyticsConfig {
 func GetChampionDifficulty() map[string]int {
 	return map[string]int{
 		// Easy Champions (1-2)
-		"Garen":        1,
-		"Malphite":     1,
-		"Nasus":        1,
-		"Warwick":      1,
-		"Annie":        1,
-		"Ashe":         1,
-		"Jinx":         1,
-		"Sona":         1,
-		"Soraka":       1,
+		"Garen":    1,
+		"Malphite": 1,
+		"Nasus":    1,
+		"Warwick":  1,
+		"Annie":    1,
+		"Ashe":     1,
+		"Jinx":     1,
+		"Sona":     1,
+		"Soraka":   1,
 
 		// Moderate Champions (3)
-		"Darius":       2,
-		"Jax":          2,
-		"Diana":        2,
-		"Lux":          2,
-		"Caitlyn":      2,
-		"Leona":        2,
-		"Thresh":       3,
-		"Orianna":      3,
-		"Graves":       3,
+		"Darius":  2,
+		"Jax":     2,
+		"Diana":   2,
+		"Lux":     2,
+		"Caitlyn": 2,
+		"Leona":   2,
+		"Thresh":  3,
+		"Orianna": 3,
+		"Graves":  3,
 
 		// Hard Champions (4)
-		"Riven":        4,
-		"Lee Sin":      4,
-		"Yasuo":        4,
-		"Zed":          4,
-		"Vayne":        4,
-		"Draven":       4,
-		"Bard":         4,
+		"Riven":   4,
+		"Lee Sin": 4,
+		"Yasuo":   4,
+		"Zed":     4,
+		"Vayne":   4,
+		"Draven":  4,
+		"Bard":    4,
 
 		// Very Hard Champions (5)
-		"Azir":         5,
-		"Nidalee":      5,
-		"Ryze":         5,
-		"Kalista":      5,
-		"Aphelios":     5,
+		"Azir":     5,
+		"Nidalee":  5,
+		"Ryze":     5,
+		"Kalista":  5,
+		"Aphelios": 5,
 	}
 }
 
@@ -345,40 +340,40 @@ func GetChampionDifficulty() map[string]int {
 func GetChampionPowerSpikes() map[string]string {
 	return map[string]string{
 		// Early game champions
-		"Draven":       "early",
-		"Lucian":       "early",
-		"Pantheon":     "early",
-		"Lee Sin":      "early",
-		"Renekton":     "early",
-		"Caitlyn":      "early",
+		"Draven":   "early",
+		"Lucian":   "early",
+		"Pantheon": "early",
+		"Lee Sin":  "early",
+		"Renekton": "early",
+		"Caitlyn":  "early",
 
 		// Mid game champions
-		"Irelia":       "mid",
-		"Diana":        "mid",
-		"Orianna":      "mid",
-		"Graves":       "mid",
-		"Jhin":         "mid",
-		"Thresh":       "mid",
+		"Irelia":  "mid",
+		"Diana":   "mid",
+		"Orianna": "mid",
+		"Graves":  "mid",
+		"Jhin":    "mid",
+		"Thresh":  "mid",
 
 		// Late game champions
-		"Nasus":        "late",
-		"Vayne":        "late",
-		"Jinx":         "late",
-		"Azir":         "late",
-		"Kassadin":     "late",
-		"Kog'Maw":      "late",
-		"Twitch":       "late",
+		"Nasus":    "late",
+		"Vayne":    "late",
+		"Jinx":     "late",
+		"Azir":     "late",
+		"Kassadin": "late",
+		"Kog'Maw":  "late",
+		"Twitch":   "late",
 	}
 }
 
 // GetQueueWeights returns importance weights for different queue types
 func GetQueueWeights() map[int]float64 {
 	return map[int]float64{
-		420: 1.0,  // Ranked Solo/Duo - highest weight
-		440: 0.8,  // Ranked Flex - high weight
-		430: 0.4,  // Normal Blind - medium weight
-		400: 0.5,  // Normal Draft - medium weight
-		450: 0.3,  // ARAM - lower weight for analysis
+		420: 1.0, // Ranked Solo/Duo - highest weight
+		440: 0.8, // Ranked Flex - high weight
+		430: 0.4, // Normal Blind - medium weight
+		400: 0.5, // Normal Draft - medium weight
+		450: 0.3, // ARAM - lower weight for analysis
 	}
 }
 
@@ -410,9 +405,9 @@ func GetAnalyticsLimits() map[string]int {
 // GetTrendThresholds returns thresholds for trend analysis
 func GetTrendThresholds() map[string]float64 {
 	return map[string]float64{
-		"significant_change":   0.10,  // 10% change
-		"major_change":        0.20,  // 20% change
-		"trend_confidence":    0.70,  // 70% confidence minimum
+		"significant_change":    0.10, // 10% change
+		"major_change":          0.20, // 20% change
+		"trend_confidence":      0.70, // 70% confidence minimum
 		"consistency_threshold": 0.80, // 80% consistency
 	}
 }
@@ -457,13 +452,13 @@ func GetInsightTemplates() map[string][]string {
 
 // AnalysisProfile defines different levels of analysis depth
 type AnalysisProfile struct {
-	Name                string  `json:"name"`
-	MatchesAnalyzed     int     `json:"matches_analyzed"`
-	IncludeAdvanced     bool    `json:"include_advanced"`
-	IncludePredictions  bool    `json:"include_predictions"`
-	IncludeComparisons  bool    `json:"include_comparisons"`
-	ProcessingWeight    float64 `json:"processing_weight"`
-	CacheDuration       time.Duration `json:"cache_duration"`
+	Name               string        `json:"name"`
+	MatchesAnalyzed    int           `json:"matches_analyzed"`
+	IncludeAdvanced    bool          `json:"include_advanced"`
+	IncludePredictions bool          `json:"include_predictions"`
+	IncludeComparisons bool          `json:"include_comparisons"`
+	ProcessingWeight   float64       `json:"processing_weight"`
+	CacheDuration      time.Duration `json:"cache_duration"`
 }
 
 // GetAnalysisProfiles returns different analysis depth profiles

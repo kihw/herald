@@ -10,8 +10,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/herald-lol/backend/internal/config"
-	"github.com/herald-lol/backend/internal/models"
+	"github.com/herald-lol/herald/backend/internal/config"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 func setupTestDB(t *testing.T) *gorm.DB {

@@ -1,0 +1,88 @@
+# Active service that routes traffic to the current environment
+apiVersion: v1
+kind: Service
+metadata:
+  name: herald-gaming-analytics
+  namespace: herald-production
+  labels:
+    app: herald-gaming-analytics
+    service-type: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  type: LoadBalancer
+  selector:
+    app: herald-gaming-analytics
+    # This selector will be switched between blue/green during deployment
+    version: blue  # Initially pointing to blue
+  ports:
+  - name: http-api
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc-server
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  sessionAffinity: None
+---
+# Internal service for blue environment
+apiVersion: v1
+kind: Service
+metadata:
+  name: herald-gaming-analytics-blue
+  namespace: herald-blue
+  labels:
+    app: herald-gaming-analytics
+    version: blue
+spec:
+  type: ClusterIP
+  selector:
+    app: herald-gaming-analytics
+    version: blue
+  ports:
+  - name: http-api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc-server
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+---
+# Internal service for green environment
+apiVersion: v1
+kind: Service
+metadata:
+  name: herald-gaming-analytics-green
+  namespace: herald-green
+  labels:
+    app: herald-gaming-analytics
+    version: green
+spec:
+  type: ClusterIP
+  selector:
+    app: herald-gaming-analytics
+    version: green
+  ports:
+  - name: http-api
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc-server
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP

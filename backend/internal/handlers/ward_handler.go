@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // WardHandler handles ward placement and map control analytics requests
@@ -31,8 +31,8 @@ type WardAnalysisRequest struct {
 // MapControlRequest represents request for map control analysis
 type MapControlRequest struct {
 	TimeRange string `form:"time_range" json:"time_range" binding:"required"`
-	Zone      string `form:"zone" json:"zone"`      // Specific zone filter
-	Metric    string `form:"metric" json:"metric"`  // "control", "coverage", "efficiency"
+	Zone      string `form:"zone" json:"zone"`     // Specific zone filter
+	Metric    string `form:"metric" json:"metric"` // "control", "coverage", "efficiency"
 }
 
 // GetWardAnalysis godoc
@@ -92,10 +92,10 @@ func (wh *WardHandler) GetWardAnalysis(c *gin.Context) {
 	// Validate game mode if provided
 	if req.GameMode != "" {
 		validGameModes := map[string]bool{
-			"RANKED_SOLO_5x5":   true,
-			"RANKED_FLEX_SR":    true,
-			"NORMAL_DRAFT":      true,
-			"ARAM":              true,
+			"RANKED_SOLO_5x5": true,
+			"RANKED_FLEX_SR":  true,
+			"NORMAL_DRAFT":    true,
+			"ARAM":            true,
 		}
 		if !validGameModes[req.GameMode] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -209,14 +209,14 @@ func (wh *WardHandler) GetMapControl(c *gin.Context) {
 
 	// Create map control response
 	mapControl := map[string]interface{}{
-		"player_id":           playerID,
-		"time_range":          req.TimeRange,
-		"map_control_score":   analysis.MapControlScore,
+		"player_id":            playerID,
+		"time_range":           req.TimeRange,
+		"map_control_score":    analysis.MapControlScore,
 		"territory_controlled": analysis.TerritoryControlled,
-		"strategic_coverage":  analysis.StrategicCoverage,
-		"zone_control":        analysis.ZoneControl,
-		"river_control":       analysis.RiverControl,
-		"jungle_control":      analysis.JungleControl,
+		"strategic_coverage":   analysis.StrategicCoverage,
+		"zone_control":         analysis.ZoneControl,
+		"river_control":        analysis.RiverControl,
+		"jungle_control":       analysis.JungleControl,
 	}
 
 	// Filter by specific zone if requested
@@ -304,11 +304,11 @@ func (wh *WardHandler) GetWardPlacementPatterns(c *gin.Context) {
 
 	// Create patterns response
 	patterns := map[string]interface{}{
-		"player_id":            playerID,
-		"time_range":           timeRange,
-		"placement_patterns":   analysis.PlacementPatterns,
-		"optimal_placements":   analysis.OptimalPlacements,
-		"placement_timing":     analysis.PlacementTiming,
+		"player_id":              playerID,
+		"time_range":             timeRange,
+		"placement_patterns":     analysis.PlacementPatterns,
+		"optimal_placements":     analysis.OptimalPlacements,
+		"placement_timing":       analysis.PlacementTiming,
 		"placement_optimization": analysis.PlacementOptimization,
 	}
 
@@ -391,11 +391,11 @@ func (wh *WardHandler) GetWardTypeAnalysis(c *gin.Context) {
 
 	// Create ward type response
 	wardTypeAnalysis := map[string]interface{}{
-		"player_id":             playerID,
-		"time_range":            timeRange,
-		"yellow_wards_analysis": analysis.YellowWardsAnalysis,
+		"player_id":              playerID,
+		"time_range":             timeRange,
+		"yellow_wards_analysis":  analysis.YellowWardsAnalysis,
 		"control_wards_analysis": analysis.ControlWardsAnalysis,
-		"blue_ward_analysis":    analysis.BlueWardAnalysis,
+		"blue_ward_analysis":     analysis.BlueWardAnalysis,
 	}
 
 	// Filter by specific ward type if requested
@@ -431,7 +431,7 @@ func (wh *WardHandler) GetWardTypeAnalysis(c *gin.Context) {
 func (wh *WardHandler) GetWardTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	metric := c.Query("metric")
-	
+
 	if playerID == "" || metric == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -442,10 +442,10 @@ func (wh *WardHandler) GetWardTrends(c *gin.Context) {
 
 	// Validate metric
 	validMetrics := map[string]bool{
-		"wards_placed":    true,
-		"wards_killed":    true,
-		"map_control":     true,
-		"efficiency":      true,
+		"wards_placed": true,
+		"wards_killed": true,
+		"map_control":  true,
+		"efficiency":   true,
 	}
 	if !validMetrics[metric] {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -557,12 +557,12 @@ func (wh *WardHandler) GetWardClearing(c *gin.Context) {
 
 	// Create ward clearing response
 	wardClearing := map[string]interface{}{
-		"player_id":               playerID,
-		"time_range":              timeRange,
-		"ward_clearing_patterns":  analysis.WardClearingPatterns,
-		"counter_warding_score":   analysis.CounterWardingScore,
-		"clearing_optimization":   analysis.ClearingOptimization,
-		"vision_denied_score":     analysis.VisionDeniedScore,
+		"player_id":              playerID,
+		"time_range":             timeRange,
+		"ward_clearing_patterns": analysis.WardClearingPatterns,
+		"counter_warding_score":  analysis.CounterWardingScore,
+		"clearing_optimization":  analysis.ClearingOptimization,
+		"vision_denied_score":    analysis.VisionDeniedScore,
 	}
 
 	c.JSON(http.StatusOK, wardClearing)
@@ -632,8 +632,8 @@ func (wh *WardHandler) GetWardOptimization(c *gin.Context) {
 
 	// Create optimization response
 	optimization := map[string]interface{}{
-		"player_id":               playerID,
-		"time_range":              timeRange,
+		"player_id":  playerID,
+		"time_range": timeRange,
 		"current_performance": map[string]interface{}{
 			"map_control_score":     analysis.MapControlScore,
 			"ward_efficiency":       analysis.WardEfficiency,
@@ -717,10 +717,10 @@ func (wh *WardHandler) GetObjectiveControl(c *gin.Context) {
 
 	// Create objective control response
 	objectiveControl := map[string]interface{}{
-		"player_id":        playerID,
-		"time_range":       timeRange,
-		"objective_setup":  analysis.ObjectiveSetup,
-		"safety_provided":  analysis.SafetyProvided,
+		"player_id":          playerID,
+		"time_range":         timeRange,
+		"objective_setup":    analysis.ObjectiveSetup,
+		"safety_provided":    analysis.SafetyProvided,
 		"strategic_coverage": analysis.StrategicCoverage,
 	}
 

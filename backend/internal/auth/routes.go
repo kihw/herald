@@ -15,19 +15,19 @@ func SetupGamingAuthRoutes(router *gin.Engine, authConfig *GamingOAuthConfig, mi
 	auth := router.Group("/auth")
 	auth.Use(middleware.CORSForGaming())
 	auth.Use(middleware.GamingSecurityHeaders())
-	
+
 	// OAuth 2.0/OpenID Connect routes
 	setupOAuthRoutes(auth, authConfig)
-	
+
 	// JWT token management routes
 	setupTokenRoutes(auth, authConfig, middleware)
-	
+
 	// Gaming user profile routes
 	setupProfileRoutes(auth, authConfig, middleware)
-	
+
 	// Gaming session management routes
 	setupSessionRoutes(auth, authConfig, middleware)
-	
+
 	// Gaming authentication utilities
 	setupUtilityRoutes(auth, authConfig, middleware)
 }
@@ -35,50 +35,50 @@ func SetupGamingAuthRoutes(router *gin.Engine, authConfig *GamingOAuthConfig, mi
 // OAuth 2.0/OpenID Connect routes
 func setupOAuthRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig) {
 	oauth := auth.Group("/oauth")
-	
+
 	// Start OAuth flow for gaming providers
 	oauth.GET("/:provider", authConfig.StartGamingOAuth)
-	
+
 	// Handle OAuth callbacks for gaming providers
 	oauth.GET("/:provider/callback", authConfig.HandleGamingOAuthCallback)
-	
+
 	// List supported gaming OAuth providers
 	oauth.GET("/providers", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"supported_providers": []gin.H{
 				{
-					"name":        "google",
-					"display_name": "Google",
-					"icon":        "https://cdn.herald.lol/icons/google.svg",
-					"description": "Sign in with Google",
+					"name":            "google",
+					"display_name":    "Google",
+					"icon":            "https://cdn.herald.lol/icons/google.svg",
+					"description":     "Sign in with Google",
 					"gaming_features": []string{"profile_sync"},
 				},
 				{
-					"name":        "discord",
-					"display_name": "Discord",
-					"icon":        "https://cdn.herald.lol/icons/discord.svg",
-					"description": "Sign in with Discord",
+					"name":            "discord",
+					"display_name":    "Discord",
+					"icon":            "https://cdn.herald.lol/icons/discord.svg",
+					"description":     "Sign in with Discord",
 					"gaming_features": []string{"rich_presence", "social_features"},
 				},
 				{
-					"name":        "twitch",
-					"display_name": "Twitch",
-					"icon":        "https://cdn.herald.lol/icons/twitch.svg",
-					"description": "Sign in with Twitch",
+					"name":            "twitch",
+					"display_name":    "Twitch",
+					"icon":            "https://cdn.herald.lol/icons/twitch.svg",
+					"description":     "Sign in with Twitch",
 					"gaming_features": []string{"streaming_integration", "clips_analysis"},
 				},
 				{
-					"name":        "riot",
-					"display_name": "Riot Games",
-					"icon":        "https://cdn.herald.lol/icons/riot.svg",
-					"description": "Sign in with Riot Games",
+					"name":            "riot",
+					"display_name":    "Riot Games",
+					"icon":            "https://cdn.herald.lol/icons/riot.svg",
+					"description":     "Sign in with Riot Games",
 					"gaming_features": []string{"lol_integration", "tft_integration", "direct_match_import"},
 				},
 				{
-					"name":        "github",
-					"display_name": "GitHub",
-					"icon":        "https://cdn.herald.lol/icons/github.svg",
-					"description": "Sign in with GitHub",
+					"name":            "github",
+					"display_name":    "GitHub",
+					"icon":            "https://cdn.herald.lol/icons/github.svg",
+					"description":     "Sign in with GitHub",
 					"gaming_features": []string{"developer_features"},
 				},
 			},
@@ -90,10 +90,10 @@ func setupOAuthRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig) {
 // JWT token management routes
 func setupTokenRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, middleware *GamingAuthMiddleware) {
 	tokens := auth.Group("/tokens")
-	
+
 	// Refresh gaming access token
 	tokens.POST("/refresh", authConfig.RefreshGamingToken)
-	
+
 	// Validate gaming token
 	tokens.POST("/validate", func(c *gin.Context) {
 		token := c.PostForm("token")
@@ -103,61 +103,61 @@ func setupTokenRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, midd
 				token = token[7:]
 			}
 		}
-		
+
 		if token == "" {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Gaming token required",
+				"error":           "Gaming token required",
 				"gaming_platform": "herald-lol",
 			})
 			return
 		}
-		
+
 		// Parse and validate gaming token
 		claims, err := authConfig.parseJWT(token)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"valid": false,
-				"error": "Invalid gaming token",
+				"valid":           false,
+				"error":           "Invalid gaming token",
 				"gaming_platform": "herald-lol",
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"valid": true,
-			"user_id": claims.UserID,
-			"email": claims.Email,
-			"name": claims.Name,
-			"provider": claims.Provider,
+			"valid":             true,
+			"user_id":           claims.UserID,
+			"email":             claims.Email,
+			"name":              claims.Name,
+			"provider":          claims.Provider,
 			"subscription_tier": claims.SubscriptionTier,
-			"permissions": claims.GamingPermissions,
-			"expires_at": claims.ExpiresAt.Time,
-			"gaming_platform": "herald-lol",
+			"permissions":       claims.GamingPermissions,
+			"expires_at":        claims.ExpiresAt.Time,
+			"gaming_platform":   "herald-lol",
 		})
 	})
-	
+
 	// Revoke gaming token (logout)
 	tokens.POST("/revoke", middleware.RequireGamingAuth(), func(c *gin.Context) {
 		// Get session token if available
 		sessionToken := c.GetHeader("X-Session-Token")
-		
+
 		if sessionToken != "" {
 			// Invalidate session in database
 			userStore := middleware.userStore
 			userStore.InvalidateGamingSession(c.Request.Context(), sessionToken)
 		}
-		
+
 		// Clear gaming cookies
 		c.SetCookie("herald_access_token", "", -1, "/", "", true, true)
 		c.SetCookie("herald_refresh_token", "", -1, "/", "", true, true)
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "Gaming token revoked successfully",
+			"success":         true,
+			"message":         "Gaming token revoked successfully",
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Get gaming token info
 	tokens.GET("/info", middleware.RequireGamingAuth(), func(c *gin.Context) {
 		claims, exists := GetGamingClaims(c)
@@ -167,17 +167,17 @@ func setupTokenRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, midd
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"user_id": claims.UserID,
-			"email": claims.Email,
-			"name": claims.Name,
-			"provider": claims.Provider,
+			"user_id":           claims.UserID,
+			"email":             claims.Email,
+			"name":              claims.Name,
+			"provider":          claims.Provider,
 			"subscription_tier": claims.SubscriptionTier,
-			"permissions": claims.GamingPermissions,
-			"issued_at": claims.IssuedAt.Time,
-			"expires_at": claims.ExpiresAt.Time,
-			"gaming_platform": "herald-lol",
+			"permissions":       claims.GamingPermissions,
+			"issued_at":         claims.IssuedAt.Time,
+			"expires_at":        claims.ExpiresAt.Time,
+			"gaming_platform":   "herald-lol",
 		})
 	})
 }
@@ -186,7 +186,7 @@ func setupTokenRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, midd
 func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, middleware *GamingAuthMiddleware) {
 	profile := auth.Group("/profile")
 	profile.Use(middleware.RequireGamingAuth())
-	
+
 	// Get gaming user profile
 	profile.GET("", func(c *gin.Context) {
 		user, exists := GetGamingUser(c)
@@ -196,13 +196,13 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"user": user,
+			"user":            user,
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Update gaming user profile
 	profile.PUT("", func(c *gin.Context) {
 		user, exists := GetGamingUser(c)
@@ -212,21 +212,21 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		var updateData struct {
 			Name     string `json:"name,omitempty"`
 			Username string `json:"username,omitempty"`
 			Avatar   string `json:"avatar,omitempty"`
 		}
-		
+
 		if err := c.ShouldBindJSON(&updateData); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid gaming profile data",
+				"error":   "Invalid gaming profile data",
 				"details": err.Error(),
 			})
 			return
 		}
-		
+
 		// Update gaming user profile
 		if updateData.Name != "" {
 			user.Name = updateData.Name
@@ -237,7 +237,7 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 		if updateData.Avatar != "" {
 			user.Avatar = updateData.Avatar
 		}
-		
+
 		// Save to database
 		userStore := middleware.userStore
 		if err := userStore.UpdateUser(c.Request.Context(), user); err != nil {
@@ -246,14 +246,14 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"user": user,
+			"success":         true,
+			"user":            user,
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Get gaming profile
 	profile.GET("/gaming", func(c *gin.Context) {
 		user, exists := GetGamingUser(c)
@@ -263,13 +263,13 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"gaming_profile": user.GamingProfile,
+			"gaming_profile":  user.GamingProfile,
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Update gaming profile
 	profile.PUT("/gaming", func(c *gin.Context) {
 		userID, exists := GetGamingUserID(c)
@@ -279,25 +279,25 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		var gamingProfile GamingProfile
 		if err := c.ShouldBindJSON(&gamingProfile); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid gaming profile data",
+				"error":   "Invalid gaming profile data",
 				"details": err.Error(),
 			})
 			return
 		}
-		
+
 		// Validate gaming profile data
 		if err := validateGamingProfile(&gamingProfile); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "Invalid gaming profile",
+				"error":   "Invalid gaming profile",
 				"details": err.Error(),
 			})
 			return
 		}
-		
+
 		// Update gaming profile
 		userStore := middleware.userStore
 		if err := userStore.UpdateGamingProfile(c.Request.Context(), userID, &gamingProfile); err != nil {
@@ -306,26 +306,26 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"gaming_profile": gamingProfile,
+			"success":         true,
+			"gaming_profile":  gamingProfile,
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Link gaming accounts
 	profile.POST("/link/:provider", func(c *gin.Context) {
 		provider := c.Param("provider")
-		
+
 		// This would initiate linking another gaming account
 		// Implementation would be similar to OAuth flow but for account linking
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Gaming account linking initiated",
-			"provider": provider,
+			"message":         "Gaming account linking initiated",
+			"provider":        provider,
 			"gaming_platform": "herald-lol",
-			"status": "not_implemented", // TODO: Implement account linking
+			"status":          "not_implemented", // TODO: Implement account linking
 		})
 	})
 }
@@ -334,20 +334,20 @@ func setupProfileRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 func setupSessionRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, middleware *GamingAuthMiddleware) {
 	sessions := auth.Group("/sessions")
 	sessions.Use(middleware.RequireGamingAuth())
-	
+
 	// Get active gaming sessions
 	sessions.GET("", func(c *gin.Context) {
 		// This would return active gaming sessions for the user
 		c.JSON(http.StatusOK, gin.H{
-			"sessions": []gin.H{}, // TODO: Implement session listing
+			"sessions":        []gin.H{}, // TODO: Implement session listing
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Terminate gaming session
 	sessions.DELETE("/:sessionId", func(c *gin.Context) {
 		sessionId := c.Param("sessionId")
-		
+
 		// This would terminate a specific gaming session
 		userStore := middleware.userStore
 		if err := userStore.InvalidateGamingSession(c.Request.Context(), sessionId); err != nil {
@@ -356,22 +356,22 @@ func setupSessionRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			})
 			return
 		}
-		
+
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "Gaming session terminated",
+			"success":         true,
+			"message":         "Gaming session terminated",
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Terminate all gaming sessions
 	sessions.DELETE("", func(c *gin.Context) {
 		// This would terminate all gaming sessions for the user
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "All gaming sessions terminated",
+			"success":         true,
+			"message":         "All gaming sessions terminated",
 			"gaming_platform": "herald-lol",
-			"status": "not_implemented", // TODO: Implement bulk session termination
+			"status":          "not_implemented", // TODO: Implement bulk session termination
 		})
 	})
 }
@@ -379,49 +379,49 @@ func setupSessionRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 // Gaming authentication utilities
 func setupUtilityRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, middleware *GamingAuthMiddleware) {
 	utils := auth.Group("/utils")
-	
+
 	// Get gaming authentication status
 	utils.GET("/status", middleware.OptionalGamingAuth(), func(c *gin.Context) {
 		authenticated := IsGamingAuthenticated(c)
-		
+
 		response := gin.H{
-			"authenticated": authenticated,
+			"authenticated":   authenticated,
 			"gaming_platform": "herald-lol",
 		}
-		
+
 		if authenticated {
 			user, _ := GetGamingUser(c)
 			tier, _ := GetGamingSubscriptionTier(c)
-			
+
 			response["user_id"] = user.ID
 			response["email"] = user.Email
 			response["name"] = user.Name
 			response["subscription_tier"] = tier
 			response["provider"] = string(user.Provider)
 		}
-		
+
 		c.JSON(http.StatusOK, response)
 	})
-	
+
 	// Gaming platform health check
 	utils.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"status": "healthy",
-			"service": "herald-gaming-auth",
-			"version": "1.0.0",
+			"status":          "healthy",
+			"service":         "herald-gaming-auth",
+			"version":         "1.0.0",
 			"gaming_platform": "herald-lol",
-			"timestamp": c.GetHeader("Date"),
+			"timestamp":       c.GetHeader("Date"),
 		})
 	})
-	
+
 	// Gaming subscription tiers info
 	utils.GET("/tiers", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"tiers": []gin.H{
 				{
-					"name": "free",
+					"name":         "free",
 					"display_name": "Free",
-					"price": "$0/month",
+					"price":        "$0/month",
 					"features": []string{
 						"Basic analytics",
 						"100 API requests/minute",
@@ -430,9 +430,9 @@ func setupUtilityRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 					"gaming_permissions": []string{"analytics:basic", "api:limited"},
 				},
 				{
-					"name": "premium",
+					"name":         "premium",
 					"display_name": "Premium",
-					"price": "$9.99/month",
+					"price":        "$9.99/month",
 					"features": []string{
 						"Advanced analytics",
 						"500 API requests/minute",
@@ -443,9 +443,9 @@ func setupUtilityRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 					"gaming_permissions": []string{"analytics:advanced", "api:standard", "coaching:basic"},
 				},
 				{
-					"name": "pro",
+					"name":         "pro",
 					"display_name": "Pro",
-					"price": "$29.99/month",
+					"price":        "$29.99/month",
 					"features": []string{
 						"Professional analytics",
 						"2000 API requests/minute",
@@ -457,9 +457,9 @@ func setupUtilityRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 					"gaming_permissions": []string{"analytics:advanced", "api:extended", "coaching:premium", "team:basic"},
 				},
 				{
-					"name": "enterprise",
+					"name":         "enterprise",
 					"display_name": "Enterprise",
-					"price": "Custom pricing",
+					"price":        "Custom pricing",
 					"features": []string{
 						"Enterprise analytics",
 						"10000 API requests/minute",
@@ -474,15 +474,15 @@ func setupUtilityRoutes(auth *gin.RouterGroup, authConfig *GamingOAuthConfig, mi
 			"gaming_platform": "herald-lol",
 		})
 	})
-	
+
 	// Gaming permissions info
 	utils.GET("/permissions", middleware.RequireGamingAuth(), func(c *gin.Context) {
 		permissions, _ := c.Get("gaming_permissions")
 		tier, _ := GetGamingSubscriptionTier(c)
-		
+
 		c.JSON(http.StatusOK, gin.H{
 			"current_permissions": permissions,
-			"subscription_tier": tier,
+			"subscription_tier":   tier,
 			"permission_descriptions": gin.H{
 				"analytics:basic":    "Access basic gaming analytics",
 				"analytics:advanced": "Access advanced gaming analytics and insights",
@@ -520,7 +520,7 @@ func validateGamingProfile(profile *GamingProfile) error {
 			return gin.H{"field": "region", "message": "Invalid region"}.(error)
 		}
 	}
-	
+
 	// Validate subscription tier
 	validTiers := []string{"free", "premium", "pro", "enterprise"}
 	if profile.SubscriptionTier != "" {
@@ -535,6 +535,6 @@ func validateGamingProfile(profile *GamingProfile) error {
 			return gin.H{"field": "subscription_tier", "message": "Invalid subscription tier"}.(error)
 		}
 	}
-	
+
 	return nil
 }

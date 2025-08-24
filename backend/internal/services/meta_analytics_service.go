@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // MetaAnalyticsService handles meta analysis and tier list generation
@@ -25,71 +25,71 @@ func NewMetaAnalyticsService(analyticsService *AnalyticsService) *MetaAnalyticsS
 
 // MetaAnalysis represents comprehensive meta analysis results
 type MetaAnalysis struct {
-	ID            string                  `json:"id"`
-	Patch         string                  `json:"patch"`
-	Region        string                  `json:"region"`
-	Rank          string                  `json:"rank"`
-	TimeRange     string                  `json:"time_range"`
-	AnalysisDate  time.Time               `json:"analysis_date"`
-	
+	ID           string    `json:"id"`
+	Patch        string    `json:"patch"`
+	Region       string    `json:"region"`
+	Rank         string    `json:"rank"`
+	TimeRange    string    `json:"time_range"`
+	AnalysisDate time.Time `json:"analysis_date"`
+
 	// Tier Lists
-	TierList      ChampionTierList        `json:"tier_list"`
+	TierList      ChampionTierList            `json:"tier_list"`
 	RoleTierLists map[string]ChampionTierList `json:"role_tier_lists"`
-	
+
 	// Meta Trends
 	MetaTrends    MetaTrendsData          `json:"meta_trends"`
 	EmergingPicks []EmergingChampionData  `json:"emerging_picks"`
 	DeciningPicks []DecliningChampionData `json:"declining_picks"`
-	
+
 	// Statistical Analysis
-	ChampionStats []ChampionMetaStats     `json:"champion_stats"`
-	BanAnalysis   BanAnalysisData         `json:"ban_analysis"`
-	PickAnalysis  PickAnalysisData        `json:"pick_analysis"`
-	
+	ChampionStats []ChampionMetaStats `json:"champion_stats"`
+	BanAnalysis   BanAnalysisData     `json:"ban_analysis"`
+	PickAnalysis  PickAnalysisData    `json:"pick_analysis"`
+
 	// Meta Shifts
-	MetaShifts    []MetaShiftData         `json:"meta_shifts"`
-	PatchImpact   PatchImpactAnalysis     `json:"patch_impact"`
-	
+	MetaShifts  []MetaShiftData     `json:"meta_shifts"`
+	PatchImpact PatchImpactAnalysis `json:"patch_impact"`
+
 	// Predictions
-	Predictions   MetaPredictions         `json:"predictions"`
-	
+	Predictions MetaPredictions `json:"predictions"`
+
 	// Recommendations
-	Recommendations []MetaRecommendation  `json:"recommendations"`
-	
+	Recommendations []MetaRecommendation `json:"recommendations"`
+
 	// Metadata
-	GeneratedAt   time.Time               `json:"generated_at"`
-	LastUpdated   time.Time               `json:"last_updated"`
-	DataQuality   float64                 `json:"data_quality"`
+	GeneratedAt time.Time `json:"generated_at"`
+	LastUpdated time.Time `json:"last_updated"`
+	DataQuality float64   `json:"data_quality"`
 }
 
 // ChampionTierList represents tier list for champions
 type ChampionTierList struct {
-	SPlusTier  []ChampionTierEntry `json:"s_plus_tier"`
-	STier      []ChampionTierEntry `json:"s_tier"`
-	APlusTier  []ChampionTierEntry `json:"a_plus_tier"`
-	ATier      []ChampionTierEntry `json:"a_tier"`
-	BPlusTier  []ChampionTierEntry `json:"b_plus_tier"`
-	BTier      []ChampionTierEntry `json:"b_tier"`
-	CPlusTier  []ChampionTierEntry `json:"c_plus_tier"`
-	CTier      []ChampionTierEntry `json:"c_tier"`
-	DTier      []ChampionTierEntry `json:"d_tier"`
-	
-	LastUpdated time.Time           `json:"last_updated"`
-	SampleSize  int                 `json:"sample_size"`
-	Confidence  float64             `json:"confidence"`
+	SPlusTier []ChampionTierEntry `json:"s_plus_tier"`
+	STier     []ChampionTierEntry `json:"s_tier"`
+	APlusTier []ChampionTierEntry `json:"a_plus_tier"`
+	ATier     []ChampionTierEntry `json:"a_tier"`
+	BPlusTier []ChampionTierEntry `json:"b_plus_tier"`
+	BTier     []ChampionTierEntry `json:"b_tier"`
+	CPlusTier []ChampionTierEntry `json:"c_plus_tier"`
+	CTier     []ChampionTierEntry `json:"c_tier"`
+	DTier     []ChampionTierEntry `json:"d_tier"`
+
+	LastUpdated time.Time `json:"last_updated"`
+	SampleSize  int       `json:"sample_size"`
+	Confidence  float64   `json:"confidence"`
 }
 
 // ChampionTierEntry represents a champion in a tier
 type ChampionTierEntry struct {
-	Champion     string    `json:"champion"`
-	TierScore    float64   `json:"tier_score"`
-	WinRate      float64   `json:"win_rate"`
-	PickRate     float64   `json:"pick_rate"`
-	BanRate      float64   `json:"ban_rate"`
-	CarryPotential float64 `json:"carry_potential"`
-	Versatility  float64   `json:"versatility"`
-	TrendDirection string  `json:"trend_direction"` // "rising", "stable", "falling"
-	TierMovement int       `json:"tier_movement"`   // +2, +1, 0, -1, -2 from previous patch
+	Champion       string   `json:"champion"`
+	TierScore      float64  `json:"tier_score"`
+	WinRate        float64  `json:"win_rate"`
+	PickRate       float64  `json:"pick_rate"`
+	BanRate        float64  `json:"ban_rate"`
+	CarryPotential float64  `json:"carry_potential"`
+	Versatility    float64  `json:"versatility"`
+	TrendDirection string   `json:"trend_direction"` // "rising", "stable", "falling"
+	TierMovement   int      `json:"tier_movement"`   // +2, +1, 0, -1, -2 from previous patch
 	RecommendedFor []string `json:"recommended_for"` // "climbing", "one_trick", "flex_pick"
 }
 
@@ -104,141 +104,141 @@ type MetaTrendsData struct {
 
 // StrategyTrendData represents trending strategies
 type StrategyTrendData struct {
-	Strategy     string    `json:"strategy"`
-	Popularity   float64   `json:"popularity"`
-	WinRate      float64   `json:"win_rate"`
-	Trend        string    `json:"trend"`
-	Champions    []string  `json:"champions"`
-	Description  string    `json:"description"`
+	Strategy    string   `json:"strategy"`
+	Popularity  float64  `json:"popularity"`
+	WinRate     float64  `json:"win_rate"`
+	Trend       string   `json:"trend"`
+	Champions   []string `json:"champions"`
+	Description string   `json:"description"`
 }
 
 // ChampionTypeData represents champion type trends
 type ChampionTypeData struct {
-	Tanks        ChampionTypeMetrics `json:"tanks"`
-	Fighters     ChampionTypeMetrics `json:"fighters"`
-	Assassins    ChampionTypeMetrics `json:"assassins"`
-	Mages        ChampionTypeMetrics `json:"mages"`
-	Marksmen     ChampionTypeMetrics `json:"marksmen"`
-	Support      ChampionTypeMetrics `json:"support"`
+	Tanks     ChampionTypeMetrics `json:"tanks"`
+	Fighters  ChampionTypeMetrics `json:"fighters"`
+	Assassins ChampionTypeMetrics `json:"assassins"`
+	Mages     ChampionTypeMetrics `json:"mages"`
+	Marksmen  ChampionTypeMetrics `json:"marksmen"`
+	Support   ChampionTypeMetrics `json:"support"`
 }
 
 // ChampionTypeMetrics represents metrics for a champion type
 type ChampionTypeMetrics struct {
-	PickRate     float64 `json:"pick_rate"`
-	WinRate      float64 `json:"win_rate"`
-	BanRate      float64 `json:"ban_rate"`
-	TrendDirection string `json:"trend_direction"`
+	PickRate       float64 `json:"pick_rate"`
+	WinRate        float64 `json:"win_rate"`
+	BanRate        float64 `json:"ban_rate"`
+	TrendDirection string  `json:"trend_direction"`
 }
 
 // GameLengthTrends represents game length meta trends
 type GameLengthTrends struct {
-	AverageGameLength float64                      `json:"average_game_length"`
-	LengthDistribution map[string]float64          `json:"length_distribution"`
-	ChampionsByLength map[string][]string          `json:"champions_by_length"`
-	StrategiesByLength map[string][]string         `json:"strategies_by_length"`
+	AverageGameLength  float64             `json:"average_game_length"`
+	LengthDistribution map[string]float64  `json:"length_distribution"`
+	ChampionsByLength  map[string][]string `json:"champions_by_length"`
+	StrategiesByLength map[string][]string `json:"strategies_by_length"`
 }
 
 // ObjectiveTrends represents objective priority trends
 type ObjectiveTrends struct {
-	DragonPriority  ObjectivePriorityData `json:"dragon_priority"`
-	BaronPriority   ObjectivePriorityData `json:"baron_priority"`
-	HeraldPriority  ObjectivePriorityData `json:"herald_priority"`
-	TowerPriority   ObjectivePriorityData `json:"tower_priority"`
+	DragonPriority ObjectivePriorityData `json:"dragon_priority"`
+	BaronPriority  ObjectivePriorityData `json:"baron_priority"`
+	HeraldPriority ObjectivePriorityData `json:"herald_priority"`
+	TowerPriority  ObjectivePriorityData `json:"tower_priority"`
 }
 
 // ObjectivePriorityData represents priority data for objectives
 type ObjectivePriorityData struct {
-	Priority       float64 `json:"priority"`
-	WinRateImpact  float64 `json:"win_rate_impact"`
-	ControlRate    float64 `json:"control_rate"`
-	ContestedRate  float64 `json:"contested_rate"`
+	Priority      float64 `json:"priority"`
+	WinRateImpact float64 `json:"win_rate_impact"`
+	ControlRate   float64 `json:"control_rate"`
+	ContestedRate float64 `json:"contested_rate"`
 }
 
 // TeamCompTrend represents team composition trends
 type TeamCompTrend struct {
-	CompositionType string    `json:"composition_type"`
-	Popularity      float64   `json:"popularity"`
-	WinRate         float64   `json:"win_rate"`
-	Champions       []string  `json:"champions"`
-	Synergies       []string  `json:"synergies"`
-	Counters        []string  `json:"counters"`
+	CompositionType string   `json:"composition_type"`
+	Popularity      float64  `json:"popularity"`
+	WinRate         float64  `json:"win_rate"`
+	Champions       []string `json:"champions"`
+	Synergies       []string `json:"synergies"`
+	Counters        []string `json:"counters"`
 }
 
 // EmergingChampionData represents emerging champion picks
 type EmergingChampionData struct {
-	Champion       string    `json:"champion"`
-	Role           string    `json:"role"`
-	CurrentTier    string    `json:"current_tier"`
-	PreviousTier   string    `json:"previous_tier"`
-	WinRateChange  float64   `json:"win_rate_change"`
-	PickRateChange float64   `json:"pick_rate_change"`
-	ReasonForRise  []string  `json:"reason_for_rise"`
-	ProjectedTier  string    `json:"projected_tier"`
-	Confidence     float64   `json:"confidence"`
+	Champion       string   `json:"champion"`
+	Role           string   `json:"role"`
+	CurrentTier    string   `json:"current_tier"`
+	PreviousTier   string   `json:"previous_tier"`
+	WinRateChange  float64  `json:"win_rate_change"`
+	PickRateChange float64  `json:"pick_rate_change"`
+	ReasonForRise  []string `json:"reason_for_rise"`
+	ProjectedTier  string   `json:"projected_tier"`
+	Confidence     float64  `json:"confidence"`
 }
 
 // DecliningChampionData represents declining champion picks
 type DecliningChampionData struct {
-	Champion        string    `json:"champion"`
-	Role            string    `json:"role"`
-	CurrentTier     string    `json:"current_tier"`
-	PreviousTier    string    `json:"previous_tier"`
-	WinRateChange   float64   `json:"win_rate_change"`
-	PickRateChange  float64   `json:"pick_rate_change"`
+	Champion         string   `json:"champion"`
+	Role             string   `json:"role"`
+	CurrentTier      string   `json:"current_tier"`
+	PreviousTier     string   `json:"previous_tier"`
+	WinRateChange    float64  `json:"win_rate_change"`
+	PickRateChange   float64  `json:"pick_rate_change"`
 	ReasonForDecline []string `json:"reason_for_decline"`
-	ProjectedTier   string    `json:"projected_tier"`
-	Confidence      float64   `json:"confidence"`
+	ProjectedTier    string   `json:"projected_tier"`
+	Confidence       float64  `json:"confidence"`
 }
 
 // ChampionMetaStats represents comprehensive champion meta statistics
 type ChampionMetaStats struct {
-	Champion       string                    `json:"champion"`
-	Role           string                    `json:"role"`
-	Tier           string                    `json:"tier"`
-	TierScore      float64                   `json:"tier_score"`
-	
+	Champion  string  `json:"champion"`
+	Role      string  `json:"role"`
+	Tier      string  `json:"tier"`
+	TierScore float64 `json:"tier_score"`
+
 	// Core Statistics
-	WinRate        float64                   `json:"win_rate"`
-	PickRate       float64                   `json:"pick_rate"`
-	BanRate        float64                   `json:"ban_rate"`
-	PresenceRate   float64                   `json:"presence_rate"`
-	
+	WinRate      float64 `json:"win_rate"`
+	PickRate     float64 `json:"pick_rate"`
+	BanRate      float64 `json:"ban_rate"`
+	PresenceRate float64 `json:"presence_rate"`
+
 	// Performance Metrics
-	AverageKDA     float64                   `json:"average_kda"`
-	DamageShare    float64                   `json:"damage_share"`
-	GoldShare      float64                   `json:"gold_share"`
-	VisionScore    float64                   `json:"vision_score"`
-	
+	AverageKDA  float64 `json:"average_kda"`
+	DamageShare float64 `json:"damage_share"`
+	GoldShare   float64 `json:"gold_share"`
+	VisionScore float64 `json:"vision_score"`
+
 	// Meta Analysis
-	Versatility    float64                   `json:"versatility"`
-	CarryPotential float64                   `json:"carry_potential"`
-	TeamReliance   float64                   `json:"team_reliance"`
-	ScalingCurve   ScalingCurveData          `json:"scaling_curve"`
-	
+	Versatility    float64          `json:"versatility"`
+	CarryPotential float64          `json:"carry_potential"`
+	TeamReliance   float64          `json:"team_reliance"`
+	ScalingCurve   ScalingCurveData `json:"scaling_curve"`
+
 	// Trend Analysis
-	TrendData      []ChampionMetaTrendPoint  `json:"trend_data"`
-	TrendDirection string                    `json:"trend_direction"`
-	
+	TrendData      []ChampionMetaTrendPoint `json:"trend_data"`
+	TrendDirection string                   `json:"trend_direction"`
+
 	// Comparative Analysis
-	RankVariance   map[string]ChampionRankStats `json:"rank_variance"`
+	RankVariance   map[string]ChampionRankStats   `json:"rank_variance"`
 	RegionVariance map[string]ChampionRegionStats `json:"region_variance"`
-	
+
 	// Build and Play Style
-	PopularBuilds  []MetaBuildData           `json:"popular_builds"`
-	PlayStyles     []PlayStyleData           `json:"play_styles"`
-	
+	PopularBuilds []MetaBuildData `json:"popular_builds"`
+	PlayStyles    []PlayStyleData `json:"play_styles"`
+
 	// Matchup Context
-	StrongAgainst  []string                  `json:"strong_against"`
-	WeakAgainst    []string                  `json:"weak_against"`
-	SynergizesWith []string                  `json:"synergizes_with"`
+	StrongAgainst  []string `json:"strong_against"`
+	WeakAgainst    []string `json:"weak_against"`
+	SynergizesWith []string `json:"synergizes_with"`
 }
 
 // ScalingCurveData represents champion scaling throughout the game
 type ScalingCurveData struct {
-	EarlyGame  float64 `json:"early_game"`
-	MidGame    float64 `json:"mid_game"`
-	LateGame   float64 `json:"late_game"`
-	PowerSpikes []int  `json:"power_spikes"`
+	EarlyGame   float64 `json:"early_game"`
+	MidGame     float64 `json:"mid_game"`
+	LateGame    float64 `json:"late_game"`
+	PowerSpikes []int   `json:"power_spikes"`
 }
 
 // ChampionMetaTrendPoint represents a trend data point
@@ -252,8 +252,8 @@ type ChampionMetaTrendPoint struct {
 
 // ChampionRankStats represents champion performance by rank
 type ChampionRankStats struct {
-	WinRate    float64 `json:"win_rate"`
-	PickRate   float64 `json:"pick_rate"`
+	WinRate     float64 `json:"win_rate"`
+	PickRate    float64 `json:"pick_rate"`
 	Performance float64 `json:"performance"`
 }
 
@@ -266,64 +266,57 @@ type ChampionRegionStats struct {
 
 // MetaBuildData represents meta build information
 type MetaBuildData struct {
-	BuildName   string    `json:"build_name"`
-	Items       []string  `json:"items"`
-	Runes       []string  `json:"runes"`
-	WinRate     float64   `json:"win_rate"`
-	PickRate    float64   `json:"pick_rate"`
-	Situations  []string  `json:"situations"`
+	BuildName  string   `json:"build_name"`
+	Items      []string `json:"items"`
+	Runes      []string `json:"runes"`
+	WinRate    float64  `json:"win_rate"`
+	PickRate   float64  `json:"pick_rate"`
+	Situations []string `json:"situations"`
 }
 
 // PlayStyleData represents play style information
-type PlayStyleData struct {
-	StyleName   string    `json:"style_name"`
-	Description string    `json:"description"`
-	Popularity  float64   `json:"popularity"`
-	Effectiveness float64 `json:"effectiveness"`
-	KeyFeatures []string  `json:"key_features"`
-}
 
 // BanAnalysisData represents ban phase analysis
 type BanAnalysisData struct {
-	TopBannedChampions []BanStatsData      `json:"top_banned_champions"`
-	BanStrategies      []BanStrategyData   `json:"ban_strategies"`
-	RoleTargeting      map[string]float64  `json:"role_targeting"`
-	PowerBans          []PowerBanData      `json:"power_bans"`
+	TopBannedChampions []BanStatsData     `json:"top_banned_champions"`
+	BanStrategies      []BanStrategyData  `json:"ban_strategies"`
+	RoleTargeting      map[string]float64 `json:"role_targeting"`
+	PowerBans          []PowerBanData     `json:"power_bans"`
 }
 
 // BanStatsData represents ban statistics for a champion
 type BanStatsData struct {
-	Champion    string  `json:"champion"`
-	BanRate     float64 `json:"ban_rate"`
-	ThreatLevel float64 `json:"threat_level"`
-	BanPriority float64 `json:"ban_priority"`
+	Champion    string   `json:"champion"`
+	BanRate     float64  `json:"ban_rate"`
+	ThreatLevel float64  `json:"threat_level"`
+	BanPriority float64  `json:"ban_priority"`
 	Reasons     []string `json:"reasons"`
 }
 
 // BanStrategyData represents ban strategy analysis
 type BanStrategyData struct {
-	Strategy    string   `json:"strategy"`
-	Description string   `json:"description"`
-	Usage       float64  `json:"usage"`
-	Effectiveness float64 `json:"effectiveness"`
+	Strategy        string   `json:"strategy"`
+	Description     string   `json:"description"`
+	Usage           float64  `json:"usage"`
+	Effectiveness   float64  `json:"effectiveness"`
 	TargetChampions []string `json:"target_champions"`
 }
 
 // PowerBanData represents power ban analysis
 type PowerBanData struct {
-	Champion      string  `json:"champion"`
+	Champion        string  `json:"champion"`
 	ImpactOnWinRate float64 `json:"impact_on_win_rate"`
-	BanValue      float64 `json:"ban_value"`
-	Situational   bool    `json:"situational"`
+	BanValue        float64 `json:"ban_value"`
+	Situational     bool    `json:"situational"`
 }
 
 // PickAnalysisData represents pick phase analysis
 type PickAnalysisData struct {
-	BlindPickSafe    []ChampionPickData `json:"blind_pick_safe"`
-	FlexPicks        []ChampionPickData `json:"flex_picks"`
-	CounterPicks     []CounterPickData  `json:"counter_picks"`
+	BlindPickSafe     []ChampionPickData `json:"blind_pick_safe"`
+	FlexPicks         []ChampionPickData `json:"flex_picks"`
+	CounterPicks      []CounterPickData  `json:"counter_picks"`
 	FirstPickPriority []ChampionPickData `json:"first_pick_priority"`
-	LastPickOptions  []ChampionPickData `json:"last_pick_options"`
+	LastPickOptions   []ChampionPickData `json:"last_pick_options"`
 }
 
 // ChampionPickData represents champion pick analysis
@@ -337,116 +330,116 @@ type ChampionPickData struct {
 
 // CounterPickData represents counter pick analysis
 type CounterPickData struct {
-	Champion    string   `json:"champion"`
-	Counters    []string `json:"counters"`
-	CounterValue float64 `json:"counter_value"`
-	Effectiveness float64 `json:"effectiveness"`
+	Champion      string   `json:"champion"`
+	Counters      []string `json:"counters"`
+	CounterValue  float64  `json:"counter_value"`
+	Effectiveness float64  `json:"effectiveness"`
 }
 
 // MetaShiftData represents meta shift analysis
 type MetaShiftData struct {
-	ShiftType     string    `json:"shift_type"`
-	Description   string    `json:"description"`
-	Catalyst      string    `json:"catalyst"`
+	ShiftType         string   `json:"shift_type"`
+	Description       string   `json:"description"`
+	Catalyst          string   `json:"catalyst"`
 	AffectedChampions []string `json:"affected_champions"`
-	Impact        float64   `json:"impact"`
-	Timeline      string    `json:"timeline"`
+	Impact            float64  `json:"impact"`
+	Timeline          string   `json:"timeline"`
 }
 
 // PatchImpactAnalysis represents patch impact analysis
 type PatchImpactAnalysis struct {
-	PatchNumber     string                    `json:"patch_number"`
-	ReleaseDate     time.Time                 `json:"release_date"`
-	OverallImpact   float64                   `json:"overall_impact"`
-	ChampionChanges []ChampionPatchChange     `json:"champion_changes"`
-	ItemChanges     []ItemPatchChange         `json:"item_changes"`
-	SystemChanges   []SystemPatchChange       `json:"system_changes"`
+	PatchNumber         string                `json:"patch_number"`
+	ReleaseDate         time.Time             `json:"release_date"`
+	OverallImpact       float64               `json:"overall_impact"`
+	ChampionChanges     []ChampionPatchChange `json:"champion_changes"`
+	ItemChanges         []ItemPatchChange     `json:"item_changes"`
+	SystemChanges       []SystemPatchChange   `json:"system_changes"`
 	MetaShiftPrediction string                `json:"meta_shift_prediction"`
 }
 
 // ChampionPatchChange represents champion changes in a patch
 type ChampionPatchChange struct {
-	Champion      string  `json:"champion"`
-	ChangeType    string  `json:"change_type"` // "buff", "nerf", "rework", "adjustment"
-	Severity      float64 `json:"severity"`
-	PredictedImpact string `json:"predicted_impact"`
-	Changes       []string `json:"changes"`
+	Champion        string   `json:"champion"`
+	ChangeType      string   `json:"change_type"` // "buff", "nerf", "rework", "adjustment"
+	Severity        float64  `json:"severity"`
+	PredictedImpact string   `json:"predicted_impact"`
+	Changes         []string `json:"changes"`
 }
 
 // ItemPatchChange represents item changes in a patch
 type ItemPatchChange struct {
-	Item            string  `json:"item"`
-	ChangeType      string  `json:"change_type"`
-	Impact          float64 `json:"impact"`
+	Item              string   `json:"item"`
+	ChangeType        string   `json:"change_type"`
+	Impact            float64  `json:"impact"`
 	AffectedChampions []string `json:"affected_champions"`
-	Changes         []string `json:"changes"`
+	Changes           []string `json:"changes"`
 }
 
 // SystemPatchChange represents system changes in a patch
 type SystemPatchChange struct {
-	System        string   `json:"system"`
-	ChangeType    string   `json:"change_type"`
-	Impact        float64  `json:"impact"`
-	Description   string   `json:"description"`
+	System          string   `json:"system"`
+	ChangeType      string   `json:"change_type"`
+	Impact          float64  `json:"impact"`
+	Description     string   `json:"description"`
 	AffectedAspects []string `json:"affected_aspects"`
 }
 
 // MetaPredictions represents meta predictions
 type MetaPredictions struct {
-	NextPatchPredictions []ChampionTierPrediction `json:"next_patch_predictions"`
-	EmergingChampions    []EmergingPrediction     `json:"emerging_champions"`
-	DecliningChampions   []DecliningPrediction    `json:"declining_champions"`
+	NextPatchPredictions []ChampionTierPrediction   `json:"next_patch_predictions"`
+	EmergingChampions    []EmergingPrediction       `json:"emerging_champions"`
+	DecliningChampions   []DecliningPrediction      `json:"declining_champions"`
 	StrategicShifts      []StrategicShiftPrediction `json:"strategic_shifts"`
-	Confidence           float64                  `json:"confidence"`
-	PredictionAccuracy   float64                  `json:"prediction_accuracy"`
+	Confidence           float64                    `json:"confidence"`
+	PredictionAccuracy   float64                    `json:"prediction_accuracy"`
 }
 
 // ChampionTierPrediction represents tier predictions for champions
 type ChampionTierPrediction struct {
-	Champion        string  `json:"champion"`
-	CurrentTier     string  `json:"current_tier"`
-	PredictedTier   string  `json:"predicted_tier"`
-	Confidence      float64 `json:"confidence"`
+	Champion         string   `json:"champion"`
+	CurrentTier      string   `json:"current_tier"`
+	PredictedTier    string   `json:"predicted_tier"`
+	Confidence       float64  `json:"confidence"`
 	ReasoningFactors []string `json:"reasoning_factors"`
 }
 
 // EmergingPrediction represents emerging champion predictions
 type EmergingPrediction struct {
-	Champion    string   `json:"champion"`
-	Role        string   `json:"role"`
-	Catalysts   []string `json:"catalysts"`
-	Timeline    string   `json:"timeline"`
-	Confidence  float64  `json:"confidence"`
+	Champion   string   `json:"champion"`
+	Role       string   `json:"role"`
+	Catalysts  []string `json:"catalysts"`
+	Timeline   string   `json:"timeline"`
+	Confidence float64  `json:"confidence"`
 }
 
 // DecliningPrediction represents declining champion predictions
 type DecliningPrediction struct {
-	Champion    string   `json:"champion"`
-	Role        string   `json:"role"`
-	Reasons     []string `json:"reasons"`
-	Timeline    string   `json:"timeline"`
-	Confidence  float64  `json:"confidence"`
+	Champion   string   `json:"champion"`
+	Role       string   `json:"role"`
+	Reasons    []string `json:"reasons"`
+	Timeline   string   `json:"timeline"`
+	Confidence float64  `json:"confidence"`
 }
 
 // StrategicShiftPrediction represents strategic meta shift predictions
 type StrategicShiftPrediction struct {
-	Strategy    string   `json:"strategy"`
-	Direction   string   `json:"direction"` // "emerging", "declining"
-	Drivers     []string `json:"drivers"`
-	Timeline    string   `json:"timeline"`
-	Impact      float64  `json:"impact"`
+	Strategy  string   `json:"strategy"`
+	Direction string   `json:"direction"` // "emerging", "declining"
+	Drivers   []string `json:"drivers"`
+	Timeline  string   `json:"timeline"`
+	Impact    float64  `json:"impact"`
 }
 
 // MetaRecommendation represents meta-based recommendations
 type MetaRecommendation struct {
-	Type         string   `json:"type"`
-	Title        string   `json:"title"`
-	Description  string   `json:"description"`
-	Priority     string   `json:"priority"`
-	TargetRank   string   `json:"target_rank"`
-	Champions    []string `json:"champions"`
-	Strategies   []string `json:"strategies"`
-	Expected     string   `json:"expected"`
+	Type        string   `json:"type"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Priority    string   `json:"priority"`
+	TargetRank  string   `json:"target_rank"`
+	Champions   []string `json:"champions"`
+	Strategies  []string `json:"strategies"`
+	Expected    string   `json:"expected"`
 }
 
 // AnalyzeMeta performs comprehensive meta analysis
@@ -503,7 +496,7 @@ func (mas *MetaAnalyticsService) AnalyzeMeta(ctx context.Context, patch string, 
 func (mas *MetaAnalyticsService) generateTierList(ctx context.Context, analysis *MetaAnalysis) error {
 	// Simulate tier list generation
 	champions := []string{"Jinx", "Caitlyn", "Vayne", "Aphelios", "Jhin", "Kai'Sa", "Ezreal", "Miss Fortune", "Ashe", "Twitch"}
-	
+
 	// Calculate tier scores and distribute champions
 	tierList := ChampionTierList{
 		LastUpdated: time.Now(),
@@ -514,18 +507,18 @@ func (mas *MetaAnalyticsService) generateTierList(ctx context.Context, analysis 
 	for i, champion := range champions {
 		// Simulate tier scoring
 		baseScore := 85.0 - float64(i)*3.5
-		winRate := 50.0 + (math.Sin(float64(i))*8)
+		winRate := 50.0 + (math.Sin(float64(i)) * 8)
 		pickRate := 15.0 - float64(i)*1.2
-		banRate := math.Max(0, 25.0 - float64(i)*2.8)
-		
+		banRate := math.Max(0, 25.0-float64(i)*2.8)
+
 		entry := ChampionTierEntry{
 			Champion:       champion,
 			TierScore:      baseScore,
 			WinRate:        winRate,
 			PickRate:       pickRate,
 			BanRate:        banRate,
-			CarryPotential: 75.0 + (math.Cos(float64(i))*15),
-			Versatility:    60.0 + (math.Sin(float64(i)*2)*20),
+			CarryPotential: 75.0 + (math.Cos(float64(i)) * 15),
+			Versatility:    60.0 + (math.Sin(float64(i)*2) * 20),
 			TrendDirection: []string{"rising", "stable", "falling"}[i%3],
 			TierMovement:   []int{1, 0, -1, 0, 1}[i%5],
 			RecommendedFor: []string{"climbing", "one_trick", "flex_pick"},
@@ -559,14 +552,14 @@ func (mas *MetaAnalyticsService) generateTierList(ctx context.Context, analysis 
 	// Generate role-specific tier lists
 	roles := []string{"TOP", "JUNGLE", "MID", "ADC", "SUPPORT"}
 	analysis.RoleTierLists = make(map[string]ChampionTierList)
-	
+
 	for _, role := range roles {
 		roleTierList := ChampionTierList{
 			LastUpdated: time.Now(),
 			SampleSize:  10000,
 			Confidence:  0.88,
 		}
-		
+
 		// Distribute some champions to each role tier list
 		for i := 0; i < 3; i++ {
 			if i < len(champions) {
@@ -585,7 +578,7 @@ func (mas *MetaAnalyticsService) generateTierList(ctx context.Context, analysis 
 				roleTierList.STier = append(roleTierList.STier, entry)
 			}
 		}
-		
+
 		analysis.RoleTierLists[role] = roleTierList
 	}
 
@@ -654,9 +647,9 @@ func (mas *MetaAnalyticsService) analyzeMetaTrends(ctx context.Context, analysis
 		GameLength: GameLengthTrends{
 			AverageGameLength: 28.4,
 			LengthDistribution: map[string]float64{
-				"early": 15.2,  // <25 min
-				"mid":   58.7,  // 25-35 min
-				"late":  26.1,  // >35 min
+				"early": 15.2, // <25 min
+				"mid":   58.7, // 25-35 min
+				"late":  26.1, // >35 min
 			},
 		},
 		ObjectivePriority: ObjectiveTrends{
@@ -692,15 +685,15 @@ func (mas *MetaAnalyticsService) analyzeMetaTrends(ctx context.Context, analysis
 
 	analysis.DeciningPicks = []DecliningChampionData{
 		{
-			Champion:        "Lucian",
-			Role:            "ADC",
-			CurrentTier:     "B+",
-			PreviousTier:    "A",
-			WinRateChange:   -1.5,
-			PickRateChange:  -3.2,
+			Champion:         "Lucian",
+			Role:             "ADC",
+			CurrentTier:      "B+",
+			PreviousTier:     "A",
+			WinRateChange:    -1.5,
+			PickRateChange:   -3.2,
 			ReasonForDecline: []string{"Early game nerfs", "Meta shift away from aggro", "Better alternatives"},
-			ProjectedTier:   "B",
-			Confidence:      0.78,
+			ProjectedTier:    "B",
+			Confidence:       0.78,
 		},
 	}
 
@@ -715,18 +708,18 @@ func (mas *MetaAnalyticsService) generateChampionStats(ctx context.Context, anal
 	for i, champion := range champions {
 		stat := ChampionMetaStats{
 			Champion:       champion,
-			Role:          "ADC",
-			Tier:          []string{"S", "A+", "A", "B+", "B"}[i],
-			TierScore:     90.0 - float64(i)*5,
-			WinRate:       52.0 + float64(i)*0.5,
-			PickRate:     20.0 - float64(i)*2,
-			BanRate:      15.0 - float64(i)*1.5,
-			PresenceRate: 35.0 - float64(i)*2.5,
-			AverageKDA:   2.8 + float64(i)*0.1,
-			DamageShare:  32.5 - float64(i)*1.2,
-			GoldShare:    25.8 - float64(i)*0.8,
-			VisionScore:  18.5 + float64(i)*0.5,
-			Versatility:  70.0 - float64(i)*5,
+			Role:           "ADC",
+			Tier:           []string{"S", "A+", "A", "B+", "B"}[i],
+			TierScore:      90.0 - float64(i)*5,
+			WinRate:        52.0 + float64(i)*0.5,
+			PickRate:       20.0 - float64(i)*2,
+			BanRate:        15.0 - float64(i)*1.5,
+			PresenceRate:   35.0 - float64(i)*2.5,
+			AverageKDA:     2.8 + float64(i)*0.1,
+			DamageShare:    32.5 - float64(i)*1.2,
+			GoldShare:      25.8 - float64(i)*0.8,
+			VisionScore:    18.5 + float64(i)*0.5,
+			Versatility:    70.0 - float64(i)*5,
 			CarryPotential: 85.0 - float64(i)*3,
 			TeamReliance:   60.0 + float64(i)*2,
 			ScalingCurve: ScalingCurveData{

@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type TeamCompositionHandler struct {
@@ -44,22 +44,22 @@ func (h *TeamCompositionHandler) RegisterRoutes(rg *gin.RouterGroup) {
 func (h *TeamCompositionHandler) OptimizeTeamComposition(c *gin.Context) {
 	var request struct {
 		PlayerData []struct {
-			SummonerID     string   `json:"summonerId" binding:"required"`
-			Role          string   `json:"role" binding:"required"`
-			ChampionPool  []string `json:"championPool"`
-			ComfortLevel  int      `json:"comfortLevel"` // 1-10
-			RecentGames   int      `json:"recentGames"`
+			SummonerID   string   `json:"summonerId" binding:"required"`
+			Role         string   `json:"role" binding:"required"`
+			ChampionPool []string `json:"championPool"`
+			ComfortLevel int      `json:"comfortLevel"` // 1-10
+			RecentGames  int      `json:"recentGames"`
 		} `json:"playerData" binding:"required"`
-		Strategy         string   `json:"strategy"`         // meta_optimal, synergy_focused, balanced, comfort_picks
-		BannedChampions  []string `json:"bannedChampions"`
+		Strategy          string   `json:"strategy"` // meta_optimal, synergy_focused, balanced, comfort_picks
+		BannedChampions   []string `json:"bannedChampions"`
 		RequiredChampions []string `json:"requiredChampions"`
-		GameMode         string   `json:"gameMode"`
-		Constraints      struct {
-			MaxNewChampions   int  `json:"maxNewChampions"`
-			RequireADC        bool `json:"requireADC"`
-			RequireTank       bool `json:"requireTank"`
-			PreferLateGame    bool `json:"preferLateGame"`
-			PreferEarlyGame   bool `json:"preferEarlyGame"`
+		GameMode          string   `json:"gameMode"`
+		Constraints       struct {
+			MaxNewChampions int  `json:"maxNewChampions"`
+			RequireADC      bool `json:"requireADC"`
+			RequireTank     bool `json:"requireTank"`
+			PreferLateGame  bool `json:"preferLateGame"`
+			PreferEarlyGame bool `json:"preferEarlyGame"`
 		} `json:"constraints"`
 	}
 
@@ -132,7 +132,7 @@ func (h *TeamCompositionHandler) GetCompositionSuggestions(c *gin.Context) {
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	strategy := c.DefaultQuery("strategy", "balanced")
 	limitStr := c.DefaultQuery("limit", "10")
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = 10
@@ -175,13 +175,13 @@ func (h *TeamCompositionHandler) ValidateComposition(c *gin.Context) {
 func (h *TeamCompositionHandler) CompareCompositions(c *gin.Context) {
 	var request struct {
 		Compositions []struct {
-			Name        string `json:"name"`
-			Champions   []struct {
+			Name      string `json:"name"`
+			Champions []struct {
 				Champion string `json:"champion" binding:"required"`
 				Role     string `json:"role" binding:"required"`
 			} `json:"champions" binding:"required"`
 		} `json:"compositions" binding:"required"`
-		GameMode string `json:"gameMode"`
+		GameMode string   `json:"gameMode"`
 		Criteria []string `json:"criteria"` // synergy, scaling, teamfight, etc.
 	}
 
@@ -207,7 +207,7 @@ func (h *TeamCompositionHandler) GetMetaCompositions(c *gin.Context) {
 	region := c.DefaultQuery("region", "global")
 	patch := c.Query("patch")
 	limitStr := c.DefaultQuery("limit", "20")
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = 20
@@ -254,8 +254,8 @@ func (h *TeamCompositionHandler) AnalyzeCounters(c *gin.Context) {
 			Role     string `json:"role" binding:"required"`
 		} `json:"enemyComposition" binding:"required"`
 		AvailableChampions []string `json:"availableChampions"`
-		TargetRole        string   `json:"targetRole"`
-		CounterType       string   `json:"counterType"` // lane, teamfight, splitpush, etc.
+		TargetRole         string   `json:"targetRole"`
+		CounterType        string   `json:"counterType"` // lane, teamfight, splitpush, etc.
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -276,7 +276,7 @@ func (h *TeamCompositionHandler) AnalyzeCounters(c *gin.Context) {
 func (h *TeamCompositionHandler) GetRoleRecommendations(c *gin.Context) {
 	summonerID := c.Param("summoner_id")
 	role := c.Param("role")
-	
+
 	if summonerID == "" || role == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Summoner ID and role are required"})
 		return
@@ -287,7 +287,7 @@ func (h *TeamCompositionHandler) GetRoleRecommendations(c *gin.Context) {
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	strategy := c.DefaultQuery("strategy", "balanced")
 	limitStr := c.DefaultQuery("limit", "15")
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = 15
@@ -349,12 +349,12 @@ func (h *TeamCompositionHandler) GetPlayerComfortPicks(c *gin.Context) {
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	recentGamesStr := c.DefaultQuery("recentGames", "50")
 	limitStr := c.DefaultQuery("limit", "20")
-	
+
 	recentGames, err := strconv.Atoi(recentGamesStr)
 	if err != nil {
 		recentGames = 50
 	}
-	
+
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil {
 		limit = 20
@@ -438,7 +438,7 @@ func (h *TeamCompositionHandler) GetChampionPools(c *gin.Context) {
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	poolType := c.DefaultQuery("poolType", "comfort") // comfort, meta, flex, wide
 	recentGamesStr := c.DefaultQuery("recentGames", "100")
-	
+
 	recentGames, err := strconv.Atoi(recentGamesStr)
 	if err != nil {
 		recentGames = 100
@@ -464,10 +464,10 @@ func (h *TeamCompositionHandler) GetBanStrategy(c *gin.Context) {
 			SummonerID string `json:"summonerId"`
 			Role       string `json:"role" binding:"required"`
 		} `json:"enemyData"`
-		BanPhase    string   `json:"banPhase"` // first_ban, second_ban
+		BanPhase     string   `json:"banPhase"` // first_ban, second_ban
 		ExistingBans []string `json:"existingBans"`
-		GameMode    string   `json:"gameMode"`
-		Strategy    string   `json:"strategy"` // target_player, protect_comp, meta_deny
+		GameMode     string   `json:"gameMode"`
+		Strategy     string   `json:"strategy"` // target_player, protect_comp, meta_deny
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {

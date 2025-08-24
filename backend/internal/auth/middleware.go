@@ -34,78 +34,78 @@ func (m *GamingAuthMiddleware) RequireGamingAuth() gin.HandlerFunc {
 		token := m.extractGamingToken(c)
 		if token == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Gaming authentication required",
+				"error":           "Gaming authentication required",
 				"gaming_platform": "herald-lol",
 				"auth_endpoints": gin.H{
-					"login": "/auth/oauth/:provider",
+					"login":   "/auth/oauth/:provider",
 					"refresh": "/auth/refresh",
 				},
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Parse and validate gaming JWT token
 		claims, err := m.config.parseJWT(token)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Invalid gaming authentication token",
+				"error":           "Invalid gaming authentication token",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check token expiration
 		if time.Now().After(claims.ExpiresAt.Time) {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Gaming authentication token expired",
+				"error":           "Gaming authentication token expired",
 				"gaming_platform": "herald-lol",
-				"action": "refresh_token",
+				"action":          "refresh_token",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Get full gaming user info
 		ctx := context.Background()
 		user, err := m.userStore.GetUserByProviderID(ctx, OAuthProvider(claims.Provider), claims.ProviderID)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Gaming user not found",
+				"error":           "Gaming user not found",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if gaming user is active
 		if !user.Metadata["is_active"] == "true" && user.Metadata["is_active"] != "" {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Gaming account is disabled",
+				"error":           "Gaming account is disabled",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Update session activity if available
 		if sessionToken := c.GetHeader("X-Session-Token"); sessionToken != "" {
 			go m.userStore.UpdateGamingSessionActivity(ctx, sessionToken)
 		}
-		
+
 		// Set gaming user context
 		c.Set("gaming_user", user)
 		c.Set("gaming_claims", claims)
 		c.Set("gaming_user_id", claims.UserID)
 		c.Set("gaming_subscription_tier", claims.SubscriptionTier)
 		c.Set("gaming_permissions", claims.GamingPermissions)
-		
+
 		// Add gaming headers for downstream services
 		c.Header("X-Gaming-User-ID", claims.UserID)
 		c.Header("X-Gaming-Tier", claims.SubscriptionTier)
 		c.Header("X-Gaming-Platform", "herald-lol")
-		
+
 		c.Next()
 	}
 }
@@ -118,28 +118,28 @@ func (m *GamingAuthMiddleware) RequireGamingPermission(permission string) gin.Ha
 		if c.IsAborted() {
 			return
 		}
-		
+
 		// Get gaming permissions from context
 		permissionsInterface, exists := c.Get("gaming_permissions")
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Gaming permissions not found",
+				"error":           "Gaming permissions not found",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		permissions, ok := permissionsInterface.([]string)
 		if !ok {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Invalid gaming permissions format",
+				"error":           "Invalid gaming permissions format",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user has required gaming permission
 		hasPermission := false
 		for _, perm := range permissions {
@@ -148,18 +148,18 @@ func (m *GamingAuthMiddleware) RequireGamingPermission(permission string) gin.Ha
 				break
 			}
 		}
-		
+
 		if !hasPermission {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming permissions",
+				"error":               "Insufficient gaming permissions",
 				"required_permission": permission,
-				"gaming_platform": "herald-lol",
-				"upgrade_info": m.getUpgradeInfo(permission),
+				"gaming_platform":     "herald-lol",
+				"upgrade_info":        m.getUpgradeInfo(permission),
 			})
 			c.Abort()
 			return
 		}
-		
+
 		c.Next()
 	}
 }
@@ -172,41 +172,41 @@ func (m *GamingAuthMiddleware) RequireGamingTier(minTier string) gin.HandlerFunc
 		if c.IsAborted() {
 			return
 		}
-		
+
 		// Get gaming tier from context
 		tier, exists := c.Get("gaming_subscription_tier")
 		if !exists {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Gaming subscription tier not found",
+				"error":           "Gaming subscription tier not found",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		userTier, ok := tier.(string)
 		if !ok {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Invalid gaming subscription tier",
+				"error":           "Invalid gaming subscription tier",
 				"gaming_platform": "herald-lol",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		// Check if user meets minimum gaming tier requirement
 		if !m.meetsTierRequirement(userTier, minTier) {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Insufficient gaming subscription tier",
-				"current_tier": userTier,
-				"required_tier": minTier,
+				"error":           "Insufficient gaming subscription tier",
+				"current_tier":    userTier,
+				"required_tier":   minTier,
 				"gaming_platform": "herald-lol",
-				"upgrade_url": "https://herald.lol/upgrade",
+				"upgrade_url":     "https://herald.lol/upgrade",
 			})
 			c.Abort()
 			return
 		}
-		
+
 		c.Next()
 	}
 }
@@ -222,7 +222,7 @@ func (m *GamingAuthMiddleware) OptionalGamingAuth() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		
+
 		// Parse and validate gaming JWT token
 		claims, err := m.config.parseJWT(token)
 		if err != nil || time.Now().After(claims.ExpiresAt.Time) {
@@ -231,7 +231,7 @@ func (m *GamingAuthMiddleware) OptionalGamingAuth() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		
+
 		// Get gaming user info
 		ctx := context.Background()
 		user, err := m.userStore.GetUserByProviderID(ctx, OAuthProvider(claims.Provider), claims.ProviderID)
@@ -241,7 +241,7 @@ func (m *GamingAuthMiddleware) OptionalGamingAuth() gin.HandlerFunc {
 			c.Next()
 			return
 		}
-		
+
 		// Set gaming user context
 		c.Set("gaming_authenticated", true)
 		c.Set("gaming_user", user)
@@ -249,12 +249,12 @@ func (m *GamingAuthMiddleware) OptionalGamingAuth() gin.HandlerFunc {
 		c.Set("gaming_user_id", claims.UserID)
 		c.Set("gaming_subscription_tier", claims.SubscriptionTier)
 		c.Set("gaming_permissions", claims.GamingPermissions)
-		
+
 		// Add gaming headers
 		c.Header("X-Gaming-User-ID", claims.UserID)
 		c.Header("X-Gaming-Tier", claims.SubscriptionTier)
 		c.Header("X-Gaming-Platform", "herald-lol")
-		
+
 		c.Next()
 	}
 }
@@ -264,22 +264,22 @@ func (m *GamingAuthMiddleware) RateLimitByGamingTier() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Get gaming tier (requires OptionalGamingAuth or RequireGamingAuth to run first)
 		tier := "free" // Default to free tier
-		
+
 		if tierInterface, exists := c.Get("gaming_subscription_tier"); exists {
 			if tierString, ok := tierInterface.(string); ok {
 				tier = tierString
 			}
 		}
-		
+
 		// Set rate limiting headers based on gaming tier
 		rateLimits := m.getGamingRateLimits(tier)
 		c.Header("X-Gaming-RateLimit-Limit", rateLimits["limit"])
 		c.Header("X-Gaming-RateLimit-Window", rateLimits["window"])
 		c.Header("X-Gaming-RateLimit-Tier", tier)
-		
+
 		// The actual rate limiting would be handled by Kong or other middleware
 		// This middleware just sets the appropriate headers
-		
+
 		c.Next()
 	}
 }
@@ -288,7 +288,7 @@ func (m *GamingAuthMiddleware) RateLimitByGamingTier() gin.HandlerFunc {
 func (m *GamingAuthMiddleware) CORSForGaming() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
-		
+
 		// Gaming platform allowed origins
 		allowedOrigins := []string{
 			"https://herald.lol",
@@ -298,7 +298,7 @@ func (m *GamingAuthMiddleware) CORSForGaming() gin.HandlerFunc {
 			"http://localhost:3000", // Development
 			"http://localhost:3001", // Development
 		}
-		
+
 		// Check if origin is allowed for gaming platform
 		originAllowed := false
 		for _, allowed := range allowedOrigins {
@@ -307,23 +307,23 @@ func (m *GamingAuthMiddleware) CORSForGaming() gin.HandlerFunc {
 				break
 			}
 		}
-		
+
 		if originAllowed {
 			c.Header("Access-Control-Allow-Origin", origin)
 		}
-		
+
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
 		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, X-Session-Token, X-Gaming-Client, X-Herald-Version")
 		c.Header("Access-Control-Expose-Headers", "X-Gaming-User-ID, X-Gaming-Tier, X-Gaming-Platform, X-Gaming-RateLimit-Limit, X-Gaming-RateLimit-Remaining")
 		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Max-Age", "86400") // 24 hours
-		
+
 		// Handle preflight OPTIONS request
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
 		}
-		
+
 		c.Next()
 	}
 }
@@ -338,13 +338,13 @@ func (m *GamingAuthMiddleware) GamingSecurityHeaders() gin.HandlerFunc {
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		c.Header("X-Gaming-Platform", "herald-lol")
 		c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.herald.lol; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com")
-		
+
 		// Gaming API specific headers
 		c.Header("X-Robots-Tag", "noindex, nofollow")
 		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
 		c.Header("Pragma", "no-cache")
 		c.Header("Expires", "0")
-		
+
 		c.Next()
 	}
 }
@@ -363,22 +363,22 @@ func (m *GamingAuthMiddleware) extractGamingToken(c *gin.Context) string {
 		// Handle direct token
 		return authHeader
 	}
-	
+
 	// 2. Check X-Auth-Token header (gaming specific)
 	if token := c.GetHeader("X-Auth-Token"); token != "" {
 		return token
 	}
-	
+
 	// 3. Check query parameter
 	if token := c.Query("token"); token != "" {
 		return token
 	}
-	
+
 	// 4. Check gaming access token cookie
 	if token, err := c.Cookie("herald_access_token"); err == nil && token != "" {
 		return token
 	}
-	
+
 	return ""
 }
 
@@ -390,14 +390,14 @@ func (m *GamingAuthMiddleware) meetsTierRequirement(userTier, minTier string) bo
 		"pro":        2,
 		"enterprise": 3,
 	}
-	
+
 	userLevel, userExists := tierLevels[userTier]
 	minLevel, minExists := tierLevels[minTier]
-	
+
 	if !userExists || !minExists {
 		return false
 	}
-	
+
 	return userLevel >= minLevel
 }
 
@@ -405,9 +405,9 @@ func (m *GamingAuthMiddleware) meetsTierRequirement(userTier, minTier string) bo
 func (m *GamingAuthMiddleware) getUpgradeInfo(permission string) map[string]string {
 	upgradeInfo := map[string]string{
 		"upgrade_url": "https://herald.lol/upgrade",
-		"contact": "support@herald.lol",
+		"contact":     "support@herald.lol",
 	}
-	
+
 	// Map permissions to required tiers
 	permissionTiers := map[string]string{
 		"analytics:advanced": "premium",
@@ -416,12 +416,12 @@ func (m *GamingAuthMiddleware) getUpgradeInfo(permission string) map[string]stri
 		"team:management":    "enterprise",
 		"api:unlimited":      "enterprise",
 	}
-	
+
 	if requiredTier, exists := permissionTiers[permission]; exists {
 		upgradeInfo["required_tier"] = requiredTier
 		upgradeInfo["upgrade_url"] = "https://herald.lol/upgrade?tier=" + requiredTier
 	}
-	
+
 	return upgradeInfo
 }
 
@@ -445,11 +445,11 @@ func (m *GamingAuthMiddleware) getGamingRateLimits(tier string) map[string]strin
 			"window": "60",
 		},
 	}
-	
+
 	if tierLimits, exists := limits[tier]; exists {
 		return tierLimits
 	}
-	
+
 	return limits["free"] // Default to free tier limits
 }
 

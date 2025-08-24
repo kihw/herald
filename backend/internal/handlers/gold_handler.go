@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // GoldHandler handles gold efficiency analytics requests
@@ -30,9 +30,9 @@ type GoldAnalysisRequest struct {
 
 // GoldOptimizationRequest represents request for gold optimization analysis
 type GoldOptimizationRequest struct {
-	TimeRange    string `form:"time_range" json:"time_range" binding:"required"`
-	FocusArea    string `form:"focus_area" json:"focus_area"`  // "income", "spending", "efficiency"
-	Difficulty   string `form:"difficulty" json:"difficulty"`  // "easy", "medium", "hard"
+	TimeRange  string `form:"time_range" json:"time_range" binding:"required"`
+	FocusArea  string `form:"focus_area" json:"focus_area"` // "income", "spending", "efficiency"
+	Difficulty string `form:"difficulty" json:"difficulty"` // "easy", "medium", "hard"
 }
 
 // GetGoldAnalysis godoc
@@ -92,11 +92,11 @@ func (gh *GoldHandler) GetGoldAnalysis(c *gin.Context) {
 	// Validate game mode if provided
 	if req.GameMode != "" {
 		validGameModes := map[string]bool{
-			"RANKED_SOLO_5x5":   true,
-			"RANKED_FLEX_SR":    true,
-			"NORMAL_DRAFT":      true,
-			"ARAM":              true,
-			"RANKED_TFT":        true,
+			"RANKED_SOLO_5x5": true,
+			"RANKED_FLEX_SR":  true,
+			"NORMAL_DRAFT":    true,
+			"ARAM":            true,
+			"RANKED_TFT":      true,
 		}
 		if !validGameModes[req.GameMode] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -336,7 +336,7 @@ func (gh *GoldHandler) GetSpendingPatterns(c *gin.Context) {
 func (gh *GoldHandler) GetGoldTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	metric := c.Query("metric")
-	
+
 	if playerID == "" || metric == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -415,7 +415,7 @@ func (gh *GoldHandler) GetGoldTrends(c *gin.Context) {
 func (gh *GoldHandler) GetGoldComparison(c *gin.Context) {
 	playerID := c.Param("player_id")
 	benchmarkType := c.Query("benchmark_type")
-	
+
 	if playerID == "" || benchmarkType == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -459,16 +459,16 @@ func (gh *GoldHandler) GetGoldComparison(c *gin.Context) {
 
 	// Extract relevant benchmark comparison
 	var comparison map[string]interface{}
-	
+
 	switch benchmarkType {
 	case "role":
 		comparison = map[string]interface{}{
 			"benchmark_type": "role",
 			"player_metrics": map[string]interface{}{
-				"gold_per_minute":    analysis.AverageGoldPerMinute,
-				"gold_efficiency":    analysis.GoldEfficiencyScore,
-				"economy_rating":     analysis.EconomyRating,
-				"gold_impact_score":  analysis.GoldImpactScore,
+				"gold_per_minute":   analysis.AverageGoldPerMinute,
+				"gold_efficiency":   analysis.GoldEfficiencyScore,
+				"economy_rating":    analysis.EconomyRating,
+				"gold_impact_score": analysis.GoldImpactScore,
 			},
 			"benchmark_metrics": analysis.RoleBenchmark,
 			"percentile":        analysis.RoleBenchmark.PlayerPercentile,
@@ -477,10 +477,10 @@ func (gh *GoldHandler) GetGoldComparison(c *gin.Context) {
 		comparison = map[string]interface{}{
 			"benchmark_type": "rank",
 			"player_metrics": map[string]interface{}{
-				"gold_per_minute":    analysis.AverageGoldPerMinute,
-				"gold_efficiency":    analysis.GoldEfficiencyScore,
-				"economy_rating":     analysis.EconomyRating,
-				"gold_impact_score":  analysis.GoldImpactScore,
+				"gold_per_minute":   analysis.AverageGoldPerMinute,
+				"gold_efficiency":   analysis.GoldEfficiencyScore,
+				"economy_rating":    analysis.EconomyRating,
+				"gold_impact_score": analysis.GoldImpactScore,
 			},
 			"benchmark_metrics": analysis.RankBenchmark,
 			"percentile":        analysis.RankBenchmark.PlayerPercentile,
@@ -489,10 +489,10 @@ func (gh *GoldHandler) GetGoldComparison(c *gin.Context) {
 		comparison = map[string]interface{}{
 			"benchmark_type": "global",
 			"player_metrics": map[string]interface{}{
-				"gold_per_minute":    analysis.AverageGoldPerMinute,
-				"gold_efficiency":    analysis.GoldEfficiencyScore,
-				"economy_rating":     analysis.EconomyRating,
-				"gold_impact_score":  analysis.GoldImpactScore,
+				"gold_per_minute":   analysis.AverageGoldPerMinute,
+				"gold_efficiency":   analysis.GoldEfficiencyScore,
+				"economy_rating":    analysis.EconomyRating,
+				"gold_impact_score": analysis.GoldImpactScore,
 			},
 			"benchmark_metrics": analysis.GlobalBenchmark,
 			"percentile":        analysis.GlobalBenchmark.PlayerPercentile,
@@ -596,12 +596,12 @@ func (gh *GoldHandler) GetGoldOptimization(c *gin.Context) {
 
 	// Create optimization response
 	optimization := map[string]interface{}{
-		"player_id":             playerID,
-		"time_range":           timeRange,
+		"player_id":  playerID,
+		"time_range": timeRange,
 		"current_performance": map[string]interface{}{
-			"gold_per_minute":     analysis.AverageGoldPerMinute,
-			"gold_efficiency":     analysis.GoldEfficiencyScore,
-			"economy_rating":      analysis.EconomyRating,
+			"gold_per_minute": analysis.AverageGoldPerMinute,
+			"gold_efficiency": analysis.GoldEfficiencyScore,
+			"economy_rating":  analysis.EconomyRating,
 		},
 		"income_optimization":   analysis.IncomeOptimization,
 		"spending_optimization": analysis.SpendingOptimization,
@@ -679,11 +679,11 @@ func (gh *GoldHandler) GetGoldPhaseAnalysis(c *gin.Context) {
 
 	// Create phase analysis response
 	phaseAnalysis := map[string]interface{}{
-		"player_id":   playerID,
-		"time_range":  timeRange,
-		"early_game":  analysis.EarlyGameGold,
-		"mid_game":    analysis.MidGameGold,
-		"late_game":   analysis.LateGameGold,
+		"player_id":  playerID,
+		"time_range": timeRange,
+		"early_game": analysis.EarlyGameGold,
+		"mid_game":   analysis.MidGameGold,
+		"late_game":  analysis.LateGameGold,
 	}
 
 	// Filter by specific phase if requested

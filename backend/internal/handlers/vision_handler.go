@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // VisionHandler handles vision analytics requests
@@ -265,7 +265,7 @@ func (vh *VisionHandler) GetVisionRecommendations(c *gin.Context) {
 
 	// Filter recommendations based on query parameters
 	recommendations := analysis.Recommendations
-	
+
 	if priority != "" {
 		filtered := []services.VisionRecommendation{}
 		for _, rec := range recommendations {
@@ -307,7 +307,7 @@ func (vh *VisionHandler) GetVisionRecommendations(c *gin.Context) {
 func (vh *VisionHandler) GetVisionTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	metric := c.Query("metric")
-	
+
 	if playerID == "" || metric == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -426,12 +426,12 @@ func (vh *VisionHandler) GetVisionZoneAnalysis(c *gin.Context) {
 	if zone != "" {
 		// Filter heatmap data for specific zone
 		filteredData := map[string]interface{}{
-			"zone":           zone,
-			"intensity":      0,
-			"coverage":       0.0,
+			"zone":            zone,
+			"intensity":       0,
+			"coverage":        0.0,
 			"strategic_value": 0.0,
 		}
-		
+
 		// Extract zone-specific intensity from heatmaps
 		if intensity, exists := analysis.WardHeatmaps.YellowWards.Intensity[zone]; exists {
 			filteredData["intensity"] = intensity
@@ -442,7 +442,7 @@ func (vh *VisionHandler) GetVisionZoneAnalysis(c *gin.Context) {
 		if intensity, exists := analysis.WardHeatmaps.WardKills.Intensity[zone]; exists {
 			filteredData["ward_kill_intensity"] = intensity
 		}
-		
+
 		zoneData["zone_analysis"] = filteredData
 	}
 
@@ -466,7 +466,7 @@ func (vh *VisionHandler) GetVisionZoneAnalysis(c *gin.Context) {
 func (vh *VisionHandler) GetVisionComparison(c *gin.Context) {
 	playerID := c.Param("player_id")
 	benchmarkType := c.Query("benchmark_type")
-	
+
 	if playerID == "" || benchmarkType == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -510,7 +510,7 @@ func (vh *VisionHandler) GetVisionComparison(c *gin.Context) {
 
 	// Extract relevant benchmark comparison
 	var comparison map[string]interface{}
-	
+
 	switch benchmarkType {
 	case "role":
 		comparison = map[string]interface{}{

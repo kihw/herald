@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 	"strconv"
-	
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	
-	"github.com/herald-lol/backend/internal/services"
+
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type RiotHandler struct {
@@ -48,7 +48,7 @@ func (h *RiotHandler) LinkAccount(c *gin.Context) {
 		GameName string `json:"game_name" binding:"required"`
 		TagLine  string `json:"tag_line" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -66,7 +66,7 @@ func (h *RiotHandler) LinkAccount(c *gin.Context) {
 			break
 		}
 	}
-	
+
 	if !isValidRegion {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid region",
@@ -172,11 +172,11 @@ func (h *RiotHandler) SyncMatches(c *gin.Context) {
 	var req struct {
 		Count int `json:"count"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		req.Count = 20 // Default count
 	}
-	
+
 	// Validate count
 	if req.Count <= 0 || req.Count > 100 {
 		req.Count = 20
@@ -229,7 +229,7 @@ func (h *RiotHandler) GetSummonerInfo(c *gin.Context) {
 		GameName string `json:"game_name" binding:"required"`
 		TagLine  string `json:"tag_line" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -292,7 +292,7 @@ func (h *RiotHandler) GetRankedInfo(c *gin.Context) {
 		Region     string `json:"region" binding:"required"`
 		SummonerID string `json:"summoner_id" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -329,7 +329,7 @@ func (h *RiotHandler) GetRankedInfo(c *gin.Context) {
 // GetMatchHistory gets match history for a summoner
 // @Summary Get match history
 // @Description Get recent match history for a summoner
-// @Tags riot  
+// @Tags riot
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -345,7 +345,7 @@ func (h *RiotHandler) GetMatchHistory(c *gin.Context) {
 	puuid := c.Query("puuid")
 	region := c.Query("region")
 	countStr := c.Query("count")
-	
+
 	if puuid == "" || region == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Missing parameters",
@@ -353,7 +353,7 @@ func (h *RiotHandler) GetMatchHistory(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	count := 20 // Default
 	if countStr != "" {
 		if parsed, err := strconv.Atoi(countStr); err == nil && parsed > 0 && parsed <= 100 {
@@ -397,7 +397,7 @@ func (h *RiotHandler) GetMatchHistory(c *gin.Context) {
 func (h *RiotHandler) GetMatchDetails(c *gin.Context) {
 	matchID := c.Param("match_id")
 	region := c.Query("region")
-	
+
 	if matchID == "" || region == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Missing parameters",
@@ -450,6 +450,6 @@ func (h *RiotHandler) GetRateLimitStatus(c *gin.Context) {
 			"kr":   map[string]interface{}{"available": true, "requests_remaining": "unknown"},
 		},
 	}
-	
+
 	c.JSON(http.StatusOK, status)
 }

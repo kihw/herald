@@ -2,15 +2,15 @@ package summoner
 
 import (
 	"context"
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"sort"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 
-	"herald.lol/internal/analytics"
-	"herald.lol/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // Herald.lol Gaming Analytics - Summoner Analytics Service
@@ -27,28 +27,28 @@ type SummonerService struct {
 // SummonerServiceConfig contains service configuration
 type SummonerServiceConfig struct {
 	// Analysis settings
-	MaxMatchesAnalyzed    int           `json:"max_matches_analyzed"`
-	DefaultAnalysisDepth  int           `json:"default_analysis_depth"`
-	CacheAnalyticsTTL     time.Duration `json:"cache_analytics_ttl"`
-	CacheSummonerTTL      time.Duration `json:"cache_summoner_ttl"`
-	
+	MaxMatchesAnalyzed   int           `json:"max_matches_analyzed"`
+	DefaultAnalysisDepth int           `json:"default_analysis_depth"`
+	CacheAnalyticsTTL    time.Duration `json:"cache_analytics_ttl"`
+	CacheSummonerTTL     time.Duration `json:"cache_summoner_ttl"`
+
 	// Performance settings
 	AnalysisTimeout       time.Duration `json:"analysis_timeout"`
 	MaxConcurrentAnalysis int           `json:"max_concurrent_analysis"`
 	EnableProgressTrack   bool          `json:"enable_progress_tracking"`
-	
+
 	// Feature flags
 	EnableLiveGameAnalysis bool `json:"enable_live_game_analysis"`
 	EnablePredictions      bool `json:"enable_predictions"`
 	EnableComparisons      bool `json:"enable_comparisons"`
 	EnableCoaching         bool `json:"enable_coaching"`
-	
+
 	// Queue preferences
-	PrioritizedQueues     []int   `json:"prioritized_queues"`  // Queue IDs in priority order
-	QueueWeights          map[int]float64 `json:"queue_weights"`
-	
+	PrioritizedQueues []int           `json:"prioritized_queues"` // Queue IDs in priority order
+	QueueWeights      map[int]float64 `json:"queue_weights"`
+
 	// Analysis profiles by subscription tier
-	TierAnalysisLimits    map[string]int `json:"tier_analysis_limits"`
+	TierAnalysisLimits map[string]int `json:"tier_analysis_limits"`
 }
 
 // NewSummonerService creates new summoner analytics service
@@ -56,7 +56,7 @@ func NewSummonerService(riotClient *riot.RiotClient, analyticsEngine *analytics.
 	if config == nil {
 		config = DefaultSummonerServiceConfig()
 	}
-	
+
 	return &SummonerService{
 		riotClient:      riotClient,
 		analyticsEngine: analyticsEngine,
@@ -91,9 +91,9 @@ func (s *SummonerService) GetSummonerAnalysis(ctx context.Context, request *Summ
 	}
 
 	response := &SummonerAnalysisResponse{
-		RequestID:   request.RequestID,
-		Region:      request.Region,
-		StartedAt:   time.Now(),
+		RequestID: request.RequestID,
+		Region:    request.Region,
+		StartedAt: time.Now(),
 	}
 
 	// Step 1: Get summoner information
@@ -248,9 +248,9 @@ func (s *SummonerService) GetSummonerComparison(ctx context.Context, request *Su
 	comparison := s.compareSummoners(analysis1.Analytics, analysis2.Analytics)
 
 	return &SummonerComparisonResponse{
-		Summoner1:  analysis1.Summoner,
-		Summoner2:  analysis2.Summoner,
-		Comparison: comparison,
+		Summoner1:   analysis1.Summoner,
+		Summoner2:   analysis2.Summoner,
+		Comparison:  comparison,
 		GeneratedAt: time.Now(),
 	}, nil
 }
@@ -337,7 +337,7 @@ func (s *SummonerService) getMatchCountForTier(tier string) int {
 
 func (s *SummonerService) getDetailedMatches(ctx context.Context, region string, matchIDs []string, tracker *AnalysisProgressTracker) ([]*riot.Match, error) {
 	matches := make([]*riot.Match, 0, len(matchIDs))
-	
+
 	for i, matchID := range matchIDs {
 		if tracker != nil {
 			progress := 50 + (i*15)/len(matchIDs) // 50-65% progress range
@@ -369,7 +369,7 @@ func (s *SummonerService) shouldIncludeMatch(match *riot.Match) bool {
 		}
 		return false
 	}
-	
+
 	// Include all valid queues if no priority list
 	return riot.ValidateQueueID(match.Info.QueueID)
 }
@@ -377,7 +377,7 @@ func (s *SummonerService) shouldIncludeMatch(match *riot.Match) bool {
 func (s *SummonerService) getCurrentRank(rankedEntries []riot.RankedEntry) string {
 	// Find highest rank across all queues
 	highestRank := "UNRANKED"
-	
+
 	for _, entry := range rankedEntries {
 		if entry.QueueType == "RANKED_SOLO_5x5" { // Prioritize Solo/Duo
 			return fmt.Sprintf("%s %s", entry.Tier, entry.Rank)
@@ -387,51 +387,51 @@ func (s *SummonerService) getCurrentRank(rankedEntries []riot.RankedEntry) strin
 			highestRank = entry.Tier + " " + entry.Rank
 		}
 	}
-	
+
 	return highestRank
 }
 
 func (s *SummonerService) isHigherRank(rank1, rank2 string) bool {
 	rankOrder := map[string]int{
-		"UNRANKED":      0,
-		"IRON IV":       1, "IRON III": 2, "IRON II": 3, "IRON I": 4,
-		"BRONZE IV":     5, "BRONZE III": 6, "BRONZE II": 7, "BRONZE I": 8,
-		"SILVER IV":     9, "SILVER III": 10, "SILVER II": 11, "SILVER I": 12,
-		"GOLD IV":       13, "GOLD III": 14, "GOLD II": 15, "GOLD I": 16,
-		"PLATINUM IV":   17, "PLATINUM III": 18, "PLATINUM II": 19, "PLATINUM I": 20,
-		"EMERALD IV":    21, "EMERALD III": 22, "EMERALD II": 23, "EMERALD I": 24,
-		"DIAMOND IV":    25, "DIAMOND III": 26, "DIAMOND II": 27, "DIAMOND I": 28,
-		"MASTER I":      29, "GRANDMASTER I": 30, "CHALLENGER I": 31,
+		"UNRANKED": 0,
+		"IRON IV":  1, "IRON III": 2, "IRON II": 3, "IRON I": 4,
+		"BRONZE IV": 5, "BRONZE III": 6, "BRONZE II": 7, "BRONZE I": 8,
+		"SILVER IV": 9, "SILVER III": 10, "SILVER II": 11, "SILVER I": 12,
+		"GOLD IV": 13, "GOLD III": 14, "GOLD II": 15, "GOLD I": 16,
+		"PLATINUM IV": 17, "PLATINUM III": 18, "PLATINUM II": 19, "PLATINUM I": 20,
+		"EMERALD IV": 21, "EMERALD III": 22, "EMERALD II": 23, "EMERALD I": 24,
+		"DIAMOND IV": 25, "DIAMOND III": 26, "DIAMOND II": 27, "DIAMOND I": 28,
+		"MASTER I": 29, "GRANDMASTER I": 30, "CHALLENGER I": 31,
 	}
-	
+
 	order1, exists1 := rankOrder[rank1]
 	order2, exists2 := rankOrder[rank2]
-	
+
 	if !exists1 || !exists2 {
 		return false
 	}
-	
+
 	return order1 > order2
 }
 
 func (s *SummonerService) processRankedEntries(entries []riot.RankedEntry) []*RankedInfo {
 	ranked := make([]*RankedInfo, 0, len(entries))
-	
+
 	for _, entry := range entries {
 		info := &RankedInfo{
-			QueueType:     entry.QueueType,
-			Tier:          entry.Tier,
-			Rank:          entry.Rank,
-			LeaguePoints:  entry.LeaguePoints,
-			Wins:          entry.Wins,
-			Losses:        entry.Losses,
-			WinRate:       float64(entry.Wins) / float64(entry.Wins+entry.Losses),
-			HotStreak:     entry.HotStreak,
-			Veteran:       entry.Veteran,
-			FreshBlood:    entry.FreshBlood,
-			Inactive:      entry.Inactive,
+			QueueType:    entry.QueueType,
+			Tier:         entry.Tier,
+			Rank:         entry.Rank,
+			LeaguePoints: entry.LeaguePoints,
+			Wins:         entry.Wins,
+			Losses:       entry.Losses,
+			WinRate:      float64(entry.Wins) / float64(entry.Wins+entry.Losses),
+			HotStreak:    entry.HotStreak,
+			Veteran:      entry.Veteran,
+			FreshBlood:   entry.FreshBlood,
+			Inactive:     entry.Inactive,
 		}
-		
+
 		if entry.MiniSeries != nil {
 			info.MiniSeries = &MiniSeriesInfo{
 				Target:   entry.MiniSeries.Target,
@@ -440,21 +440,21 @@ func (s *SummonerService) processRankedEntries(entries []riot.RankedEntry) []*Ra
 				Progress: entry.MiniSeries.Progress,
 			}
 		}
-		
+
 		ranked = append(ranked, info)
 	}
-	
+
 	// Sort by queue priority (Solo/Duo first)
 	sort.Slice(ranked, func(i, j int) bool {
 		return ranked[i].QueueType == "RANKED_SOLO_5x5"
 	})
-	
+
 	return ranked
 }
 
 func (s *SummonerService) processChampionMasteries(masteries []riot.ChampionMastery) []*ChampionMasteryInfo {
 	processed := make([]*ChampionMasteryInfo, 0, len(masteries))
-	
+
 	for _, mastery := range masteries {
 		info := &ChampionMasteryInfo{
 			ChampionID:     int(mastery.ChampionID),
@@ -466,12 +466,12 @@ func (s *SummonerService) processChampionMasteries(masteries []riot.ChampionMast
 		}
 		processed = append(processed, info)
 	}
-	
+
 	// Sort by mastery points (highest first)
 	sort.Slice(processed, func(i, j int) bool {
 		return processed[i].ChampionPoints > processed[j].ChampionPoints
 	})
-	
+
 	return processed
 }
 

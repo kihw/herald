@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Herald.lol Gaming Analytics - Game-Specific Rate Limiter
@@ -20,26 +20,26 @@ type GameSpecificRateLimiter struct {
 
 // GameRateLimitResult contains game-specific rate limiting result
 type GameRateLimitResult struct {
-	Allowed      bool          `json:"allowed"`
-	Remaining    int           `json:"remaining"`
-	Reset        time.Time     `json:"reset"`
-	RetryAfter   time.Duration `json:"retry_after,omitempty"`
-	GameType     string        `json:"game_type"`
-	Operation    string        `json:"operation"`
-	LimitType    string        `json:"limit_type"`
-	Region       string        `json:"region,omitempty"`
+	Allowed    bool          `json:"allowed"`
+	Remaining  int           `json:"remaining"`
+	Reset      time.Time     `json:"reset"`
+	RetryAfter time.Duration `json:"retry_after,omitempty"`
+	GameType   string        `json:"game_type"`
+	Operation  string        `json:"operation"`
+	LimitType  string        `json:"limit_type"`
+	Region     string        `json:"region,omitempty"`
 }
 
 // GameRateLimitRequest contains game-specific request information
 type GameRateLimitRequest struct {
 	UserID           string `json:"user_id"`
-	GameType         string `json:"game_type"`         // LoL, TFT
-	Operation        string `json:"operation"`         // analytics, match_data, export
+	GameType         string `json:"game_type"` // LoL, TFT
+	Operation        string `json:"operation"` // analytics, match_data, export
 	Region           string `json:"region,omitempty"`
 	SubscriptionTier string `json:"subscription_tier"`
 	Endpoint         string `json:"endpoint"`
 	IsRealTime       bool   `json:"is_real_time"`
-	DataSize         string `json:"data_size"`         // small, medium, large
+	DataSize         string `json:"data_size"` // small, medium, large
 }
 
 // NewGameSpecificRateLimiter creates new game-specific rate limiter
@@ -63,27 +63,27 @@ func (g *GameSpecificRateLimiter) CheckGameLimits(ctx context.Context, request *
 		IsRealTime:       g.isRealTimeEndpoint(request.Endpoint),
 		DataSize:         g.getDataSize(request.Endpoint),
 	}
-	
+
 	// Check analytics-specific limits
 	if gameRequest.Operation == "analytics" {
 		return g.checkAnalyticsLimits(ctx, gameRequest)
 	}
-	
+
 	// Check export-specific limits
 	if gameRequest.Operation == "export" {
 		return g.checkExportLimits(ctx, gameRequest)
 	}
-	
+
 	// Check real-time operation limits
 	if gameRequest.IsRealTime {
 		return g.checkRealTimeLimits(ctx, gameRequest)
 	}
-	
+
 	// Check region-specific limits
 	if gameRequest.Region != "" {
 		return g.checkRegionLimits(ctx, gameRequest)
 	}
-	
+
 	// Default: allow request
 	return &RateLimitResult{
 		Allowed:   true,
@@ -94,14 +94,14 @@ func (g *GameSpecificRateLimiter) CheckGameLimits(ctx context.Context, request *
 // checkAnalyticsLimits checks analytics-specific rate limits
 func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, request *GameRateLimitRequest) (*RateLimitResult, error) {
 	now := time.Now()
-	
+
 	// Get tier-specific analytics limits
 	tierLimits := g.getTierLimits(request.SubscriptionTier)
 	analyticsLimits := g.config.AnalyticsLimits
-	
+
 	var limit int
 	var limitType string
-	
+
 	// Determine specific analytics limit based on endpoint complexity
 	switch {
 	case strings.Contains(request.Endpoint, "compare") || strings.Contains(request.Endpoint, "insights"):
@@ -120,7 +120,7 @@ func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, requ
 		limit = analyticsLimits.BasicAnalyticsPerMin
 		limitType = "basic_analytics"
 	}
-	
+
 	// Apply tier multipliers
 	if request.SubscriptionTier == "premium" {
 		limit = int(float64(limit) * 2.0)
@@ -129,11 +129,11 @@ func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, requ
 	} else if request.SubscriptionTier == "enterprise" {
 		limit = int(float64(limit) * 10.0)
 	}
-	
+
 	// Check analytics limit
-	analyticsKey := fmt.Sprintf("analytics:%s:%s:minute:%d", 
+	analyticsKey := fmt.Sprintf("analytics:%s:%s:minute:%d",
 		request.UserID, limitType, now.Unix()/60)
-	
+
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, analyticsKey)
 	pipe.Expire(ctx, analyticsKey, time.Minute)
@@ -141,9 +141,9 @@ func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, requ
 	if err != nil {
 		return nil, fmt.Errorf("failed to check analytics limit: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	if int(count) > limit {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -153,7 +153,7 @@ func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, requ
 			LimitType:  fmt.Sprintf("%s_limit", limitType),
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: limit - int(count),
@@ -166,7 +166,7 @@ func (g *GameSpecificRateLimiter) checkAnalyticsLimits(ctx context.Context, requ
 func (g *GameSpecificRateLimiter) checkExportLimits(ctx context.Context, request *GameRateLimitRequest) (*RateLimitResult, error) {
 	now := time.Now()
 	exportLimits := g.config.ExportLimits
-	
+
 	// Get tier-specific export limits
 	var dailyLimit int
 	switch request.SubscriptionTier {
@@ -181,18 +181,18 @@ func (g *GameSpecificRateLimiter) checkExportLimits(ctx context.Context, request
 	default:
 		dailyLimit = 1
 	}
-	
+
 	if dailyLimit == -1 {
 		return &RateLimitResult{
 			Allowed:   true,
 			LimitType: "unlimited_exports",
 		}, nil
 	}
-	
+
 	// Check daily export limit
-	exportKey := fmt.Sprintf("export:%s:day:%d", 
+	exportKey := fmt.Sprintf("export:%s:day:%d",
 		request.UserID, now.Unix()/86400)
-	
+
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, exportKey)
 	pipe.Expire(ctx, exportKey, 24*time.Hour)
@@ -200,9 +200,9 @@ func (g *GameSpecificRateLimiter) checkExportLimits(ctx context.Context, request
 	if err != nil {
 		return nil, fmt.Errorf("failed to check export limit: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	if int(count) > dailyLimit {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -212,7 +212,7 @@ func (g *GameSpecificRateLimiter) checkExportLimits(ctx context.Context, request
 			LimitType:  "export_daily_limit",
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: dailyLimit - int(count),
@@ -225,7 +225,7 @@ func (g *GameSpecificRateLimiter) checkExportLimits(ctx context.Context, request
 func (g *GameSpecificRateLimiter) checkRealTimeLimits(ctx context.Context, request *GameRateLimitRequest) (*RateLimitResult, error) {
 	now := time.Now()
 	analyticsLimits := g.config.AnalyticsLimits
-	
+
 	var limit int
 	switch request.SubscriptionTier {
 	case "free":
@@ -239,10 +239,10 @@ func (g *GameSpecificRateLimiter) checkRealTimeLimits(ctx context.Context, reque
 	default:
 		limit = analyticsLimits.RealTimeAnalyticsPerMin / 2
 	}
-	
-	realtimeKey := fmt.Sprintf("realtime:%s:minute:%d", 
+
+	realtimeKey := fmt.Sprintf("realtime:%s:minute:%d",
 		request.UserID, now.Unix()/60)
-	
+
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, realtimeKey)
 	pipe.Expire(ctx, realtimeKey, time.Minute)
@@ -250,9 +250,9 @@ func (g *GameSpecificRateLimiter) checkRealTimeLimits(ctx context.Context, reque
 	if err != nil {
 		return nil, fmt.Errorf("failed to check real-time limit: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	if int(count) > limit {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -262,7 +262,7 @@ func (g *GameSpecificRateLimiter) checkRealTimeLimits(ctx context.Context, reque
 			LimitType:  "realtime_limit",
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: limit - int(count),
@@ -274,25 +274,25 @@ func (g *GameSpecificRateLimiter) checkRealTimeLimits(ctx context.Context, reque
 // checkRegionLimits checks region-specific limits
 func (g *GameSpecificRateLimiter) checkRegionLimits(ctx context.Context, request *GameRateLimitRequest) (*RateLimitResult, error) {
 	now := time.Now()
-	
+
 	// Some regions might have specific limits due to Riot API constraints
 	var regionMultiplier float64
 	switch request.Region {
 	case "KR", "JP": // High traffic regions
 		regionMultiplier = 0.8
-	case "OCE", "TR": // Lower traffic regions  
+	case "OCE", "TR": // Lower traffic regions
 		regionMultiplier = 1.2
 	default:
 		regionMultiplier = 1.0
 	}
-	
+
 	tierLimits := g.getTierLimits(request.SubscriptionTier)
 	baseLimit := tierLimits.RequestsPerMinute
 	adjustedLimit := int(float64(baseLimit) * regionMultiplier)
-	
-	regionKey := fmt.Sprintf("region:%s:%s:minute:%d", 
+
+	regionKey := fmt.Sprintf("region:%s:%s:minute:%d",
 		request.Region, request.UserID, now.Unix()/60)
-	
+
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, regionKey)
 	pipe.Expire(ctx, regionKey, time.Minute)
@@ -300,9 +300,9 @@ func (g *GameSpecificRateLimiter) checkRegionLimits(ctx context.Context, request
 	if err != nil {
 		return nil, fmt.Errorf("failed to check region limit: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	if int(count) > adjustedLimit {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -312,7 +312,7 @@ func (g *GameSpecificRateLimiter) checkRegionLimits(ctx context.Context, request
 			LimitType:  "region_limit",
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: adjustedLimit - int(count),
@@ -347,13 +347,13 @@ func (g *GameSpecificRateLimiter) isRealTimeEndpoint(endpoint string) bool {
 		"/realtime",
 		"/streaming",
 	}
-	
+
 	for _, pattern := range realTimeEndpoints {
 		if strings.Contains(endpoint, pattern) {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -390,7 +390,7 @@ func (g *GameSpecificRateLimiter) getTierLimits(tier string) *TierLimits {
 // GetGameStats retrieves game-specific statistics
 func (g *GameSpecificRateLimiter) GetGameStats(ctx context.Context, userID, gameType string) (*GameStats, error) {
 	now := time.Now()
-	
+
 	// Get current counts for different operations
 	keys := []string{
 		fmt.Sprintf("analytics:%s:basic_analytics:minute:%d", userID, now.Unix()/60),
@@ -398,7 +398,7 @@ func (g *GameSpecificRateLimiter) GetGameStats(ctx context.Context, userID, game
 		fmt.Sprintf("analytics:%s:realtime_analytics:minute:%d", userID, now.Unix()/60),
 		fmt.Sprintf("export:%s:day:%d", userID, now.Unix()/86400),
 	}
-	
+
 	pipe := g.redis.Pipeline()
 	for _, key := range keys {
 		pipe.Get(ctx, key)
@@ -407,12 +407,12 @@ func (g *GameSpecificRateLimiter) GetGameStats(ctx context.Context, userID, game
 	if err != nil {
 		return nil, fmt.Errorf("failed to get game stats: %w", err)
 	}
-	
+
 	stats := &GameStats{
 		UserID:   userID,
 		GameType: gameType,
 	}
-	
+
 	// Parse results
 	if len(results) >= 4 {
 		if val, err := results[0].(*redis.StringCmd).Result(); err == nil {
@@ -436,24 +436,24 @@ func (g *GameSpecificRateLimiter) GetGameStats(ctx context.Context, userID, game
 			}
 		}
 	}
-	
+
 	return stats, nil
 }
 
 // GameStats contains game-specific usage statistics
 type GameStats struct {
-	UserID                        string `json:"user_id"`
-	GameType                      string `json:"game_type"`
-	BasicAnalyticsThisMinute      int    `json:"basic_analytics_this_minute"`
-	AdvancedAnalyticsThisMinute   int    `json:"advanced_analytics_this_minute"`
-	RealtimeAnalyticsThisMinute   int    `json:"realtime_analytics_this_minute"`
-	ExportsToday                  int    `json:"exports_today"`
+	UserID                      string `json:"user_id"`
+	GameType                    string `json:"game_type"`
+	BasicAnalyticsThisMinute    int    `json:"basic_analytics_this_minute"`
+	AdvancedAnalyticsThisMinute int    `json:"advanced_analytics_this_minute"`
+	RealtimeAnalyticsThisMinute int    `json:"realtime_analytics_this_minute"`
+	ExportsToday                int    `json:"exports_today"`
 }
 
 // ResetGameCounters resets all game-specific counters for a user
 func (g *GameSpecificRateLimiter) ResetGameCounters(ctx context.Context, userID string) error {
 	now := time.Now()
-	
+
 	// Get all keys for this user
 	patterns := []string{
 		fmt.Sprintf("analytics:%s:*", userID),
@@ -461,7 +461,7 @@ func (g *GameSpecificRateLimiter) ResetGameCounters(ctx context.Context, userID 
 		fmt.Sprintf("realtime:%s:*", userID),
 		fmt.Sprintf("region:*:%s:*", userID),
 	}
-	
+
 	var allKeys []string
 	for _, pattern := range patterns {
 		keys, err := g.redis.Keys(ctx, pattern).Result()
@@ -469,14 +469,14 @@ func (g *GameSpecificRateLimiter) ResetGameCounters(ctx context.Context, userID 
 			allKeys = append(allKeys, keys...)
 		}
 	}
-	
+
 	if len(allKeys) > 0 {
 		err := g.redis.Del(ctx, allKeys...).Err()
 		if err != nil {
 			return fmt.Errorf("failed to reset game counters: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -484,11 +484,11 @@ func (g *GameSpecificRateLimiter) ResetGameCounters(ctx context.Context, userID 
 func (g *GameSpecificRateLimiter) CheckBurstLimit(ctx context.Context, userID, subscriptionTier string) (*RateLimitResult, error) {
 	tierLimits := g.getTierLimits(subscriptionTier)
 	now := time.Now()
-	
+
 	// Check requests in the last 10 seconds (burst window)
 	burstWindow := 10 * time.Second
 	burstKey := fmt.Sprintf("burst:%s:10s:%d", userID, now.Unix()/10)
-	
+
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, burstKey)
 	pipe.Expire(ctx, burstKey, burstWindow)
@@ -496,9 +496,9 @@ func (g *GameSpecificRateLimiter) CheckBurstLimit(ctx context.Context, userID, s
 	if err != nil {
 		return nil, fmt.Errorf("failed to check burst limit: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	if int(count) > tierLimits.BurstLimit {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -508,7 +508,7 @@ func (g *GameSpecificRateLimiter) CheckBurstLimit(ctx context.Context, userID, s
 			LimitType:  "burst_limit",
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: tierLimits.BurstLimit - int(count),

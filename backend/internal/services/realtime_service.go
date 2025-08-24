@@ -8,30 +8,30 @@ import (
 	"sync"
 	"time"
 
-	"github.com/herald/internal/models"
-	"github.com/herald/internal/websocket"
+	"github.com/herald-lol/herald/backend/internal/models"
+	"github.com/herald-lol/herald/backend/internal/websocket"
 )
 
 // RealtimeService manages real-time gaming data updates
 type RealtimeService struct {
-	hub          *websocket.Hub
-	riotService  *RiotService
+	hub              *websocket.Hub
+	riotService      *RiotService
 	analyticsService *AnalyticsService
-	userService  *UserService
-	
+	userService      *UserService
+
 	// Active live matches being tracked
-	liveMatches  map[string]*LiveMatchTracker
-	matchesMu    sync.RWMutex
-	
+	liveMatches map[string]*LiveMatchTracker
+	matchesMu   sync.RWMutex
+
 	// Performance update intervals
 	performanceUpdateInterval time.Duration
 	matchUpdateInterval       time.Duration
-	
+
 	// Channels for processing updates
 	matchUpdates       chan MatchUpdate
 	performanceUpdates chan PerformanceUpdate
 	rankUpdates        chan RankUpdate
-	
+
 	// Context for graceful shutdown
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -39,13 +39,13 @@ type RealtimeService struct {
 
 // LiveMatchTracker tracks live match data and participants
 type LiveMatchTracker struct {
-	GameID       string                    `json:"game_id"`
-	StartTime    time.Time                 `json:"start_time"`
-	GameMode     string                    `json:"game_mode"`
-	Participants []LiveParticipantData     `json:"participants"`
-	LastUpdate   time.Time                 `json:"last_update"`
-	Watchers     map[string]bool          `json:"-"` // UserIDs watching this match
-	UpdateCount  int                      `json:"update_count"`
+	GameID       string                `json:"game_id"`
+	StartTime    time.Time             `json:"start_time"`
+	GameMode     string                `json:"game_mode"`
+	Participants []LiveParticipantData `json:"participants"`
+	LastUpdate   time.Time             `json:"last_update"`
+	Watchers     map[string]bool       `json:"-"` // UserIDs watching this match
+	UpdateCount  int                   `json:"update_count"`
 	mu           sync.RWMutex
 }
 
@@ -84,53 +84,53 @@ type PerformanceUpdate struct {
 }
 
 type RankUpdate struct {
-	UserID   string
-	OldRank  string
-	NewRank  string
-	LP       int
-	Series   *RankedSeries
+	UserID  string
+	OldRank string
+	NewRank string
+	LP      int
+	Series  *RankedSeries
 }
 
 type RankedSeries struct {
-	Target  string `json:"target"`
-	Wins    int    `json:"wins"`
-	Losses  int    `json:"losses"`
+	Target   string `json:"target"`
+	Wins     int    `json:"wins"`
+	Losses   int    `json:"losses"`
 	Progress string `json:"progress"`
 }
 
 // NewRealtimeService creates a new realtime service
 func NewRealtimeService(hub *websocket.Hub, riotService *RiotService, analyticsService *AnalyticsService, userService *UserService) *RealtimeService {
 	ctx, cancel := context.WithCancel(context.Background())
-	
+
 	service := &RealtimeService{
-		hub:                      hub,
-		riotService:             riotService,
-		analyticsService:        analyticsService,
-		userService:             userService,
-		liveMatches:             make(map[string]*LiveMatchTracker),
+		hub:                       hub,
+		riotService:               riotService,
+		analyticsService:          analyticsService,
+		userService:               userService,
+		liveMatches:               make(map[string]*LiveMatchTracker),
 		performanceUpdateInterval: 30 * time.Second,
 		matchUpdateInterval:       15 * time.Second,
-		matchUpdates:             make(chan MatchUpdate, 1000),
-		performanceUpdates:       make(chan PerformanceUpdate, 500),
-		rankUpdates:              make(chan RankUpdate, 100),
-		ctx:                      ctx,
-		cancel:                   cancel,
+		matchUpdates:              make(chan MatchUpdate, 1000),
+		performanceUpdates:        make(chan PerformanceUpdate, 500),
+		rankUpdates:               make(chan RankUpdate, 100),
+		ctx:                       ctx,
+		cancel:                    cancel,
 	}
-	
+
 	return service
 }
 
 // Start begins the realtime service processing
 func (rs *RealtimeService) Start() {
 	log.Println("Starting Herald.lol Realtime Service...")
-	
+
 	// Start background processors
 	go rs.processMatchUpdates()
 	go rs.processPerformanceUpdates()
 	go rs.processRankUpdates()
 	go rs.trackLiveMatches()
 	go rs.periodicPerformanceUpdates()
-	
+
 	log.Println("Realtime Service started successfully")
 }
 
@@ -138,7 +138,7 @@ func (rs *RealtimeService) Start() {
 func (rs *RealtimeService) Stop() {
 	log.Println("Stopping Realtime Service...")
 	rs.cancel()
-	
+
 	// Close channels
 	close(rs.matchUpdates)
 	close(rs.performanceUpdates)
@@ -149,7 +149,7 @@ func (rs *RealtimeService) Stop() {
 func (rs *RealtimeService) StartTrackingMatch(gameID, userID string) error {
 	rs.matchesMu.Lock()
 	defer rs.matchesMu.Unlock()
-	
+
 	// Check if match is already being tracked
 	if tracker, exists := rs.liveMatches[gameID]; exists {
 		tracker.mu.Lock()
@@ -157,13 +157,13 @@ func (rs *RealtimeService) StartTrackingMatch(gameID, userID string) error {
 		tracker.mu.Unlock()
 		return nil
 	}
-	
+
 	// Get live match data from Riot API
 	liveGameInfo, err := rs.riotService.GetLiveGame(userID)
 	if err != nil {
 		return fmt.Errorf("failed to get live game info: %w", err)
 	}
-	
+
 	// Create new tracker
 	tracker := &LiveMatchTracker{
 		GameID:     liveGameInfo.GameID,
@@ -172,7 +172,7 @@ func (rs *RealtimeService) StartTrackingMatch(gameID, userID string) error {
 		LastUpdate: time.Now(),
 		Watchers:   map[string]bool{userID: true},
 	}
-	
+
 	// Convert participants
 	for _, participant := range liveGameInfo.Participants {
 		tracker.Participants = append(tracker.Participants, LiveParticipantData{
@@ -186,9 +186,9 @@ func (rs *RealtimeService) StartTrackingMatch(gameID, userID string) error {
 			LastUpdate:     time.Now(),
 		})
 	}
-	
+
 	rs.liveMatches[gameID] = tracker
-	
+
 	log.Printf("Started tracking live match %s for user %s", gameID, userID)
 	return nil
 }
@@ -197,17 +197,17 @@ func (rs *RealtimeService) StartTrackingMatch(gameID, userID string) error {
 func (rs *RealtimeService) StopTrackingMatch(gameID, userID string) {
 	rs.matchesMu.Lock()
 	defer rs.matchesMu.Unlock()
-	
+
 	tracker, exists := rs.liveMatches[gameID]
 	if !exists {
 		return
 	}
-	
+
 	tracker.mu.Lock()
 	delete(tracker.Watchers, userID)
 	hasWatchers := len(tracker.Watchers) > 0
 	tracker.mu.Unlock()
-	
+
 	// If no one is watching, remove the tracker
 	if !hasWatchers {
 		delete(rs.liveMatches, gameID)
@@ -223,22 +223,22 @@ func (rs *RealtimeService) SendPerformanceUpdate(userID string) {
 		log.Printf("Error getting recent matches for performance update: %v", err)
 		return
 	}
-	
+
 	if len(recentMatches.Matches) == 0 {
 		return
 	}
-	
+
 	// Calculate current session performance
 	var totalKDA, totalCS, totalVision, totalDamage, totalGold float64
 	matchCount := float64(len(recentMatches.Matches))
-	
+
 	for _, match := range recentMatches.Matches {
 		// Get detailed match data
 		matchDetail, err := rs.riotService.GetMatchDetails(match.MatchID)
 		if err != nil {
 			continue
 		}
-		
+
 		// Find user's participant data
 		for _, participant := range matchDetail.Info.Participants {
 			if participant.SummonerID == userID {
@@ -246,7 +246,7 @@ func (rs *RealtimeService) SendPerformanceUpdate(userID string) {
 				if participant.Deaths > 0 {
 					kda = kda / float64(participant.Deaths)
 				}
-				
+
 				totalKDA += kda
 				totalCS += float64(participant.TotalMinionsKilled + participant.NeutralMinionsKilled)
 				totalVision += float64(participant.VisionScore)
@@ -256,24 +256,24 @@ func (rs *RealtimeService) SendPerformanceUpdate(userID string) {
 			}
 		}
 	}
-	
+
 	// Calculate averages
 	avgKDA := totalKDA / matchCount
 	avgCS := totalCS / matchCount
 	avgVision := totalVision / matchCount
 	avgDamage := totalDamage / matchCount
 	avgGold := totalGold / matchCount
-	
+
 	// Get historical averages for comparison
 	historicalStats, err := rs.analyticsService.GetPlayerStats(userID, 30) // 30 days
 	if err != nil {
 		log.Printf("Error getting historical stats: %v", err)
 		return
 	}
-	
+
 	// Generate improvement suggestion
 	improvement := rs.generateImprovementSuggestion(avgKDA, avgCS, avgVision, historicalStats)
-	
+
 	// Create performance update
 	update := PerformanceUpdate{
 		UserID: userID,
@@ -284,11 +284,11 @@ func (rs *RealtimeService) SendPerformanceUpdate(userID string) {
 			CSPerMinute:    avgCS / 30.0, // Assuming 30min average game
 			VisionScore:    avgVision,
 			DamageShare:    (avgDamage / (avgDamage + 40000)) * 100, // Rough team damage estimate
-			GoldEfficiency: (avgGold / 15000) * 100, // Rough efficiency calculation
+			GoldEfficiency: (avgGold / 15000) * 100,                 // Rough efficiency calculation
 			Improvement:    improvement,
 		},
 	}
-	
+
 	// Send update
 	select {
 	case rs.performanceUpdates <- update:
@@ -305,7 +305,7 @@ func (rs *RealtimeService) SendRankUpdate(userID, oldRank, newRank string, lp in
 		NewRank: newRank,
 		LP:      lp,
 	}
-	
+
 	select {
 	case rs.rankUpdates <- update:
 	default:
@@ -327,12 +327,12 @@ func (rs *RealtimeService) processMatchUpdates() {
 				MatchID: update.Data.GameID,
 				Data:    update.Data,
 			}
-			
+
 			// Send to specific user
 			if update.UserID != "" {
 				rs.hub.BroadcastToUser(update.UserID, message)
 			}
-			
+
 			// Also send to anyone watching this match
 			rs.hub.BroadcastToMatch(update.GameID, message)
 		}
@@ -350,7 +350,7 @@ func (rs *RealtimeService) processPerformanceUpdates() {
 				UserID: update.UserID,
 				Data:   update.Data,
 			}
-			
+
 			rs.hub.BroadcastToUser(update.UserID, message)
 		}
 	}
@@ -372,7 +372,7 @@ func (rs *RealtimeService) processRankUpdates() {
 					"series":   update.Series,
 				},
 			}
-			
+
 			rs.hub.BroadcastToUser(update.UserID, message)
 		}
 	}
@@ -381,7 +381,7 @@ func (rs *RealtimeService) processRankUpdates() {
 func (rs *RealtimeService) trackLiveMatches() {
 	ticker := time.NewTicker(rs.matchUpdateInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-rs.ctx.Done():
@@ -395,7 +395,7 @@ func (rs *RealtimeService) trackLiveMatches() {
 func (rs *RealtimeService) periodicPerformanceUpdates() {
 	ticker := time.NewTicker(rs.performanceUpdateInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-rs.ctx.Done():
@@ -404,7 +404,7 @@ func (rs *RealtimeService) periodicPerformanceUpdates() {
 			// Send performance updates to all connected users
 			stats := rs.hub.GetStats()
 			log.Printf("Sending periodic performance updates to %d users", stats.ActiveConnections)
-			
+
 			// This would typically be triggered by actual game events
 			// For now, we'll skip automatic updates to avoid spam
 		}
@@ -418,13 +418,13 @@ func (rs *RealtimeService) updateLiveMatches() {
 		matchesToUpdate[gameID] = tracker
 	}
 	rs.matchesMu.RUnlock()
-	
+
 	for gameID, tracker := range matchesToUpdate {
 		// Skip if updated recently
 		if time.Since(tracker.LastUpdate) < rs.matchUpdateInterval {
 			continue
 		}
-		
+
 		// Get updated match data (this would typically come from Riot's spectator API)
 		// For now, we'll simulate updates
 		rs.simulateMatchUpdate(gameID, tracker)
@@ -434,19 +434,19 @@ func (rs *RealtimeService) updateLiveMatches() {
 func (rs *RealtimeService) simulateMatchUpdate(gameID string, tracker *LiveMatchTracker) {
 	tracker.mu.Lock()
 	defer tracker.mu.Unlock()
-	
+
 	// Simulate some updates
 	tracker.UpdateCount++
 	tracker.LastUpdate = time.Now()
-	
+
 	// Create match update data
 	updateData := websocket.MatchUpdateData{
-		GameID:   gameID,
-		Status:   "in_progress",
-		GameTime: int(time.Since(tracker.StartTime).Minutes()),
+		GameID:       gameID,
+		Status:       "in_progress",
+		GameTime:     int(time.Since(tracker.StartTime).Minutes()),
 		Participants: make([]websocket.ParticipantData, len(tracker.Participants)),
 	}
-	
+
 	// Convert participants
 	for i, participant := range tracker.Participants {
 		updateData.Participants[i] = websocket.ParticipantData{
@@ -462,7 +462,7 @@ func (rs *RealtimeService) simulateMatchUpdate(gameID string, tracker *LiveMatch
 			KDA:          participant.KDA,
 		}
 	}
-	
+
 	// Send update to all watchers
 	for userID := range tracker.Watchers {
 		update := MatchUpdate{
@@ -471,7 +471,7 @@ func (rs *RealtimeService) simulateMatchUpdate(gameID string, tracker *LiveMatch
 			Data:     updateData,
 			Priority: 2, // Medium priority
 		}
-		
+
 		select {
 		case rs.matchUpdates <- update:
 		default:
@@ -482,22 +482,22 @@ func (rs *RealtimeService) simulateMatchUpdate(gameID string, tracker *LiveMatch
 
 func (rs *RealtimeService) generateImprovementSuggestion(currentKDA, currentCS, currentVision float64, historical *models.PlayerStats) string {
 	suggestions := []string{}
-	
-	if currentKDA < historical.AverageKDA * 0.9 {
+
+	if currentKDA < historical.AverageKDA*0.9 {
 		suggestions = append(suggestions, "Focus on positioning and avoid risky trades")
 	}
-	
-	if currentCS < historical.AverageCS * 0.9 {
+
+	if currentCS < historical.AverageCS*0.9 {
 		suggestions = append(suggestions, "Practice last-hitting minions and farming efficiency")
 	}
-	
-	if currentVision < historical.AverageVisionScore * 0.9 {
+
+	if currentVision < historical.AverageVisionScore*0.9 {
 		suggestions = append(suggestions, "Place more wards and buy control wards")
 	}
-	
+
 	if len(suggestions) == 0 {
 		return "Great performance! Keep up the consistency"
 	}
-	
+
 	return suggestions[0] // Return first suggestion for now
 }

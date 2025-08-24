@@ -43,7 +43,7 @@ func TestStreamingService(t *testing.T) {
 
 func TestStreamingEnvironmentConfigs(t *testing.T) {
 	environments := []string{"development", "staging", "production"}
-	
+
 	for _, env := range environments {
 		config := GetStreamingConfigByEnvironment(env)
 		if config == nil {
@@ -73,7 +73,7 @@ func TestStreamingEnvironmentConfigs(t *testing.T) {
 
 func TestHeraldStreamingTargets(t *testing.T) {
 	targets := GetHeraldStreamingTargets()
-	
+
 	// Test latency targets
 	if targets.MessageDeliveryLatency > 1*time.Second {
 		t.Error("Message delivery latency should be under 1 second for gaming")
@@ -124,7 +124,7 @@ func TestHeraldStreamingTargets(t *testing.T) {
 
 func TestSubscriptionStreamingConfig(t *testing.T) {
 	configs := GetSubscriptionStreamingConfig()
-	
+
 	// Test all subscription tiers exist
 	expectedTiers := []string{"free", "premium", "pro", "enterprise"}
 	for _, tier := range expectedTiers {
@@ -181,7 +181,7 @@ func TestSubscriptionStreamingConfig(t *testing.T) {
 
 func TestRegionalConfigs(t *testing.T) {
 	regions := GetRegionalConfigs()
-	
+
 	// Test major regions exist
 	expectedRegions := []string{"na", "euw", "kr", "cn"}
 	for _, region := range expectedRegions {
@@ -236,7 +236,7 @@ func TestRegionalConfigs(t *testing.T) {
 
 func TestDefaultFeatureConfig(t *testing.T) {
 	features := GetDefaultFeatureConfig()
-	
+
 	if features.LiveMatchFeatures == nil {
 		t.Fatal("Expected live match features configuration")
 	}
@@ -314,7 +314,7 @@ func TestDefaultFeatureConfig(t *testing.T) {
 
 func TestStreamingMetrics(t *testing.T) {
 	metrics := NewStreamingMetrics()
-	
+
 	if metrics.StartTime.IsZero() {
 		t.Error("Metrics start time should be set")
 	}
@@ -362,7 +362,7 @@ func TestStreamingMetrics(t *testing.T) {
 func TestEventProcessors(t *testing.T) {
 	// Test LiveMatchEventProcessor
 	liveProcessor := &LiveMatchEventProcessor{}
-	
+
 	if liveProcessor.GetEventType() != "live_match_event" {
 		t.Error("Live match processor should return correct event type")
 	}
@@ -373,7 +373,7 @@ func TestEventProcessors(t *testing.T) {
 
 	// Test PlayerUpdateProcessor
 	playerProcessor := &PlayerUpdateProcessor{}
-	
+
 	if playerProcessor.GetEventType() != "player_update" {
 		t.Error("Player update processor should return correct event type")
 	}
@@ -384,7 +384,7 @@ func TestEventProcessors(t *testing.T) {
 
 	// Test AnalyticsUpdateProcessor
 	analyticsProcessor := &AnalyticsUpdateProcessor{}
-	
+
 	if analyticsProcessor.GetEventType() != "analytics_update" {
 		t.Error("Analytics update processor should return correct event type")
 	}
@@ -408,7 +408,7 @@ func TestEventProcessors(t *testing.T) {
 func TestLiveMatchEventTypes(t *testing.T) {
 	// Test different live match event types
 	eventTypes := []string{
-		"kill", "death", "objective_taken", "item_purchased", 
+		"kill", "death", "objective_taken", "item_purchased",
 		"level_up", "team_fight", "game_end",
 	}
 
@@ -473,12 +473,12 @@ func TestPlayerUpdateTypes(t *testing.T) {
 func TestNotificationTypes(t *testing.T) {
 	// Test different notification types
 	notification := &Notification{
-		ID:       "test-notification-123",
-		Type:     "achievement",
-		Title:    "New Achievement!",
-		Message:  "You unlocked a new achievement",
-		Priority: "normal",
-		Category: "gaming",
+		ID:        "test-notification-123",
+		Type:      "achievement",
+		Title:     "New Achievement!",
+		Message:   "You unlocked a new achievement",
+		Priority:  "normal",
+		Category:  "gaming",
 		CreatedAt: time.Now(),
 	}
 
@@ -512,9 +512,9 @@ func TestNotificationTypes(t *testing.T) {
 
 func TestStreamingServiceCompleteness(t *testing.T) {
 	// Test that our streaming service implementation is complete for Herald.lol
-	
+
 	config := GetDefaultStreamingConfig()
-	
+
 	// Test core streaming capabilities
 	if !config.EnableWebSocket {
 		t.Error("WebSocket streaming should be enabled")
@@ -538,7 +538,7 @@ func TestStreamingServiceCompleteness(t *testing.T) {
 
 	// Test performance targets for gaming platform
 	targets := GetHeraldStreamingTargets()
-	
+
 	// Test latency requirements for competitive gaming
 	if targets.MessageDeliveryLatency > 1*time.Second {
 		t.Error("Message delivery latency too high for competitive gaming")

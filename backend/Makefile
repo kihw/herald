@@ -1,6 +1,7 @@
-# Herald.lol Backend Testing and Development Makefile
+# Herald.lol Gaming Analytics Platform - Makefile
+# Gaming-optimized development and deployment commands
 
-.PHONY: test test-verbose test-coverage test-race test-bench test-gaming help clean deps lint fmt build run-tests
+.PHONY: help build test clean docker sonar gaming-setup test-verbose test-coverage test-race test-bench test-gaming run-tests
 
 # Default target
 help:
@@ -246,3 +247,65 @@ test-stats:
 	@echo ""
 	@echo "Gaming Test Coverage:"
 	@grep -r "KDA\|CS.*min\|Vision\|Damage" . --include="*_test.go" | wc -l | awk '{print "  " $$1 " gaming-specific tests"}'
+
+# 🎮 Gaming colors for better terminal experience
+RED := \033[31m
+GREEN := \033[32m
+YELLOW := \033[33m
+BLUE := \033[34m
+PURPLE := \033[35m
+GOLD := \033[1;33m
+NC := \033[0m
+
+# Gaming configuration
+GAMING_PERFORMANCE_TARGET := 5000
+GAMING_PROJECT_NAME := herald-gaming-analytics
+DOCKER_REGISTRY := herald-gaming
+KUBERNETES_NAMESPACE := herald-production
+
+# 📊 SonarQube Gaming Quality
+sonar-start: ## 📊 Start Herald.lol SonarQube gaming analysis
+	@echo "$(GOLD)📊 Starting Herald.lol SonarQube gaming analysis...$(NC)"
+	./scripts/sonarqube-local.sh start
+	@echo "$(GREEN)✅ SonarQube gaming analysis started!$(NC)"
+
+sonar-setup: ## 🎮 Setup Herald.lol gaming quality profiles
+	@echo "$(GOLD)🎮 Setting up Herald.lol gaming quality profiles...$(NC)"
+	./scripts/sonarqube-local.sh setup
+	@echo "$(GREEN)✅ Gaming quality profiles configured!$(NC)"
+
+sonar-analyze: ## 🔍 Run Herald.lol gaming code analysis
+	@echo "$(GOLD)🔍 Running Herald.lol gaming code analysis...$(NC)"
+	./scripts/sonarqube-local.sh analyze
+	@echo "$(GREEN)✅ Gaming code analysis completed!$(NC)"
+	@echo "$(YELLOW)🌐 Gaming Dashboard: http://localhost:9000$(NC)"
+
+sonar-full: ## 🎯 Complete Herald.lol SonarQube gaming workflow
+	@echo "$(GOLD)🎯 Running complete Herald.lol gaming quality analysis...$(NC)"
+	./scripts/sonarqube-local.sh full
+	@echo "$(GREEN)✅ Complete gaming analysis finished!$(NC)"
+
+sonar-stop: ## 🛑 Stop Herald.lol SonarQube
+	@echo "$(GOLD)🛑 Stopping Herald.lol SonarQube...$(NC)"
+	./scripts/sonarqube-local.sh stop
+	@echo "$(GREEN)✅ SonarQube stopped!$(NC)"
+
+sonar-cleanup: ## 🧹 Clean up Herald.lol SonarQube data
+	@echo "$(GOLD)🧹 Cleaning up Herald.lol SonarQube data...$(NC)"
+	./scripts/sonarqube-local.sh cleanup
+	@echo "$(GREEN)✅ SonarQube data cleaned!$(NC)"
+
+# 🔧 Claude Code Integration
+sync-hooks: ## 🔧 Sync Herald.lol Claude hooks
+	@echo "$(GOLD)🔧 Synchronizing Herald.lol Claude hooks...$(NC)"
+	./scripts/sync-claude-hooks.sh sync
+	@echo "$(GREEN)✅ Claude hooks synchronized!$(NC)"
+
+test-hooks: ## 🧪 Test Herald.lol Claude hooks
+	@echo "$(GOLD)🧪 Testing Herald.lol Claude hooks...$(NC)"
+	./scripts/sync-claude-hooks.sh test
+	@echo "$(GREEN)✅ Claude hooks tested!$(NC)"
+
+hooks-status: ## 📊 Show Herald.lol Claude hooks status
+	@echo "$(GOLD)📊 Herald.lol Claude hooks status...$(NC)"
+	./scripts/sync-claude-hooks.sh status

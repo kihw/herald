@@ -1,0 +1,164 @@
+# Herald.lol gRPC Code Generation Makefile
+
+PROTO_PATH = api/proto
+GENERATED_PATH = internal/grpc/gen
+GO_MODULE = github.com/herald-lol/herald/backend
+
+# Protocol Buffer and gRPC tools
+PROTOC = protoc
+PROTOC_GO = protoc-gen-go
+PROTOC_GO_GRPC = protoc-gen-go-grpc
+
+# Version requirements
+PROTOC_VERSION = 3.21.0
+PROTOC_GO_VERSION = v1.31.0
+PROTOC_GO_GRPC_VERSION = v1.3.0
+
+.PHONY: all clean install-tools generate-proto check-tools help
+
+all: check-tools generate-proto
+
+help:
+	@echo "Herald.lol gRPC Makefile"
+	@echo ""
+	@echo "Available targets:"
+	@echo "  all                - Check tools and generate all protobuf code"
+	@echo "  install-tools      - Install required protobuf and gRPC tools"
+	@echo "  check-tools        - Check if required tools are installed"
+	@echo "  generate-proto     - Generate Go code from .proto files"
+	@echo "  clean              - Remove generated files"
+	@echo "  help               - Show this help message"
+
+# Install required tools
+install-tools:
+	@echo "🛠️  Installing Herald.lol gRPC tools..."
+	@echo "Installing protoc-gen-go..."
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GO_VERSION)
+	@echo "Installing protoc-gen-go-grpc..."
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@$(PROTOC_GO_GRPC_VERSION)
+	@echo "✅ Tools installed successfully!"
+	@echo ""
+	@echo "⚠️  Note: You still need to install protoc manually:"
+	@echo "   - Linux: apt install protobuf-compiler"
+	@echo "   - macOS: brew install protobuf" 
+	@echo "   - Windows: Download from https://github.com/protocolbuffers/protobuf/releases"
+
+# Check if required tools are installed
+check-tools:
+	@echo "🔍 Checking Herald.lol gRPC tools..."
+	@command -v protoc >/dev/null 2>&1 || (echo "❌ protoc not found. Please install Protocol Buffers compiler." && exit 1)
+	@command -v protoc-gen-go >/dev/null 2>&1 || (echo "❌ protoc-gen-go not found. Run 'make install-tools'" && exit 1)
+	@command -v protoc-gen-go-grpc >/dev/null 2>&1 || (echo "❌ protoc-gen-go-grpc not found. Run 'make install-tools'" && exit 1)
+	@echo "✅ All tools are installed!"
+
+# Generate Go code from proto files
+generate-proto: check-tools
+	@echo "🎮 Generating Herald.lol gRPC code..."
+	
+	# Create output directories
+	@mkdir -p $(GENERATED_PATH)/analytics/v1
+	@mkdir -p $(GENERATED_PATH)/match/v1
+	@mkdir -p $(GENERATED_PATH)/riot/v1
+	
+	# Generate Analytics service
+	@echo "Generating Analytics service..."
+	$(PROTOC) --go_out=$(GENERATED_PATH)/analytics/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/analytics/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/analytics.proto
+	
+	# Generate Match service  
+	@echo "Generating Match service..."
+	$(PROTOC) --go_out=$(GENERATED_PATH)/match/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/match/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/match.proto
+		
+	# Generate Riot service
+	@echo "Generating Riot service..."
+	$(PROTOC) --go_out=$(GENERATED_PATH)/riot/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/riot/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/riot.proto
+	
+	@echo "✅ Herald.lol gRPC code generation completed!"
+	@echo ""
+	@echo "Generated files:"
+	@find $(GENERATED_PATH) -name "*.pb.go" -o -name "*_grpc.pb.go" | sed 's/^/  - /'
+
+# Clean generated files
+clean:
+	@echo "🧹 Cleaning generated Herald.lol gRPC files..."
+	@rm -rf $(GENERATED_PATH)
+	@echo "✅ Generated files removed!"
+
+# Development helpers
+.PHONY: dev-generate watch format lint
+
+# Quick development generation (with auto-clean)
+dev-generate: clean generate-proto
+	@echo "🚀 Development gRPC generation complete!"
+
+# Watch for proto file changes (requires inotify-tools on Linux)
+watch:
+	@echo "👀 Watching for Herald.lol proto file changes..."
+	@command -v inotifywait >/dev/null 2>&1 || (echo "❌ inotifywait not found. Install inotify-tools" && exit 1)
+	@while inotifywait -r -e modify $(PROTO_PATH); do \
+		echo "📝 Proto file changed, regenerating..."; \
+		make dev-generate; \
+	done
+
+# Format proto files (requires clang-format)
+format:
+	@echo "🎨 Formatting Herald.lol proto files..."
+	@command -v clang-format >/dev/null 2>&1 || (echo "⚠️  clang-format not found, skipping formatting" && exit 0)
+	@find $(PROTO_PATH) -name "*.proto" -exec clang-format -i {} \;
+	@echo "✅ Proto files formatted!"
+
+# Lint proto files (requires buf)
+lint:
+	@echo "🔍 Linting Herald.lol proto files..."
+	@command -v buf >/dev/null 2>&1 || (echo "⚠️  buf not found. Install from https://buf.build/docs/installation" && exit 0)
+	@buf lint $(PROTO_PATH)
+	@echo "✅ Proto files linted!"
+
+# Gaming-specific targets
+.PHONY: generate-analytics generate-match generate-riot
+
+generate-analytics: check-tools
+	@echo "🎮 Generating Analytics service for gaming analytics..."
+	@mkdir -p $(GENERATED_PATH)/analytics/v1
+	$(PROTOC) --go_out=$(GENERATED_PATH)/analytics/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/analytics/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/analytics.proto
+
+generate-match: check-tools
+	@echo "⚔️  Generating Match service for League of Legends matches..."
+	@mkdir -p $(GENERATED_PATH)/match/v1
+	$(PROTOC) --go_out=$(GENERATED_PATH)/match/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/match/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/match.proto
+
+generate-riot: check-tools  
+	@echo "🎯 Generating Riot API service for gaming data integration..."
+	@mkdir -p $(GENERATED_PATH)/riot/v1
+	$(PROTOC) --go_out=$(GENERATED_PATH)/riot/v1 --go_opt=paths=source_relative \
+		--go-grpc_out=$(GENERATED_PATH)/riot/v1 --go-grpc_opt=paths=source_relative \
+		--proto_path=$(PROTO_PATH) \
+		$(PROTO_PATH)/riot.proto
+
+# Performance and monitoring
+.PHONY: benchmark test-grpc
+
+benchmark:
+	@echo "⚡ Running Herald.lol gRPC performance benchmarks..."
+	@echo "🎯 Target: <5s analytics response time"
+	@echo "🎮 Testing gaming-optimized gRPC services..."
+	# Add benchmark commands here
+
+test-grpc:
+	@echo "🧪 Testing Herald.lol gRPC services..."
+	@echo "🎮 Running gaming analytics tests..."
+	# Add gRPC testing commands here

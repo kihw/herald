@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"math"
 	"strings"
-	"time"
 
-	"herald.lol/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // Herald.lol Gaming Analytics - Engine Helper Functions
@@ -38,7 +37,7 @@ func (a *AnalyticsEngine) calculateTeamDamage(match *riot.Match, teamID int) int
 // normalizeRole converts various role representations to standard roles
 func (a *AnalyticsEngine) normalizeRole(role string) string {
 	role = strings.ToUpper(strings.TrimSpace(role))
-	
+
 	roleMap := map[string]string{
 		"TOP":     "TOP",
 		"JUNGLE":  "JUNGLE",
@@ -51,7 +50,7 @@ func (a *AnalyticsEngine) normalizeRole(role string) string {
 		"SUPPORT": "SUPPORT",
 		"SUPP":    "SUPPORT",
 	}
-	
+
 	if normalized, exists := roleMap[role]; exists {
 		return normalized
 	}
@@ -122,7 +121,7 @@ func (a *AnalyticsEngine) calculateMasteryLevel(performance *ChampionPerformance
 // calculateChampionTrend calculates performance trend for a specific champion
 func (a *AnalyticsEngine) calculateChampionTrend(matches []*riot.Match, playerPUUID, champion string) string {
 	var championMatches []*riot.Match
-	
+
 	// Filter matches for this champion
 	for _, match := range matches {
 		participant := a.findPlayerInMatch(match, playerPUUID)
@@ -179,16 +178,16 @@ func (a *AnalyticsEngine) calculateTrendDirection(oldValue, newValue float64) st
 // getRankThresholds returns performance thresholds for a given rank
 func (a *AnalyticsEngine) getRankThresholds(rank string) *RankThresholds {
 	rank = strings.ToUpper(rank)
-	
+
 	if thresholds, exists := a.config.RankThresholds[rank]; exists {
 		return thresholds
 	}
-	
+
 	// Default to Silver thresholds if rank not found
 	if thresholds, exists := a.config.RankThresholds["SILVER"]; exists {
 		return thresholds
 	}
-	
+
 	// Fallback thresholds
 	return &RankThresholds{
 		MinKDA:         1.5,
@@ -401,7 +400,7 @@ type championAccumulator struct {
 
 // CalculateSkillGap calculates skill gap between current and target rank
 func (a *AnalyticsEngine) CalculateSkillGap(currentMetrics *CoreMetrics, targetRank string) *SkillGap {
-	currentThreshold := a.getRankThresholds("SILVER") // Default current
+	_ = a.getRankThresholds("SILVER") // Default current - unused for now
 	targetThreshold := a.getRankThresholds(targetRank)
 
 	return &SkillGap{

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type CounterPickHandler struct {
@@ -28,33 +28,33 @@ func (h *CounterPickHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		counterPicks.POST("/analyze", h.AnalyzeCounterPicks)
 		counterPicks.GET("/suggestions/:champion/:role", h.GetCounterSuggestions)
 		counterPicks.GET("/matchup/:champion1/:champion2", h.GetMatchupAnalysis)
-		
+
 		// Multi-target counter analysis
 		counterPicks.POST("/multi-target", h.AnalyzeMultiTargetCounters)
 		counterPicks.POST("/team-counters", h.GetTeamCounterStrategies)
-		
+
 		// Lane and phase specific
 		counterPicks.GET("/lane-counters/:champion/:role", h.GetLaneCounters)
 		counterPicks.GET("/teamfight-counters/:champion", h.GetTeamFightCounters)
 		counterPicks.GET("/item-counters/:champion", h.GetItemCounters)
 		counterPicks.GET("/playstyle-counters/:champion", h.GetPlayStyleCounters)
-		
+
 		// Meta and statistical data
 		counterPicks.GET("/meta-counters", h.GetMetaCounters)
 		counterPicks.GET("/winrate-data/:champion/:target", h.GetWinRateData)
 		counterPicks.GET("/popularity/:champion", h.GetCounterPopularity)
-		
+
 		// User-specific features
 		counterPicks.GET("/personalized/:summoner_id", h.GetPersonalizedCounters)
 		counterPicks.POST("/favorites", h.AddToFavorites)
 		counterPicks.GET("/favorites/:summoner_id", h.GetFavoriteCounters)
 		counterPicks.DELETE("/favorites/:id", h.RemoveFromFavorites)
-		
+
 		// Historical data and learning
 		counterPicks.GET("/history/:summoner_id", h.GetCounterHistory)
 		counterPicks.POST("/feedback", h.SubmitCounterFeedback)
 		counterPicks.GET("/performance/:summoner_id/:champion", h.GetCounterPerformance)
-		
+
 		// Ban strategy integration
 		counterPicks.POST("/ban-strategy", h.GetCounterBanStrategy)
 		counterPicks.GET("/threat-assessment", h.AssessThreatLevel)
@@ -70,10 +70,10 @@ func (h *CounterPickHandler) AnalyzeCounterPicks(c *gin.Context) {
 		PlayerChampionPool []string `json:"playerChampionPool"`
 		PlayerRank         string   `json:"playerRank"`
 		Preferences        struct {
-			PrioritizeLane     bool `json:"prioritizeLane"`
+			PrioritizeLane      bool `json:"prioritizeLane"`
 			PrioritizeTeamfight bool `json:"prioritizeTeamfight"`
-			PrioritizeMeta     bool `json:"prioritizeMeta"`
-			PrioritizeComfort  bool `json:"prioritizeComfort"`
+			PrioritizeMeta      bool `json:"prioritizeMeta"`
+			PrioritizeComfort   bool `json:"prioritizeComfort"`
 		} `json:"preferences"`
 	}
 
@@ -106,7 +106,7 @@ func (h *CounterPickHandler) AnalyzeCounterPicks(c *gin.Context) {
 func (h *CounterPickHandler) GetCounterSuggestions(c *gin.Context) {
 	champion := c.Param("champion")
 	role := c.Param("role")
-	
+
 	if champion == "" || role == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Champion and role are required"})
 		return
@@ -162,7 +162,7 @@ func (h *CounterPickHandler) GetCounterSuggestions(c *gin.Context) {
 func (h *CounterPickHandler) GetMatchupAnalysis(c *gin.Context) {
 	champion1 := c.Param("champion1")
 	champion2 := c.Param("champion2")
-	
+
 	if champion1 == "" || champion2 == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Both champions are required"})
 		return
@@ -171,7 +171,7 @@ func (h *CounterPickHandler) GetMatchupAnalysis(c *gin.Context) {
 	// Get query parameters
 	role := c.DefaultQuery("role", "mid")
 	gameMode := c.DefaultQuery("gameMode", "ranked")
-	
+
 	// Analyze both directions
 	analysis1, err := h.service.AnalyzeCounterPicks(
 		c.Request.Context(),
@@ -207,14 +207,14 @@ func (h *CounterPickHandler) GetMatchupAnalysis(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"champion1":        champion1,
-		"champion2":        champion2,
-		"role":            role,
+		"champion1":            champion1,
+		"champion2":            champion2,
+		"role":                 role,
 		"champion1VsChampion2": matchup1,
 		"champion2VsChampion1": matchup2,
-		"lanePhases":      analysis1.LaneCounters,
-		"teamFightData":   analysis1.TeamFightCounters,
-		"itemCounters":    analysis1.ItemCounters,
+		"lanePhases":           analysis1.LaneCounters,
+		"teamFightData":        analysis1.TeamFightCounters,
+		"itemCounters":         analysis1.ItemCounters,
 	})
 }
 
@@ -252,7 +252,7 @@ func (h *CounterPickHandler) AnalyzeMultiTargetCounters(c *gin.Context) {
 		if threatLevel == "" {
 			threatLevel = "medium"
 		}
-		
+
 		priority := target.Priority
 		if priority == 0 {
 			priority = 50
@@ -288,7 +288,7 @@ func (h *CounterPickHandler) GetTeamCounterStrategies(c *gin.Context) {
 			Champion string `json:"champion" binding:"required"`
 			Role     string `json:"role" binding:"required"`
 		} `json:"enemyTeam" binding:"required"`
-		OurTeam  []struct {
+		OurTeam []struct {
 			Champion string `json:"champion"`
 			Role     string `json:"role" binding:"required"`
 		} `json:"ourTeam"`
@@ -328,13 +328,13 @@ func (h *CounterPickHandler) GetTeamCounterStrategies(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"enemyTeam":        request.EnemyTeam,
-		"ourTeam":          request.OurTeam,
-		"teamStrategies":   analysis.TeamCounters,
-		"universalCounters": analysis.UniversalCounters,
+		"enemyTeam":          request.EnemyTeam,
+		"ourTeam":            request.OurTeam,
+		"teamStrategies":     analysis.TeamCounters,
+		"universalCounters":  analysis.UniversalCounters,
 		"banRecommendations": analysis.BanRecommendations,
-		"overallStrategy":  analysis.OverallStrategy,
-		"confidence":       analysis.Confidence,
+		"overallStrategy":    analysis.OverallStrategy,
+		"confidence":         analysis.Confidence,
 	})
 }
 
@@ -342,14 +342,14 @@ func (h *CounterPickHandler) GetTeamCounterStrategies(c *gin.Context) {
 func (h *CounterPickHandler) GetLaneCounters(c *gin.Context) {
 	champion := c.Param("champion")
 	role := c.Param("role")
-	
+
 	if champion == "" || role == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Champion and role are required"})
 		return
 	}
 
 	gameMode := c.DefaultQuery("gameMode", "ranked")
-	
+
 	analysis, err := h.service.AnalyzeCounterPicks(
 		c.Request.Context(),
 		champion,
@@ -373,7 +373,7 @@ func (h *CounterPickHandler) GetLaneCounters(c *gin.Context) {
 // GetTeamFightCounters gets team fight counter information
 func (h *CounterPickHandler) GetTeamFightCounters(c *gin.Context) {
 	champion := c.Param("champion")
-	
+
 	if champion == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Champion is required"})
 		return
@@ -381,7 +381,7 @@ func (h *CounterPickHandler) GetTeamFightCounters(c *gin.Context) {
 
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	role := c.DefaultQuery("role", "mid")
-	
+
 	analysis, err := h.service.AnalyzeCounterPicks(
 		c.Request.Context(),
 		champion,
@@ -395,16 +395,16 @@ func (h *CounterPickHandler) GetTeamFightCounters(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"targetChampion":     champion,
-		"teamFightCounters":  analysis.TeamFightCounters,
-		"confidence":         analysis.Confidence,
+		"targetChampion":    champion,
+		"teamFightCounters": analysis.TeamFightCounters,
+		"confidence":        analysis.Confidence,
 	})
 }
 
 // GetItemCounters gets item-based counter recommendations
 func (h *CounterPickHandler) GetItemCounters(c *gin.Context) {
 	champion := c.Param("champion")
-	
+
 	if champion == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Champion is required"})
 		return
@@ -412,7 +412,7 @@ func (h *CounterPickHandler) GetItemCounters(c *gin.Context) {
 
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	role := c.DefaultQuery("role", "mid")
-	
+
 	analysis, err := h.service.AnalyzeCounterPicks(
 		c.Request.Context(),
 		champion,
@@ -435,7 +435,7 @@ func (h *CounterPickHandler) GetItemCounters(c *gin.Context) {
 // GetPlayStyleCounters gets playstyle-based counter strategies
 func (h *CounterPickHandler) GetPlayStyleCounters(c *gin.Context) {
 	champion := c.Param("champion")
-	
+
 	if champion == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Champion is required"})
 		return
@@ -443,7 +443,7 @@ func (h *CounterPickHandler) GetPlayStyleCounters(c *gin.Context) {
 
 	gameMode := c.DefaultQuery("gameMode", "ranked")
 	role := c.DefaultQuery("role", "mid")
-	
+
 	analysis, err := h.service.AnalyzeCounterPicks(
 		c.Request.Context(),
 		champion,
@@ -457,9 +457,9 @@ func (h *CounterPickHandler) GetPlayStyleCounters(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"targetChampion":     champion,
-		"playStyleCounters":  analysis.PlayStyleCounters,
-		"confidence":         analysis.Confidence,
+		"targetChampion":    champion,
+		"playStyleCounters": analysis.PlayStyleCounters,
+		"confidence":        analysis.Confidence,
 	})
 }
 
@@ -480,7 +480,7 @@ func (h *CounterPickHandler) GetMetaCounters(c *gin.Context) {
 	// This would integrate with meta service to get current strong picks
 	// and then analyze their counters
 	strongPicks := []string{"Yasuo", "Zed", "Akali", "Katarina", "Ahri"} // Mock data
-	
+
 	var metaCounters []interface{}
 	for _, champion := range strongPicks {
 		targetRole := role
@@ -559,9 +559,9 @@ func (h *CounterPickHandler) GetPersonalizedCounters(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"summonerID":     summonerID,
-		"targetChampion": targetChampion,
-		"targetRole":     targetRole,
+		"summonerID":           summonerID,
+		"targetChampion":       targetChampion,
+		"targetRole":           targetRole,
 		"personalizedCounters": analysis.CounterPicks,
 		"recommendations": gin.H{
 			"comfort": "Based on your most played champions",
@@ -734,10 +734,10 @@ func (h *CounterPickHandler) GetCounterPerformance(c *gin.Context) {
 		"summonerID": summonerID,
 		"champion":   champion,
 		"performance": gin.H{
-			"overallWinRate":   65.5,
-			"counterWinRate":   58.2,
-			"averageKDA":       2.1,
-			"gamesPlayed":      23,
+			"overallWinRate": 65.5,
+			"counterWinRate": 58.2,
+			"averageKDA":     2.1,
+			"gamesPlayed":    23,
 		},
 	})
 }
@@ -776,7 +776,7 @@ func (h *CounterPickHandler) AssessThreatLevel(c *gin.Context) {
 		"threatAssessment": gin.H{
 			"overall":    "high",
 			"early":      "medium",
-			"mid":        "high", 
+			"mid":        "high",
 			"late":       "critical",
 			"priorities": []string{"Ban Yasuo", "Counter Zed", "Focus Jinx"},
 		},

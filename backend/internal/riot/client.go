@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Herald.lol Gaming Analytics - Riot Games API Client
@@ -16,10 +16,10 @@ import (
 
 // RiotClient handles all Riot Games API interactions
 type RiotClient struct {
-	httpClient   *http.Client
-	redis        *redis.Client
-	config       *RiotClientConfig
-	rateLimiter  *RiotRateLimiter
+	httpClient  *http.Client
+	redis       *redis.Client
+	config      *RiotClientConfig
+	rateLimiter *RiotRateLimiter
 }
 
 // RiotClientConfig contains client configuration
@@ -32,8 +32,8 @@ type RiotClientConfig struct {
 	CacheTTL         time.Duration `json:"cache_ttl"`
 	RateLimitEnabled bool          `json:"rate_limit_enabled"`
 	UserAgent        string        `json:"user_agent"`
-	RequestsPerMin   int           `json:"requests_per_min"`   // Riot API limit
-	BurstLimit       int           `json:"burst_limit"`        // Short burst limit
+	RequestsPerMin   int           `json:"requests_per_min"` // Riot API limit
+	BurstLimit       int           `json:"burst_limit"`      // Short burst limit
 }
 
 // NewRiotClient creates new Riot Games API client
@@ -59,7 +59,7 @@ func NewRiotClient(redis *redis.Client, config *RiotClientConfig) *RiotClient {
 func (r *RiotClient) GetSummonerByName(ctx context.Context, region, summonerName string) (*Summoner, error) {
 	endpoint := fmt.Sprintf("/lol/summoner/v4/summoners/by-name/%s", summonerName)
 	cacheKey := fmt.Sprintf("summoner:%s:%s", region, strings.ToLower(summonerName))
-	
+
 	// Try cache first
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
@@ -93,7 +93,7 @@ func (r *RiotClient) GetSummonerByName(ctx context.Context, region, summonerName
 func (r *RiotClient) GetSummonerByPUUID(ctx context.Context, region, puuid string) (*Summoner, error) {
 	endpoint := fmt.Sprintf("/lol/summoner/v4/summoners/by-puuid/%s", puuid)
 	cacheKey := fmt.Sprintf("summoner:puuid:%s:%s", region, puuid)
-	
+
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
 			var summoner Summoner
@@ -124,7 +124,7 @@ func (r *RiotClient) GetSummonerByPUUID(ctx context.Context, region, puuid strin
 func (r *RiotClient) GetRankedInfo(ctx context.Context, region, summonerID string) ([]RankedEntry, error) {
 	endpoint := fmt.Sprintf("/lol/league/v4/entries/by-summoner/%s", summonerID)
 	cacheKey := fmt.Sprintf("ranked:%s:%s", region, summonerID)
-	
+
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
 			var entries []RankedEntry
@@ -155,7 +155,7 @@ func (r *RiotClient) GetRankedInfo(ctx context.Context, region, summonerID strin
 func (r *RiotClient) GetMatchHistory(ctx context.Context, region, puuid string, start, count int) ([]string, error) {
 	endpoint := fmt.Sprintf("/lol/match/v5/matches/by-puuid/%s/ids?start=%d&count=%d", puuid, start, count)
 	cacheKey := fmt.Sprintf("matches:%s:%s:%d:%d", region, puuid, start, count)
-	
+
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
 			var matchIds []string
@@ -186,7 +186,7 @@ func (r *RiotClient) GetMatchHistory(ctx context.Context, region, puuid string, 
 func (r *RiotClient) GetMatch(ctx context.Context, region, matchID string) (*Match, error) {
 	endpoint := fmt.Sprintf("/lol/match/v5/matches/%s", matchID)
 	cacheKey := fmt.Sprintf("match:%s:%s", region, matchID)
-	
+
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
 			var match Match
@@ -217,7 +217,7 @@ func (r *RiotClient) GetMatch(ctx context.Context, region, matchID string) (*Mat
 // GetLiveGame retrieves current live game information
 func (r *RiotClient) GetLiveGame(ctx context.Context, region, summonerID string) (*LiveGame, error) {
 	endpoint := fmt.Sprintf("/lol/spectator/v4/active-games/by-summoner/%s", summonerID)
-	
+
 	// Don't cache live game data
 	response, err := r.makeRiotAPIRequest(ctx, region, endpoint)
 	if err != nil {
@@ -236,7 +236,7 @@ func (r *RiotClient) GetLiveGame(ctx context.Context, region, summonerID string)
 func (r *RiotClient) GetChampionMastery(ctx context.Context, region, summonerID string) ([]ChampionMastery, error) {
 	endpoint := fmt.Sprintf("/lol/champion-mastery/v4/champion-masteries/by-summoner/%s", summonerID)
 	cacheKey := fmt.Sprintf("mastery:%s:%s", region, summonerID)
-	
+
 	if r.config.CacheEnabled {
 		if cached, err := r.getCachedResponse(ctx, cacheKey); err == nil && cached != "" {
 			var masteries []ChampionMastery
@@ -300,11 +300,11 @@ func (r *RiotClient) makeRiotAPIRequest(ctx context.Context, region, endpoint st
 		if lastErr == nil && response.StatusCode < 500 {
 			break
 		}
-		
+
 		if response != nil {
 			response.Body.Close()
 		}
-		
+
 		if attempt < r.config.MaxRetries {
 			// Exponential backoff
 			backoff := time.Duration(1<<attempt) * time.Second
@@ -365,7 +365,7 @@ func (r *RiotClient) getRegionalURL(region string) string {
 	if url, exists := regionalMappings[region]; exists {
 		return url
 	}
-	
+
 	// Default to NA1 if region not found
 	return regionalMappings["NA1"]
 }
@@ -385,7 +385,7 @@ func (r *RiotClient) cacheResponse(ctx context.Context, key string, data []byte,
 // GetClientStats returns client usage statistics
 func (r *RiotClient) GetClientStats(ctx context.Context) (*RiotClientStats, error) {
 	stats := &RiotClientStats{}
-	
+
 	// Get rate limiter stats
 	if rateLimiterStats, err := r.rateLimiter.GetStats(ctx); err == nil {
 		stats.RequestsThisMinute = rateLimiterStats.RequestsThisMinute

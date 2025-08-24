@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Herald.lol Gaming Analytics - Advanced DDoS Protection
@@ -46,11 +46,11 @@ type BlockInfo struct {
 
 // AttackSignature represents detected attack patterns
 type AttackSignature struct {
-	Type        string    `json:"type"`
-	Confidence  float64   `json:"confidence"`
-	Evidence    []string  `json:"evidence"`
-	Detected    time.Time `json:"detected"`
-	Severity    string    `json:"severity"`
+	Type       string    `json:"type"`
+	Confidence float64   `json:"confidence"`
+	Evidence   []string  `json:"evidence"`
+	Detected   time.Time `json:"detected"`
+	Severity   string    `json:"severity"`
 }
 
 // NewDDoSProtector creates new DDoS protection system
@@ -71,31 +71,31 @@ func NewDDoSProtector(redisClient *redis.Client, config *GamingRateLimitConfig) 
 // IsBlocked checks if a client is currently blocked
 func (ddos *DDoSProtector) IsBlocked(ctx context.Context, clientID string) (bool, *BlockInfo) {
 	key := fmt.Sprintf("herald:ddos:blocked:%s", clientID)
-	
+
 	result, err := ddos.redisClient.HGetAll(ctx, key).Result()
 	if err != nil || len(result) == 0 {
 		return false, nil
 	}
-	
+
 	blockInfo := &BlockInfo{
 		Reason:     result["reason"],
 		AttackType: result["attack_type"],
 		Severity:   result["severity"],
 		IPAddress:  result["ip_address"],
 	}
-	
+
 	// Parse timestamps
 	if blockedAtStr, exists := result["blocked_at"]; exists {
 		if timestamp, err := strconv.ParseInt(blockedAtStr, 10, 64); err == nil {
 			blockInfo.BlockedAt = time.Unix(timestamp, 0)
 		}
 	}
-	
+
 	if blockedUntilStr, exists := result["blocked_until"]; exists && blockedUntilStr != "" {
 		if timestamp, err := strconv.ParseInt(blockedUntilStr, 10, 64); err == nil {
 			blockedUntil := time.Unix(timestamp, 0)
 			blockInfo.BlockedUntil = &blockedUntil
-			
+
 			// Check if block has expired
 			if time.Now().After(blockedUntil) {
 				ddos.unblockClient(ctx, clientID)
@@ -103,20 +103,20 @@ func (ddos *DDoSProtector) IsBlocked(ctx context.Context, clientID string) (bool
 			}
 		}
 	}
-	
+
 	if requestCountStr, exists := result["request_count"]; exists {
 		if count, err := strconv.Atoi(requestCountStr); err == nil {
 			blockInfo.RequestCount = count
 		}
 	}
-	
+
 	return true, blockInfo
 }
 
 // RecordRequest records a request for DDoS analysis
 func (ddos *DDoSProtector) RecordRequest(ctx context.Context, clientID, ipAddress string) {
 	now := time.Now()
-	
+
 	// Record request in time-series for pattern analysis
 	requestKey := fmt.Sprintf("herald:ddos:requests:%s", clientID)
 	ddos.redisClient.ZAdd(ctx, requestKey, &redis.Z{
@@ -124,7 +124,7 @@ func (ddos *DDoSProtector) RecordRequest(ctx context.Context, clientID, ipAddres
 		Member: fmt.Sprintf("%d-%s", now.UnixNano(), ipAddress),
 	})
 	ddos.redisClient.Expire(ctx, requestKey, 10*time.Minute)
-	
+
 	// Record IP-based requests for IP blocking
 	ipKey := fmt.Sprintf("herald:ddos:ip_requests:%s", ipAddress)
 	ddos.redisClient.ZAdd(ctx, ipKey, &redis.Z{
@@ -132,7 +132,7 @@ func (ddos *DDoSProtector) RecordRequest(ctx context.Context, clientID, ipAddres
 		Member: fmt.Sprintf("%d-%s", now.UnixNano(), clientID),
 	})
 	ddos.redisClient.Expire(ctx, ipKey, 10*time.Minute)
-	
+
 	// Analyze patterns and trigger mitigation if needed
 	go ddos.analyzeAndMitigate(ctx, clientID, ipAddress)
 }
@@ -141,12 +141,12 @@ func (ddos *DDoSProtector) RecordRequest(ctx context.Context, clientID, ipAddres
 func (ddos *DDoSProtector) analyzeAndMitigate(ctx context.Context, clientID, ipAddress string) {
 	// Check for various attack patterns
 	signatures := ddos.patterns.DetectAttackPatterns(ctx, clientID, ipAddress)
-	
+
 	for _, signature := range signatures {
 		if signature.Confidence > 0.7 { // High confidence threshold
 			// Trigger mitigation
 			ddos.mitigation.TriggerMitigation(ctx, clientID, ipAddress, signature)
-			
+
 			// Log attack detection
 			ddos.logAttackDetection(ctx, clientID, ipAddress, signature)
 		}
@@ -156,32 +156,32 @@ func (ddos *DDoSProtector) analyzeAndMitigate(ctx context.Context, clientID, ipA
 // DetectAttackPatterns detects various DDoS attack patterns
 func (apd *AttackPatternDetector) DetectAttackPatterns(ctx context.Context, clientID, ipAddress string) []*AttackSignature {
 	var signatures []*AttackSignature
-	
+
 	// 1. Volumetric attack detection
 	if volumetricSig := apd.detectVolumetricAttack(ctx, clientID, ipAddress); volumetricSig != nil {
 		signatures = append(signatures, volumetricSig)
 	}
-	
+
 	// 2. Burst attack detection
 	if burstSig := apd.detectBurstAttack(ctx, clientID, ipAddress); burstSig != nil {
 		signatures = append(signatures, burstSig)
 	}
-	
+
 	// 3. Slowloris attack detection
 	if slowlorisSig := apd.detectSlowlorisAttack(ctx, clientID, ipAddress); slowlorisSig != nil {
 		signatures = append(signatures, slowlorisSig)
 	}
-	
+
 	// 4. Distributed attack detection
 	if distributedSig := apd.detectDistributedAttack(ctx, ipAddress); distributedSig != nil {
 		signatures = append(signatures, distributedSig)
 	}
-	
+
 	// 5. Gaming-specific attack patterns
 	if gamingSig := apd.detectGamingAttackPatterns(ctx, clientID, ipAddress); gamingSig != nil {
 		signatures = append(signatures, gamingSig)
 	}
-	
+
 	return signatures
 }
 
@@ -189,17 +189,17 @@ func (apd *AttackPatternDetector) DetectAttackPatterns(ctx context.Context, clie
 func (apd *AttackPatternDetector) detectVolumetricAttack(ctx context.Context, clientID, ipAddress string) *AttackSignature {
 	now := time.Now()
 	windowStart := now.Add(-time.Minute)
-	
+
 	// Check requests in the last minute
 	requestKey := fmt.Sprintf("herald:ddos:requests:%s", clientID)
 	count, err := apd.redisClient.ZCount(ctx, requestKey, strconv.FormatInt(windowStart.Unix(), 10), "+inf").Result()
 	if err != nil {
 		return nil
 	}
-	
+
 	// Volumetric attack threshold
 	threshold := int64(1000) // 1000 requests per minute
-	
+
 	if count > threshold {
 		confidence := float64(count) / float64(threshold)
 		if confidence > 3.0 {
@@ -207,7 +207,7 @@ func (apd *AttackPatternDetector) detectVolumetricAttack(ctx context.Context, cl
 		} else {
 			confidence = confidence / 3.0
 		}
-		
+
 		return &AttackSignature{
 			Type:       "volumetric",
 			Confidence: confidence,
@@ -219,47 +219,47 @@ func (apd *AttackPatternDetector) detectVolumetricAttack(ctx context.Context, cl
 			Severity: apd.getSeverity(confidence),
 		}
 	}
-	
+
 	return nil
 }
 
 // detectBurstAttack detects burst attack patterns
 func (apd *AttackPatternDetector) detectBurstAttack(ctx context.Context, clientID, ipAddress string) *AttackSignature {
 	now := time.Now()
-	
+
 	// Check for burst patterns in 5-second windows
 	var burstCounts []int64
 	for i := 0; i < 12; i++ { // Check last 12 5-second windows (1 minute)
 		windowEnd := now.Add(-time.Duration(i) * 5 * time.Second)
 		windowStart := windowEnd.Add(-5 * time.Second)
-		
+
 		requestKey := fmt.Sprintf("herald:ddos:requests:%s", clientID)
 		count, _ := apd.redisClient.ZCount(ctx, requestKey,
 			strconv.FormatInt(windowStart.Unix(), 10),
 			strconv.FormatInt(windowEnd.Unix(), 10)).Result()
-		
+
 		burstCounts = append(burstCounts, count)
 	}
-	
+
 	// Analyze burst patterns
 	var highBursts int
 	var totalRequests int64
 	burstThreshold := int64(100) // 100 requests in 5 seconds
-	
+
 	for _, count := range burstCounts {
 		totalRequests += count
 		if count > burstThreshold {
 			highBursts++
 		}
 	}
-	
+
 	// Detect burst attack if multiple high bursts with gaps
 	if highBursts >= 3 && totalRequests > 500 {
 		confidence := float64(highBursts) / 12.0 * 2.0 // Scale by burst frequency
 		if confidence > 1.0 {
 			confidence = 1.0
 		}
-		
+
 		return &AttackSignature{
 			Type:       "burst",
 			Confidence: confidence,
@@ -272,7 +272,7 @@ func (apd *AttackPatternDetector) detectBurstAttack(ctx context.Context, clientI
 			Severity: apd.getSeverity(confidence),
 		}
 	}
-	
+
 	return nil
 }
 
@@ -280,22 +280,22 @@ func (apd *AttackPatternDetector) detectBurstAttack(ctx context.Context, clientI
 func (apd *AttackPatternDetector) detectSlowlorisAttack(ctx context.Context, clientID, ipAddress string) *AttackSignature {
 	// Check for many long-running connections from same IP
 	connectionKey := fmt.Sprintf("herald:ddos:connections:%s", ipAddress)
-	
+
 	// This would typically track connection timestamps and durations
 	// For now, we'll use a simplified approach
 	now := time.Now()
 	windowStart := now.Add(-10 * time.Minute)
-	
+
 	connectionCount, err := apd.redisClient.ZCount(ctx, connectionKey,
 		strconv.FormatInt(windowStart.Unix(), 10), "+inf").Result()
 	if err != nil {
 		return nil
 	}
-	
+
 	// Check for sustained, low-rate connections
 	if connectionCount > 100 { // Many slow connections
 		confidence := 0.6 // Medium confidence for slowloris detection
-		
+
 		return &AttackSignature{
 			Type:       "slowloris",
 			Confidence: confidence,
@@ -307,34 +307,34 @@ func (apd *AttackPatternDetector) detectSlowlorisAttack(ctx context.Context, cli
 			Severity: "medium",
 		}
 	}
-	
+
 	return nil
 }
 
 // detectDistributedAttack detects distributed attacks across IPs
 func (apd *AttackPatternDetector) detectDistributedAttack(ctx context.Context, ipAddress string) *AttackSignature {
 	now := time.Now()
-	
+
 	// Check for correlated attacks from multiple IPs in same subnet
 	subnet := apd.getSubnet(ipAddress)
 	if subnet == "" {
 		return nil
 	}
-	
+
 	// Count active IPs in subnet attacking
 	subnetKey := fmt.Sprintf("herald:ddos:subnet:%s", subnet)
 	activeIPs, err := apd.redisClient.ZCard(ctx, subnetKey).Result()
 	if err != nil {
 		return nil
 	}
-	
+
 	// Distributed attack threshold
 	if activeIPs > 10 { // More than 10 IPs from same subnet
 		confidence := float64(activeIPs) / 50.0 // Scale by IP count
 		if confidence > 1.0 {
 			confidence = 1.0
 		}
-		
+
 		return &AttackSignature{
 			Type:       "distributed",
 			Confidence: confidence,
@@ -347,24 +347,24 @@ func (apd *AttackPatternDetector) detectDistributedAttack(ctx context.Context, i
 			Severity: apd.getSeverity(confidence),
 		}
 	}
-	
+
 	return nil
 }
 
 // detectGamingAttackPatterns detects gaming-specific attack patterns
 func (apd *AttackPatternDetector) detectGamingAttackPatterns(ctx context.Context, clientID, ipAddress string) *AttackSignature {
 	now := time.Now()
-	
+
 	// Check for gaming API abuse patterns
 	patterns := []string{
 		"herald:ddos:gaming:analytics_spam",
 		"herald:ddos:gaming:riot_api_abuse",
 		"herald:ddos:gaming:export_spam",
 	}
-	
+
 	var totalAbuse int64
 	var evidenceList []string
-	
+
 	for _, pattern := range patterns {
 		key := fmt.Sprintf("%s:%s", pattern, clientID)
 		count, _ := apd.redisClient.Get(ctx, key).Int64()
@@ -373,13 +373,13 @@ func (apd *AttackPatternDetector) detectGamingAttackPatterns(ctx context.Context
 			evidenceList = append(evidenceList, fmt.Sprintf("%s: %d requests", strings.Split(pattern, ":")[3], count))
 		}
 	}
-	
+
 	if totalAbuse > 100 {
 		confidence := float64(totalAbuse) / 500.0 // Scale by abuse level
 		if confidence > 1.0 {
 			confidence = 1.0
 		}
-		
+
 		return &AttackSignature{
 			Type:       "gaming_api_abuse",
 			Confidence: confidence,
@@ -388,18 +388,18 @@ func (apd *AttackPatternDetector) detectGamingAttackPatterns(ctx context.Context
 			Severity:   apd.getSeverity(confidence),
 		}
 	}
-	
+
 	return nil
 }
 
 // TriggerMitigation triggers appropriate mitigation strategies
 func (me *MitigationEngine) TriggerMitigation(ctx context.Context, clientID, ipAddress string, signature *AttackSignature) {
 	now := time.Now()
-	
+
 	// Determine mitigation strategy based on attack type and severity
 	var blockDuration time.Duration
 	var reason string
-	
+
 	switch signature.Type {
 	case "volumetric":
 		blockDuration = me.config.BlockDuration
@@ -407,31 +407,31 @@ func (me *MitigationEngine) TriggerMitigation(ctx context.Context, clientID, ipA
 			blockDuration = blockDuration * 3
 		}
 		reason = "Volumetric DDoS attack detected"
-		
+
 	case "burst":
 		blockDuration = me.config.BlockDuration / 2
 		reason = "Burst attack pattern detected"
-		
+
 	case "slowloris":
 		blockDuration = me.config.BlockDuration * 2
 		reason = "Slowloris attack detected"
-		
+
 	case "distributed":
 		blockDuration = me.config.BlockDuration * 4
 		reason = "Distributed DDoS attack detected"
-		
+
 	case "gaming_api_abuse":
 		blockDuration = me.config.BlockDuration
 		reason = "Gaming API abuse detected"
-		
+
 	default:
 		blockDuration = me.config.BlockDuration
 		reason = "Suspicious activity detected"
 	}
-	
+
 	// Apply mitigation
 	me.blockClient(ctx, clientID, ipAddress, signature, blockDuration, reason)
-	
+
 	// Apply additional mitigations for severe attacks
 	if signature.Severity == "critical" {
 		me.applyAdvancedMitigation(ctx, ipAddress, signature)
@@ -442,7 +442,7 @@ func (me *MitigationEngine) TriggerMitigation(ctx context.Context, clientID, ipA
 func (me *MitigationEngine) blockClient(ctx context.Context, clientID, ipAddress string, signature *AttackSignature, duration time.Duration, reason string) {
 	key := fmt.Sprintf("herald:ddos:blocked:%s", clientID)
 	blockedUntil := time.Now().Add(duration)
-	
+
 	blockInfo := map[string]interface{}{
 		"reason":        reason,
 		"blocked_at":    time.Now().Unix(),
@@ -452,10 +452,10 @@ func (me *MitigationEngine) blockClient(ctx context.Context, clientID, ipAddress
 		"confidence":    signature.Confidence,
 		"ip_address":    ipAddress,
 	}
-	
+
 	me.redisClient.HMSet(ctx, key, blockInfo)
 	me.redisClient.Expire(ctx, key, duration+time.Hour) // Expire slightly after block duration
-	
+
 	// Also block by IP for severe attacks
 	if signature.Severity == "critical" || signature.Severity == "high" {
 		ipKey := fmt.Sprintf("herald:ddos:blocked_ip:%s", ipAddress)
@@ -474,11 +474,11 @@ func (me *MitigationEngine) applyAdvancedMitigation(ctx context.Context, ipAddre
 			me.redisClient.Set(ctx, subnetKey, time.Now().Unix(), me.config.BlockDuration*2)
 		}
 	}
-	
+
 	// Implement CAPTCHA challenges
 	challengeKey := fmt.Sprintf("herald:ddos:challenge:%s", ipAddress)
 	me.redisClient.Set(ctx, challengeKey, "required", me.config.BlockDuration)
-	
+
 	// Notify administrators for critical attacks
 	if signature.Severity == "critical" {
 		me.notifyAdministrators(ctx, ipAddress, signature)
@@ -503,7 +503,7 @@ func (ddos *DDoSProtector) logAttackDetection(ctx context.Context, clientID, ipA
 		"detected_at": signature.Detected.Unix(),
 		"platform":    "herald-lol",
 	}
-	
+
 	logKey := fmt.Sprintf("herald:ddos:attack_log:%s", time.Now().Format("2006-01-02"))
 	ddos.redisClient.LPush(ctx, logKey, logEntry)
 	ddos.redisClient.Expire(ctx, logKey, 30*24*time.Hour) // Keep logs for 30 days
@@ -547,7 +547,7 @@ func (me *MitigationEngine) notifyAdministrators(ctx context.Context, ipAddress 
 		"timestamp":   time.Now().Unix(),
 		"platform":    "herald-lol",
 	}
-	
+
 	me.redisClient.LPush(ctx, alertKey, alert)
 	me.redisClient.LTrim(ctx, alertKey, 0, 99) // Keep last 100 alerts
 }

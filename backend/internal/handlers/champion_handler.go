@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // ChampionHandler handles champion-specific analytics requests
@@ -325,10 +325,10 @@ func (ch *ChampionHandler) GetChampionPowerSpikes(c *gin.Context) {
 
 	// Create power spikes response
 	powerSpikes := map[string]interface{}{
-		"player_id":    playerID,
-		"champion":     champion,
-		"time_range":   timeRange,
-		"power_spikes": analysis.PowerSpikes,
+		"player_id":       playerID,
+		"champion":        champion,
+		"time_range":      timeRange,
+		"power_spikes":    analysis.PowerSpikes,
 		"carry_potential": analysis.CarryPotential,
 		"scaling_analysis": map[string]interface{}{
 			"early_game_rating": analysis.LanePhasePerformance.PhaseRating,
@@ -401,7 +401,7 @@ func (ch *ChampionHandler) GetChampionMatchups(c *gin.Context) {
 	// Filter by specific opponent if provided
 	if opponent != "" {
 		var specificMatchup *services.MatchupData
-		
+
 		// Look in strength matchups
 		for _, matchup := range analysis.StrengthMatchups {
 			if strings.EqualFold(matchup.OpponentChampion, opponent) {
@@ -409,7 +409,7 @@ func (ch *ChampionHandler) GetChampionMatchups(c *gin.Context) {
 				break
 			}
 		}
-		
+
 		// Look in weakness matchups if not found
 		if specificMatchup == nil {
 			for _, matchup := range analysis.WeaknessMatchups {
@@ -419,7 +419,7 @@ func (ch *ChampionHandler) GetChampionMatchups(c *gin.Context) {
 				}
 			}
 		}
-		
+
 		if specificMatchup != nil {
 			matchups["specific_matchup"] = specificMatchup
 		} else {
@@ -498,11 +498,11 @@ func (ch *ChampionHandler) GetChampionBuilds(c *gin.Context) {
 
 	// Create builds response
 	builds := map[string]interface{}{
-		"player_id":  playerID,
-		"champion":   champion,
-		"time_range": timeRange,
-		"item_builds": analysis.ItemBuilds,
-		"skill_order": analysis.SkillOrder,
+		"player_id":         playerID,
+		"champion":          champion,
+		"time_range":        timeRange,
+		"item_builds":       analysis.ItemBuilds,
+		"skill_order":       analysis.SkillOrder,
 		"rune_optimization": analysis.RuneOptimization,
 	}
 
@@ -562,10 +562,10 @@ func (ch *ChampionHandler) GetChampionCoaching(c *gin.Context) {
 	// Validate focus area if provided
 	if focusArea != "" {
 		validFocusAreas := map[string]bool{
-			"mechanics":    true,
-			"builds":       true,
-			"matchups":     true,
-			"positioning":  true,
+			"mechanics":     true,
+			"builds":        true,
+			"matchups":      true,
+			"positioning":   true,
 			"team_fighting": true,
 		}
 		if !validFocusAreas[focusArea] {
@@ -589,20 +589,20 @@ func (ch *ChampionHandler) GetChampionCoaching(c *gin.Context) {
 
 	// Create coaching response
 	coaching := map[string]interface{}{
-		"player_id":              playerID,
-		"champion":               champion,
-		"time_range":             timeRange,
+		"player_id":  playerID,
+		"champion":   champion,
+		"time_range": timeRange,
 		"current_performance": map[string]interface{}{
-			"overall_rating":   analysis.OverallRating,
-			"mechanics_score":  analysis.MechanicsScore,
+			"overall_rating":       analysis.OverallRating,
+			"mechanics_score":      analysis.MechanicsScore,
 			"game_knowledge_score": analysis.GameKnowledgeScore,
-			"consistency_score": analysis.ConsistencyScore,
+			"consistency_score":    analysis.ConsistencyScore,
 		},
-		"core_strengths":         analysis.CoreStrengths,
-		"improvement_areas":      analysis.ImprovementAreas,
+		"core_strengths":            analysis.CoreStrengths,
+		"improvement_areas":         analysis.ImprovementAreas,
 		"playstyle_recommendations": analysis.PlayStyleRecommendations,
-		"training_recommendations": analysis.TrainingRecommendations,
-		"learning_curve":         analysis.LearningCurve,
+		"training_recommendations":  analysis.TrainingRecommendations,
+		"learning_curve":            analysis.LearningCurve,
 	}
 
 	c.JSON(http.StatusOK, coaching)
@@ -628,7 +628,7 @@ func (ch *ChampionHandler) GetChampionTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	champion := c.Query("champion")
 	metric := c.DefaultQuery("metric", "rating")
-	
+
 	if playerID == "" || champion == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -639,11 +639,11 @@ func (ch *ChampionHandler) GetChampionTrends(c *gin.Context) {
 
 	// Validate metric
 	validMetrics := map[string]bool{
-		"rating":   true,
-		"winrate":  true,
-		"kda":      true,
-		"dpm":      true,
-		"cs":       true,
+		"rating":  true,
+		"winrate": true,
+		"kda":     true,
+		"dpm":     true,
+		"cs":      true,
 	}
 	if !validMetrics[metric] {
 		c.JSON(http.StatusBadRequest, ErrorResponse{

@@ -3,11 +3,11 @@ package handlers
 import (
 	"net/http"
 	"strings"
-	
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	
-	"github.com/herald-lol/backend/internal/services"
+
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 type AuthHandler struct {
@@ -33,7 +33,7 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 // @Router /auth/register [post]
 func (h *AuthHandler) Register(c *gin.Context) {
 	var req services.RegisterRequest
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -80,7 +80,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Router /auth/login [post]
 func (h *AuthHandler) Login(c *gin.Context) {
 	var req services.LoginRequest
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -124,7 +124,7 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var req struct {
 		RefreshToken string `json:"refresh_token" binding:"required"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -184,7 +184,7 @@ func (h *AuthHandler) ChangePassword(c *gin.Context) {
 		CurrentPassword string `json:"current_password" binding:"required"`
 		NewPassword     string `json:"new_password" binding:"required,min=6"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -240,7 +240,7 @@ func (h *AuthHandler) ResetPassword(c *gin.Context) {
 	var req struct {
 		Email string `json:"email" binding:"required,email"`
 	}
-	
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "Invalid request format",
@@ -298,7 +298,7 @@ func (h *AuthHandler) GetProfile(c *gin.Context) {
 func (h *AuthHandler) Logout(c *gin.Context) {
 	// In a stateless JWT setup, logout is handled client-side by discarding tokens
 	// In a more sophisticated setup, you might maintain a blacklist of tokens
-	
+
 	c.JSON(http.StatusOK, SuccessResponse{
 		Success: true,
 		Message: "Logged out successfully",
@@ -330,7 +330,7 @@ func (h *AuthHandler) AuthMiddleware() gin.HandlerFunc {
 
 		// Extract token
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		
+
 		// Validate token
 		user, err := h.authService.ValidateToken(tokenString)
 		if err != nil {

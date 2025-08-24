@@ -1,0 +1,445 @@
+syntax = "proto3";
+
+package herald.match.v1;
+
+option go_package = "github.com/herald-lol/herald/backend/internal/grpc/gen/match/v1;matchv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+// Match Processing gRPC service for Herald.lol
+service MatchService {
+  // Process a single match
+  rpc ProcessMatch(ProcessMatchRequest) returns (ProcessMatchResponse);
+  
+  // Batch process multiple matches
+  rpc BatchProcessMatches(BatchProcessMatchesRequest) returns (BatchProcessMatchesResponse);
+  
+  // Get match details
+  rpc GetMatch(GetMatchRequest) returns (GetMatchResponse);
+  
+  // Search matches by criteria
+  rpc SearchMatches(SearchMatchesRequest) returns (SearchMatchesResponse);
+  
+  // Stream live match updates
+  rpc StreamLiveMatch(StreamLiveMatchRequest) returns (stream LiveMatchUpdate);
+  
+  // Get match timeline
+  rpc GetMatchTimeline(GetMatchTimelineRequest) returns (GetMatchTimelineResponse);
+}
+
+message ProcessMatchRequest {
+  string match_id = 1;
+  string region = 2;
+  ProcessingConfig config = 3;
+  bool force_reprocess = 4;
+}
+
+message ProcessMatchResponse {
+  MatchData match_data = 1;
+  ProcessingStats processing_stats = 2;
+  repeated string warnings = 3;
+}
+
+message BatchProcessMatchesRequest {
+  repeated string match_ids = 1;
+  string region = 2;
+  ProcessingConfig config = 3;
+  int32 parallel_workers = 4;
+}
+
+message BatchProcessMatchesResponse {
+  repeated MatchProcessResult results = 1;
+  BatchProcessingStats stats = 2;
+}
+
+message GetMatchRequest {
+  string match_id = 1;
+  optional string region = 2;
+  bool include_timeline = 3;
+}
+
+message GetMatchResponse {
+  MatchData match_data = 1;
+  optional MatchTimeline timeline = 2;
+}
+
+message SearchMatchesRequest {
+  MatchSearchCriteria criteria = 1;
+  int32 page_size = 2;
+  string page_token = 3;
+}
+
+message SearchMatchesResponse {
+  repeated MatchSummary matches = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+}
+
+message StreamLiveMatchRequest {
+  string match_id = 1;
+  string region = 2;
+  repeated string event_types = 3;
+}
+
+message LiveMatchUpdate {
+  string match_id = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  string update_type = 3;
+  LiveMatchData data = 4;
+}
+
+message GetMatchTimelineRequest {
+  string match_id = 1;
+  optional google.protobuf.Duration start_time = 2;
+  optional google.protobuf.Duration end_time = 3;
+}
+
+message GetMatchTimelineResponse {
+  MatchTimeline timeline = 1;
+  repeated MatchEvent events = 2;
+}
+
+// Core Match Models
+
+message MatchData {
+  string match_id = 1;
+  MatchInfo info = 2;
+  repeated Participant participants = 3;
+  repeated Team teams = 4;
+  MatchAnalysis analysis = 5;
+  google.protobuf.Timestamp processed_at = 6;
+}
+
+message MatchInfo {
+  string game_mode = 1;
+  string game_type = 2;
+  google.protobuf.Duration game_duration = 3;
+  string map_id = 4;
+  string patch_version = 5;
+  string queue_id = 6;
+  string region = 7;
+  google.protobuf.Timestamp game_start_timestamp = 8;
+  string season = 9;
+}
+
+message Participant {
+  string puuid = 1;
+  string summoner_id = 2;
+  string summoner_name = 3;
+  int32 participant_id = 4;
+  int32 team_id = 5;
+  
+  // Champion Information
+  string champion_name = 6;
+  int32 champion_id = 7;
+  int32 champion_level = 8;
+  
+  // Position and Role
+  string position = 9;
+  string role = 10;
+  string lane = 11;
+  
+  // Game Stats
+  ParticipantStats stats = 12;
+  
+  // Items and Build
+  repeated int32 items = 13;
+  int32 item0 = 14;
+  int32 item1 = 15;
+  int32 item2 = 16;
+  int32 item3 = 17;
+  int32 item4 = 18;
+  int32 item5 = 19;
+  int32 item6 = 20;
+  
+  // Runes and Summoner Spells
+  RuneSelection runes = 21;
+  int32 summoner_spell1 = 22;
+  int32 summoner_spell2 = 23;
+  
+  // Performance Metrics
+  ParticipantPerformance performance = 24;
+}
+
+message ParticipantStats {
+  // KDA
+  int32 kills = 1;
+  int32 deaths = 2;
+  int32 assists = 3;
+  double kda = 4;
+  
+  // CS and Gold
+  int32 total_minions_killed = 5;
+  int32 neutral_minions_killed = 6;
+  int32 cs_per_minute = 7;
+  int32 gold_earned = 8;
+  int32 gold_spent = 9;
+  
+  // Damage
+  int64 total_damage_dealt = 10;
+  int64 total_damage_dealt_to_champions = 11;
+  int64 total_damage_taken = 12;
+  int64 magic_damage_dealt = 13;
+  int64 physical_damage_dealt = 14;
+  int64 true_damage_dealt = 15;
+  
+  // Healing and Shielding
+  int64 total_heal = 16;
+  int64 total_damage_shielded = 17;
+  
+  // Vision
+  int32 vision_score = 18;
+  int32 wards_placed = 19;
+  int32 wards_killed = 20;
+  int32 control_wards_purchased = 21;
+  
+  // Objectives
+  int32 turrets_killed = 22;
+  int32 inhibitors_killed = 23;
+  int32 dragon_kills = 24;
+  int32 baron_kills = 25;
+  
+  // Other
+  int32 largest_killing_spree = 26;
+  int32 largest_multi_kill = 27;
+  bool first_blood_kill = 28;
+  bool first_tower_kill = 29;
+  
+  // Combat Stats
+  double damage_per_minute = 30;
+  double damage_share = 31;
+  double kill_participation = 32;
+}
+
+message RuneSelection {
+  int32 primary_style = 1;
+  int32 secondary_style = 2;
+  repeated int32 perks = 3;
+  repeated int32 stat_perks = 4;
+}
+
+message ParticipantPerformance {
+  double overall_rating = 1;
+  double early_game_rating = 2;
+  double mid_game_rating = 3;
+  double late_game_rating = 4;
+  double laning_rating = 5;
+  double team_fighting_rating = 6;
+  double positioning_rating = 7;
+  double decision_making_rating = 8;
+}
+
+message Team {
+  int32 team_id = 1;
+  bool win = 2;
+  repeated TeamBans bans = 3;
+  TeamObjectives objectives = 4;
+  TeamStats team_stats = 5;
+}
+
+message TeamBans {
+  int32 champion_id = 1;
+  int32 pick_turn = 2;
+}
+
+message TeamObjectives {
+  ObjectiveInfo baron = 1;
+  ObjectiveInfo champion = 2;
+  ObjectiveInfo dragon = 3;
+  ObjectiveInfo inhibitor = 4;
+  ObjectiveInfo rift_herald = 5;
+  ObjectiveInfo tower = 6;
+}
+
+message ObjectiveInfo {
+  bool first = 1;
+  int32 kills = 2;
+}
+
+message TeamStats {
+  int32 total_kills = 1;
+  int32 total_deaths = 2;
+  int32 total_assists = 3;
+  int64 total_gold = 4;
+  int64 total_damage = 5;
+  double avg_level = 6;
+  double gold_per_minute = 7;
+  double damage_per_minute = 8;
+}
+
+message MatchAnalysis {
+  double match_quality_score = 1;
+  string dominant_strategy = 2;
+  repeated string key_moments = 3;
+  MatchPhaseAnalysis early_game = 4;
+  MatchPhaseAnalysis mid_game = 5;
+  MatchPhaseAnalysis late_game = 6;
+  string victory_condition = 7;
+  repeated string turning_points = 8;
+}
+
+message MatchPhaseAnalysis {
+  string phase_name = 1;
+  google.protobuf.Duration start_time = 2;
+  google.protobuf.Duration end_time = 3;
+  string dominant_team = 4;
+  double team_gold_diff = 5;
+  repeated string key_events = 6;
+}
+
+message MatchTimeline {
+  string match_id = 1;
+  repeated MatchEvent events = 2;
+  repeated MatchFrame frames = 3;
+  google.protobuf.Duration interval = 4;
+}
+
+message MatchEvent {
+  google.protobuf.Duration timestamp = 1;
+  string event_type = 2;
+  int32 participant_id = 3;
+  Position position = 4;
+  map<string, string> event_data = 5;
+  repeated int32 assisting_participant_ids = 6;
+}
+
+message MatchFrame {
+  google.protobuf.Duration timestamp = 1;
+  repeated ParticipantFrame participant_frames = 2;
+  repeated EventData events = 3;
+}
+
+message ParticipantFrame {
+  int32 participant_id = 1;
+  int32 current_gold = 2;
+  int32 total_gold = 3;
+  int32 level = 4;
+  int32 xp = 5;
+  int32 minions_killed = 6;
+  int32 jungle_minions_killed = 7;
+  Position position = 8;
+}
+
+message Position {
+  int32 x = 1;
+  int32 y = 2;
+}
+
+message EventData {
+  string event_type = 1;
+  google.protobuf.Timestamp timestamp = 2;
+  map<string, string> data = 3;
+}
+
+message LiveMatchData {
+  repeated LiveParticipant participants = 1;
+  GameState game_state = 2;
+  LiveObjectives objectives = 3;
+  repeated LiveEvent recent_events = 4;
+}
+
+message LiveParticipant {
+  int32 participant_id = 1;
+  string champion = 2;
+  int32 level = 3;
+  int32 current_gold = 4;
+  int32 kills = 5;
+  int32 deaths = 6;
+  int32 assists = 7;
+  int32 cs = 8;
+  Position position = 9;
+}
+
+message GameState {
+  google.protobuf.Duration game_time = 1;
+  string current_phase = 2;
+  int32 blue_team_gold = 3;
+  int32 red_team_gold = 4;
+  double win_probability_blue = 5;
+}
+
+message LiveObjectives {
+  repeated string dragons_killed = 1;
+  int32 barons_killed = 2;
+  int32 heralds_killed = 3;
+  ObjectiveStatus next_dragon = 4;
+  ObjectiveStatus baron = 5;
+  ObjectiveStatus herald = 6;
+}
+
+message ObjectiveStatus {
+  string objective_type = 1;
+  google.protobuf.Duration spawn_time = 2;
+  bool is_available = 3;
+}
+
+message LiveEvent {
+  google.protobuf.Duration timestamp = 1;
+  string event_type = 2;
+  string description = 3;
+  repeated int32 participant_ids = 4;
+}
+
+// Search and Processing
+
+message MatchSearchCriteria {
+  optional string player_id = 1;
+  optional string champion = 2;
+  optional string position = 3;
+  optional string queue_type = 4;
+  optional string season = 5;
+  optional google.protobuf.Timestamp start_date = 6;
+  optional google.protobuf.Timestamp end_date = 7;
+  optional bool win_only = 8;
+  optional int32 min_game_duration = 9;
+  optional int32 max_game_duration = 10;
+}
+
+message MatchSummary {
+  string match_id = 1;
+  google.protobuf.Timestamp game_date = 2;
+  google.protobuf.Duration game_duration = 3;
+  string queue_type = 4;
+  string champion = 5;
+  string position = 6;
+  bool win = 7;
+  int32 kills = 8;
+  int32 deaths = 9;
+  int32 assists = 10;
+  double kda = 11;
+  int32 cs = 12;
+}
+
+message MatchProcessResult {
+  string match_id = 1;
+  bool success = 2;
+  optional string error = 3;
+  google.protobuf.Timestamp processed_at = 4;
+  ProcessingStats stats = 5;
+}
+
+message ProcessingConfig {
+  bool include_timeline = 1;
+  bool calculate_advanced_stats = 2;
+  bool update_player_stats = 3;
+  bool generate_insights = 4;
+  int32 priority = 5;
+}
+
+message ProcessingStats {
+  google.protobuf.Duration processing_time = 1;
+  int32 events_processed = 2;
+  int32 participants_analyzed = 3;
+  bool from_cache = 4;
+  string processing_version = 5;
+}
+
+message BatchProcessingStats {
+  int32 total_matches = 1;
+  int32 successful = 2;
+  int32 failed = 3;
+  google.protobuf.Duration total_time = 4;
+  double average_time_per_match = 5;
+  int32 cache_hits = 6;
+}

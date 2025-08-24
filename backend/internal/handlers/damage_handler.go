@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // DamageHandler handles damage analytics requests
@@ -92,11 +92,11 @@ func (dh *DamageHandler) GetDamageAnalysis(c *gin.Context) {
 	// Validate game mode if provided
 	if req.GameMode != "" {
 		validGameModes := map[string]bool{
-			"RANKED_SOLO_5x5":   true,
-			"RANKED_FLEX_SR":    true,
-			"NORMAL_DRAFT":      true,
-			"ARAM":              true,
-			"RANKED_TFT":        true,
+			"RANKED_SOLO_5x5": true,
+			"RANKED_FLEX_SR":  true,
+			"NORMAL_DRAFT":    true,
+			"ARAM":            true,
+			"RANKED_TFT":      true,
 		}
 		if !validGameModes[req.GameMode] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -216,10 +216,10 @@ func (dh *DamageHandler) GetDamageDistribution(c *gin.Context) {
 	// Validate target type if provided
 	if targetType != "" {
 		validTargetTypes := map[string]bool{
-			"champions":   true,
-			"structures":  true,
-			"monsters":    true,
-			"objectives":  true,
+			"champions":  true,
+			"structures": true,
+			"monsters":   true,
+			"objectives": true,
 		}
 		if !validTargetTypes[targetType] {
 			c.JSON(http.StatusBadRequest, ErrorResponse{
@@ -261,7 +261,7 @@ func (dh *DamageHandler) GetDamageDistribution(c *gin.Context) {
 func (dh *DamageHandler) GetDamageTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	metric := c.Query("metric")
-	
+
 	if playerID == "" || metric == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -340,7 +340,7 @@ func (dh *DamageHandler) GetDamageTrends(c *gin.Context) {
 func (dh *DamageHandler) GetDamageComparison(c *gin.Context) {
 	playerID := c.Param("player_id")
 	benchmarkType := c.Query("benchmark_type")
-	
+
 	if playerID == "" || benchmarkType == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -384,16 +384,16 @@ func (dh *DamageHandler) GetDamageComparison(c *gin.Context) {
 
 	// Extract relevant benchmark comparison
 	var comparison map[string]interface{}
-	
+
 	switch benchmarkType {
 	case "role":
 		comparison = map[string]interface{}{
 			"benchmark_type": "role",
 			"player_metrics": map[string]interface{}{
-				"damage_share":       analysis.DamageShare,
-				"damage_per_minute":  analysis.DamagePerMinute,
-				"carry_potential":    analysis.CarryPotential,
-				"efficiency_rating":  analysis.EfficiencyRating,
+				"damage_share":      analysis.DamageShare,
+				"damage_per_minute": analysis.DamagePerMinute,
+				"carry_potential":   analysis.CarryPotential,
+				"efficiency_rating": analysis.EfficiencyRating,
 			},
 			"benchmark_metrics": analysis.RoleBenchmark,
 			"percentile":        analysis.RoleBenchmark.PlayerPercentile,
@@ -402,10 +402,10 @@ func (dh *DamageHandler) GetDamageComparison(c *gin.Context) {
 		comparison = map[string]interface{}{
 			"benchmark_type": "rank",
 			"player_metrics": map[string]interface{}{
-				"damage_share":       analysis.DamageShare,
-				"damage_per_minute":  analysis.DamagePerMinute,
-				"carry_potential":    analysis.CarryPotential,
-				"efficiency_rating":  analysis.EfficiencyRating,
+				"damage_share":      analysis.DamageShare,
+				"damage_per_minute": analysis.DamagePerMinute,
+				"carry_potential":   analysis.CarryPotential,
+				"efficiency_rating": analysis.EfficiencyRating,
 			},
 			"benchmark_metrics": analysis.RankBenchmark,
 			"percentile":        analysis.RankBenchmark.PlayerPercentile,
@@ -414,10 +414,10 @@ func (dh *DamageHandler) GetDamageComparison(c *gin.Context) {
 		comparison = map[string]interface{}{
 			"benchmark_type": "global",
 			"player_metrics": map[string]interface{}{
-				"damage_share":       analysis.DamageShare,
-				"damage_per_minute":  analysis.DamagePerMinute,
-				"carry_potential":    analysis.CarryPotential,
-				"efficiency_rating":  analysis.EfficiencyRating,
+				"damage_share":      analysis.DamageShare,
+				"damage_per_minute": analysis.DamagePerMinute,
+				"carry_potential":   analysis.CarryPotential,
+				"efficiency_rating": analysis.EfficiencyRating,
 			},
 			"benchmark_metrics": analysis.GlobalBenchmark,
 			"percentile":        analysis.GlobalBenchmark.PlayerPercentile,

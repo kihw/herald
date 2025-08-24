@@ -17,51 +17,51 @@ import (
 // NotificationService handles all types of notifications
 type NotificationService struct {
 	config *NotificationConfig
-	
+
 	// Real-time connections
 	wsConnections map[string]*WebSocketConnection
 	connectionsMu sync.RWMutex
-	
+
 	// Notification channels
 	notificationQueue chan *NotificationJob
 	emailQueue        chan *EmailNotification
 	pushQueue         chan *PushNotification
-	
+
 	// Service components
-	emailProvider EmailProvider
-	pushProvider  PushProvider
+	emailProvider  EmailProvider
+	pushProvider   PushProvider
 	templateEngine TemplateEngine
-	
+
 	// Worker management
-	workers int
+	workers  int
 	shutdown chan bool
-	wg      sync.WaitGroup
+	wg       sync.WaitGroup
 }
 
 // NotificationConfig contains service configuration
 type NotificationConfig struct {
 	// Queue settings
-	QueueSize           int           `json:"queue_size"`
-	WorkerCount         int           `json:"worker_count"`
-	ProcessingTimeout   time.Duration `json:"processing_timeout"`
-	RetryAttempts       int           `json:"retry_attempts"`
-	RetryDelay          time.Duration `json:"retry_delay"`
-	
+	QueueSize         int           `json:"queue_size"`
+	WorkerCount       int           `json:"worker_count"`
+	ProcessingTimeout time.Duration `json:"processing_timeout"`
+	RetryAttempts     int           `json:"retry_attempts"`
+	RetryDelay        time.Duration `json:"retry_delay"`
+
 	// Real-time settings
 	WebSocketReadTimeout  time.Duration `json:"websocket_read_timeout"`
 	WebSocketWriteTimeout time.Duration `json:"websocket_write_timeout"`
-	PingInterval         time.Duration `json:"ping_interval"`
-	MaxConnections       int           `json:"max_connections"`
-	
+	PingInterval          time.Duration `json:"ping_interval"`
+	MaxConnections        int           `json:"max_connections"`
+
 	// Email settings
-	EmailEnabled         bool          `json:"email_enabled"`
-	EmailTemplatesPath   string        `json:"email_templates_path"`
-	EmailRateLimit       int           `json:"email_rate_limit"`
-	
+	EmailEnabled       bool   `json:"email_enabled"`
+	EmailTemplatesPath string `json:"email_templates_path"`
+	EmailRateLimit     int    `json:"email_rate_limit"`
+
 	// Push settings
-	PushEnabled          bool          `json:"push_enabled"`
-	PushRateLimit        int           `json:"push_rate_limit"`
-	
+	PushEnabled   bool `json:"push_enabled"`
+	PushRateLimit int  `json:"push_rate_limit"`
+
 	// Notification settings
 	DefaultRetentionDays int           `json:"default_retention_days"`
 	EnableBatching       bool          `json:"enable_batching"`
@@ -81,35 +81,35 @@ type WebSocketConnection struct {
 
 // ClientInfo contains client information
 type ClientInfo struct {
-	UserAgent    string `json:"user_agent"`
-	IPAddress    string `json:"ip_address"`
-	Platform     string `json:"platform"`
-	Version      string `json:"version"`
+	UserAgent    string   `json:"user_agent"`
+	IPAddress    string   `json:"ip_address"`
+	Platform     string   `json:"platform"`
+	Version      string   `json:"version"`
 	Capabilities []string `json:"capabilities"`
 }
 
 // NotificationJob represents a notification processing job
 type NotificationJob struct {
-	ID           string                 `json:"id"`
-	Type         NotificationType       `json:"type"`
-	UserID       string                 `json:"user_id"`
-	Channels     []NotificationChannel  `json:"channels"`
-	Content      *NotificationContent   `json:"content"`
-	Priority     NotificationPriority   `json:"priority"`
-	ScheduledAt  *time.Time             `json:"scheduled_at"`
-	ExpiresAt    *time.Time             `json:"expires_at"`
-	Context      map[string]interface{} `json:"context"`
-	CreatedAt    time.Time              `json:"created_at"`
-	Status       string                 `json:"status"`
-	Attempts     int                    `json:"attempts"`
-	LastError    string                 `json:"last_error"`
+	ID          string                 `json:"id"`
+	Type        NotificationType       `json:"type"`
+	UserID      string                 `json:"user_id"`
+	Channels    []NotificationChannel  `json:"channels"`
+	Content     *NotificationContent   `json:"content"`
+	Priority    NotificationPriority   `json:"priority"`
+	ScheduledAt *time.Time             `json:"scheduled_at"`
+	ExpiresAt   *time.Time             `json:"expires_at"`
+	Context     map[string]interface{} `json:"context"`
+	CreatedAt   time.Time              `json:"created_at"`
+	Status      string                 `json:"status"`
+	Attempts    int                    `json:"attempts"`
+	LastError   string                 `json:"last_error"`
 }
 
 // NotificationType represents different types of notifications
 type NotificationType string
 
 const (
-	NotificationTypeMatchComplete   NotificationType = "match_complete"
+	NotificationTypeMatchComplete  NotificationType = "match_complete"
 	NotificationTypeRankChange     NotificationType = "rank_change"
 	NotificationTypeAchievement    NotificationType = "achievement"
 	NotificationTypeCoachingTip    NotificationType = "coaching_tip"
@@ -168,19 +168,19 @@ type NotificationAction struct {
 
 // EmailNotification represents an email notification
 type EmailNotification struct {
-	ID          string            `json:"id"`
-	To          []string          `json:"to"`
-	CC          []string          `json:"cc"`
-	BCC         []string          `json:"bcc"`
-	Subject     string            `json:"subject"`
-	TextBody    string            `json:"text_body"`
-	HTMLBody    string            `json:"html_body"`
-	Template    string            `json:"template"`
+	ID           string                 `json:"id"`
+	To           []string               `json:"to"`
+	CC           []string               `json:"cc"`
+	BCC          []string               `json:"bcc"`
+	Subject      string                 `json:"subject"`
+	TextBody     string                 `json:"text_body"`
+	HTMLBody     string                 `json:"html_body"`
+	Template     string                 `json:"template"`
 	TemplateData map[string]interface{} `json:"template_data"`
-	Attachments []*EmailAttachment `json:"attachments"`
-	Priority    NotificationPriority `json:"priority"`
-	ScheduledAt *time.Time        `json:"scheduled_at"`
-	CreatedAt   time.Time         `json:"created_at"`
+	Attachments  []*EmailAttachment     `json:"attachments"`
+	Priority     NotificationPriority   `json:"priority"`
+	ScheduledAt  *time.Time             `json:"scheduled_at"`
+	CreatedAt    time.Time              `json:"created_at"`
 }
 
 // EmailAttachment represents an email attachment
@@ -230,21 +230,21 @@ type TemplateEngine interface {
 
 // DeliveryStatus represents delivery status
 type DeliveryStatus struct {
-	ID          string    `json:"id"`
-	Status      string    `json:"status"`
+	ID          string     `json:"id"`
+	Status      string     `json:"status"`
 	DeliveredAt *time.Time `json:"delivered_at"`
-	Error       string    `json:"error"`
+	Error       string     `json:"error"`
 }
 
 // NotificationPreferences represents user notification preferences
 type NotificationPreferences struct {
-	UserID              string                                 `json:"user_id"`
-	Channels            map[NotificationChannel]bool           `json:"channels"`
-	Types               map[NotificationType]bool              `json:"types"`
-	QuietHours          *QuietHours                            `json:"quiet_hours"`
-	Frequency           map[NotificationType]string            `json:"frequency"`
-	CustomSettings      map[string]interface{}                 `json:"custom_settings"`
-	LastUpdated         time.Time                              `json:"last_updated"`
+	UserID         string                       `json:"user_id"`
+	Channels       map[NotificationChannel]bool `json:"channels"`
+	Types          map[NotificationType]bool    `json:"types"`
+	QuietHours     *QuietHours                  `json:"quiet_hours"`
+	Frequency      map[NotificationType]string  `json:"frequency"`
+	CustomSettings map[string]interface{}       `json:"custom_settings"`
+	LastUpdated    time.Time                    `json:"last_updated"`
 }
 
 // QuietHours represents quiet hours settings
@@ -257,15 +257,15 @@ type QuietHours struct {
 
 // Notification statistics and metrics
 type NotificationMetrics struct {
-	TotalSent      int                            `json:"total_sent"`
-	TotalDelivered int                            `json:"total_delivered"`
-	TotalFailed    int                            `json:"total_failed"`
-	DeliveryRate   float64                        `json:"delivery_rate"`
-	ByChannel      map[NotificationChannel]int    `json:"by_channel"`
-	ByType         map[NotificationType]int       `json:"by_type"`
-	ByPriority     map[NotificationPriority]int   `json:"by_priority"`
-	AverageLatency time.Duration                  `json:"average_latency"`
-	Timestamp      time.Time                      `json:"timestamp"`
+	TotalSent      int                          `json:"total_sent"`
+	TotalDelivered int                          `json:"total_delivered"`
+	TotalFailed    int                          `json:"total_failed"`
+	DeliveryRate   float64                      `json:"delivery_rate"`
+	ByChannel      map[NotificationChannel]int  `json:"by_channel"`
+	ByType         map[NotificationType]int     `json:"by_type"`
+	ByPriority     map[NotificationPriority]int `json:"by_priority"`
+	AverageLatency time.Duration                `json:"average_latency"`
+	Timestamp      time.Time                    `json:"timestamp"`
 }
 
 // NewNotificationService creates a new notification service
@@ -473,7 +473,7 @@ func (s *NotificationService) GetNotificationPreferences(userID string) (*Notifi
 			ChannelInApp:    true,
 		},
 		Types: map[NotificationType]bool{
-			NotificationTypeMatchComplete:   true,
+			NotificationTypeMatchComplete:  true,
 			NotificationTypeRankChange:     true,
 			NotificationTypeAchievement:    true,
 			NotificationTypeCoachingTip:    false,
@@ -489,9 +489,9 @@ func (s *NotificationService) GetNotificationPreferences(userID string) (*Notifi
 			Timezone:  "UTC",
 		},
 		Frequency: map[NotificationType]string{
-			NotificationTypeMatchComplete:   "immediate",
-			NotificationTypeCoachingTip:    "daily",
-			NotificationTypeWeeklyReport:   "weekly",
+			NotificationTypeMatchComplete: "immediate",
+			NotificationTypeCoachingTip:   "daily",
+			NotificationTypeWeeklyReport:  "weekly",
 		},
 		LastUpdated: time.Now(),
 	}, nil
@@ -502,7 +502,7 @@ func (s *NotificationService) UpdateNotificationPreferences(userID string, prefe
 	// Mock implementation - would update database in real system
 	preferences.UserID = userID
 	preferences.LastUpdated = time.Now()
-	
+
 	log.Printf("Updated notification preferences for user: %s", userID)
 	return nil
 }
@@ -521,7 +521,7 @@ func (s *NotificationService) GetMetrics(since time.Time) (*NotificationMetrics,
 			ChannelPush:     2990,
 		},
 		ByType: map[NotificationType]int{
-			NotificationTypeMatchComplete:   6830,
+			NotificationTypeMatchComplete:  6830,
 			NotificationTypeRankChange:     1250,
 			NotificationTypeAchievement:    2180,
 			NotificationTypeCoachingTip:    1890,
@@ -601,7 +601,7 @@ func (s *NotificationService) processNotification(notification *NotificationJob,
 	defer cancel()
 
 	notification.Status = "processing"
-	
+
 	// Process each channel
 	for _, channel := range notification.Channels {
 		switch channel {
@@ -622,10 +622,10 @@ func (s *NotificationService) processNotification(notification *NotificationJob,
 
 func (s *NotificationService) processRealTimeNotification(ctx context.Context, notification *NotificationJob) {
 	data := map[string]interface{}{
-		"id":       notification.ID,
-		"type":     notification.Type,
-		"content":  notification.Content,
-		"priority": notification.Priority,
+		"id":        notification.ID,
+		"type":      notification.Type,
+		"content":   notification.Content,
+		"priority":  notification.Priority,
 		"timestamp": time.Now(),
 	}
 
@@ -720,7 +720,7 @@ func (s *NotificationService) handleWebSocketConnection(wsConn *WebSocketConnect
 					wsConn.Conn.WriteMessage(websocket.CloseMessage, []byte{})
 					return
 				}
-				
+
 				wsConn.Conn.SetWriteDeadline(time.Now().Add(s.config.WebSocketWriteTimeout))
 				if err := wsConn.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
 					log.Printf("WebSocket write error for user %s: %v", wsConn.UserID, err)
@@ -739,7 +739,7 @@ func (s *NotificationService) handleWebSocketConnection(wsConn *WebSocketConnect
 			}
 			break
 		}
-		
+
 		wsConn.LastPing = time.Now()
 		wsConn.Conn.SetReadDeadline(time.Now().Add(s.config.WebSocketReadTimeout))
 	}
@@ -786,7 +786,7 @@ func (s *NotificationService) scheduleNotification(notification *NotificationJob
 		defer timer.Stop()
 
 		<-timer.C
-		
+
 		ctx, cancel := context.WithTimeout(context.Background(), s.config.ProcessingTimeout)
 		defer cancel()
 
@@ -802,7 +802,7 @@ func (s *NotificationService) scheduleNotification(notification *NotificationJob
 // Shutdown gracefully shuts down the notification service
 func (s *NotificationService) Shutdown(ctx context.Context) error {
 	log.Println("Shutting down notification service...")
-	
+
 	// Close all WebSocket connections
 	s.connectionsMu.Lock()
 	for userID, conn := range s.wsConnections {
@@ -811,16 +811,16 @@ func (s *NotificationService) Shutdown(ctx context.Context) error {
 		delete(s.wsConnections, userID)
 	}
 	s.connectionsMu.Unlock()
-	
+
 	close(s.shutdown)
-	
+
 	// Wait for workers to finish
 	done := make(chan struct{})
 	go func() {
 		s.wg.Wait()
 		close(done)
 	}()
-	
+
 	select {
 	case <-done:
 		log.Println("Notification service shut down successfully")

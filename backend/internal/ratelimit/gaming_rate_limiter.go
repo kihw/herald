@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Herald.lol Gaming Analytics - Gaming-Specific Rate Limiter
@@ -15,59 +15,59 @@ import (
 
 // GamingRateLimiter provides gaming-specific rate limiting functionality
 type GamingRateLimiter struct {
-	redis        *redis.Client
-	config       *GamingRateLimitConfig
-	ipLimiter    *IPRateLimiter
-	apiLimiter   *APIRateLimiter
+	redis           *redis.Client
+	config          *GamingRateLimitConfig
+	ipLimiter       *IPRateLimiter
+	apiLimiter      *APIRateLimiter
 	gameRateLimiter *GameSpecificRateLimiter
 }
 
 // GamingRateLimitConfig contains rate limiting configuration
 type GamingRateLimitConfig struct {
 	// Subscription tier limits
-	FreeTierLimits     *TierLimits `json:"free_tier"`
-	PremiumTierLimits  *TierLimits `json:"premium_tier"`
-	ProTierLimits      *TierLimits `json:"pro_tier"`
-	EnterpriseLimits   *TierLimits `json:"enterprise_tier"`
-	
+	FreeTierLimits    *TierLimits `json:"free_tier"`
+	PremiumTierLimits *TierLimits `json:"premium_tier"`
+	ProTierLimits     *TierLimits `json:"pro_tier"`
+	EnterpriseLimits  *TierLimits `json:"enterprise_tier"`
+
 	// Gaming-specific limits
-	RiotAPILimits      *GameAPILimits `json:"riot_api_limits"`
-	AnalyticsLimits    *AnalyticsRateLimits `json:"analytics_limits"`
-	ExportLimits       *ExportRateLimits `json:"export_limits"`
-	
+	RiotAPILimits   *GameAPILimits       `json:"riot_api_limits"`
+	AnalyticsLimits *AnalyticsRateLimits `json:"analytics_limits"`
+	ExportLimits    *ExportRateLimits    `json:"export_limits"`
+
 	// DDoS protection
-	DDoSProtection     *DDoSProtectionConfig `json:"ddos_protection"`
-	
+	DDoSProtection *DDoSProtectionConfig `json:"ddos_protection"`
+
 	// IP-based limits
-	IPLimits          *IPRateLimitConfig `json:"ip_limits"`
+	IPLimits *IPRateLimitConfig `json:"ip_limits"`
 }
 
 // TierLimits defines rate limits per subscription tier
 type TierLimits struct {
-	RequestsPerMinute    int           `json:"requests_per_minute"`
-	RequestsPerHour      int           `json:"requests_per_hour"`
-	RequestsPerDay       int           `json:"requests_per_day"`
-	AnalyticsPerMinute   int           `json:"analytics_per_minute"`
-	ExportsPerDay        int           `json:"exports_per_day"`
-	BurstLimit           int           `json:"burst_limit"`
-	WindowDuration       time.Duration `json:"window_duration"`
+	RequestsPerMinute  int           `json:"requests_per_minute"`
+	RequestsPerHour    int           `json:"requests_per_hour"`
+	RequestsPerDay     int           `json:"requests_per_day"`
+	AnalyticsPerMinute int           `json:"analytics_per_minute"`
+	ExportsPerDay      int           `json:"exports_per_day"`
+	BurstLimit         int           `json:"burst_limit"`
+	WindowDuration     time.Duration `json:"window_duration"`
 }
 
 // GameAPILimits defines gaming API specific limits
 type GameAPILimits struct {
-	RiotPersonalLimit    int `json:"riot_personal_limit"`    // 100 req/2min
-	RiotProductionLimit  int `json:"riot_production_limit"`  // Variable
-	MatchDataPerHour     int `json:"match_data_per_hour"`
-	SummonerDataPerHour  int `json:"summoner_data_per_hour"`
-	RankedDataPerHour    int `json:"ranked_data_per_hour"`
+	RiotPersonalLimit   int `json:"riot_personal_limit"`   // 100 req/2min
+	RiotProductionLimit int `json:"riot_production_limit"` // Variable
+	MatchDataPerHour    int `json:"match_data_per_hour"`
+	SummonerDataPerHour int `json:"summoner_data_per_hour"`
+	RankedDataPerHour   int `json:"ranked_data_per_hour"`
 }
 
 // AnalyticsRateLimits defines analytics-specific rate limits
 type AnalyticsRateLimits struct {
-	BasicAnalyticsPerMin    int `json:"basic_analytics_per_min"`
-	AdvancedAnalyticsPerMin int `json:"advanced_analytics_per_min"`
-	RealTimeAnalyticsPerMin int `json:"realtime_analytics_per_min"`
-	TeamAnalyticsPerMin     int `json:"team_analytics_per_min"`
+	BasicAnalyticsPerMin      int `json:"basic_analytics_per_min"`
+	AdvancedAnalyticsPerMin   int `json:"advanced_analytics_per_min"`
+	RealTimeAnalyticsPerMin   int `json:"realtime_analytics_per_min"`
+	TeamAnalyticsPerMin       int `json:"team_analytics_per_min"`
 	ComparisonAnalyticsPerMin int `json:"comparison_analytics_per_min"`
 }
 
@@ -82,35 +82,35 @@ type ExportRateLimits struct {
 
 // DDoSProtectionConfig defines DDoS protection settings
 type DDoSProtectionConfig struct {
-	Enabled              bool          `json:"enabled"`
-	RequestThreshold     int           `json:"request_threshold"`
-	WindowDuration       time.Duration `json:"window_duration"`
-	BlockDuration        time.Duration `json:"block_duration"`
-	SuspiciousPatterns   []string      `json:"suspicious_patterns"`
-	GeoBlocking          bool          `json:"geo_blocking"`
-	BlockedCountries     []string      `json:"blocked_countries"`
+	Enabled            bool          `json:"enabled"`
+	RequestThreshold   int           `json:"request_threshold"`
+	WindowDuration     time.Duration `json:"window_duration"`
+	BlockDuration      time.Duration `json:"block_duration"`
+	SuspiciousPatterns []string      `json:"suspicious_patterns"`
+	GeoBlocking        bool          `json:"geo_blocking"`
+	BlockedCountries   []string      `json:"blocked_countries"`
 }
 
 // IPRateLimitConfig defines IP-based rate limiting
 type IPRateLimitConfig struct {
-	RequestsPerMinute  int           `json:"requests_per_minute"`
-	RequestsPerHour    int           `json:"requests_per_hour"`
-	WhitelistedIPs     []string      `json:"whitelisted_ips"`
-	BlacklistedIPs     []string      `json:"blacklisted_ips"`
-	TrustedProxies     []string      `json:"trusted_proxies"`
+	RequestsPerMinute int      `json:"requests_per_minute"`
+	RequestsPerHour   int      `json:"requests_per_hour"`
+	WhitelistedIPs    []string `json:"whitelisted_ips"`
+	BlacklistedIPs    []string `json:"blacklisted_ips"`
+	TrustedProxies    []string `json:"trusted_proxies"`
 }
 
 // RateLimitResult contains rate limiting decision
 type RateLimitResult struct {
-	Allowed           bool          `json:"allowed"`
-	Remaining         int           `json:"remaining"`
-	Reset             time.Time     `json:"reset"`
-	RetryAfter        time.Duration `json:"retry_after,omitempty"`
-	Tier              string        `json:"tier"`
-	LimitType         string        `json:"limit_type"`
-	RequestsThisMinute int          `json:"requests_this_minute"`
-	RequestsThisHour  int           `json:"requests_this_hour"`
-	RequestsThisDay   int           `json:"requests_this_day"`
+	Allowed            bool          `json:"allowed"`
+	Remaining          int           `json:"remaining"`
+	Reset              time.Time     `json:"reset"`
+	RetryAfter         time.Duration `json:"retry_after,omitempty"`
+	Tier               string        `json:"tier"`
+	LimitType          string        `json:"limit_type"`
+	RequestsThisMinute int           `json:"requests_this_minute"`
+	RequestsThisHour   int           `json:"requests_this_hour"`
+	RequestsThisDay    int           `json:"requests_this_day"`
 }
 
 // NewGamingRateLimiter creates new gaming rate limiter
@@ -138,7 +138,7 @@ func (g *GamingRateLimiter) CheckGamingRateLimit(ctx context.Context, request *G
 			}, nil
 		}
 	}
-	
+
 	// 2. Check IP rate limits
 	ipResult, err := g.ipLimiter.CheckIPLimit(ctx, request.ClientIP)
 	if err != nil {
@@ -147,7 +147,7 @@ func (g *GamingRateLimiter) CheckGamingRateLimit(ctx context.Context, request *G
 	if !ipResult.Allowed {
 		return ipResult, nil
 	}
-	
+
 	// 3. Check subscription tier limits
 	tierResult, err := g.checkTierLimits(ctx, request)
 	if err != nil {
@@ -156,7 +156,7 @@ func (g *GamingRateLimiter) CheckGamingRateLimit(ctx context.Context, request *G
 	if !tierResult.Allowed {
 		return tierResult, nil
 	}
-	
+
 	// 4. Check gaming-specific limits
 	gamingResult, err := g.gameRateLimiter.CheckGameLimits(ctx, request)
 	if err != nil {
@@ -165,12 +165,12 @@ func (g *GamingRateLimiter) CheckGamingRateLimit(ctx context.Context, request *G
 	if !gamingResult.Allowed {
 		return gamingResult, nil
 	}
-	
+
 	// 5. Update counters if all checks pass
 	if err := g.updateCounters(ctx, request); err != nil {
 		return nil, fmt.Errorf("failed to update counters: %w", err)
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:   true,
 		Remaining: tierResult.Remaining,
@@ -183,7 +183,7 @@ func (g *GamingRateLimiter) CheckGamingRateLimit(ctx context.Context, request *G
 // checkDDoSProtection checks for DDoS attack patterns
 func (g *GamingRateLimiter) checkDDoSProtection(ctx context.Context, request *GamingRateLimitRequest) (bool, error) {
 	key := fmt.Sprintf("ddos:ip:%s", request.ClientIP)
-	
+
 	// Check request rate within window
 	pipe := g.redis.Pipeline()
 	pipe.Incr(ctx, key)
@@ -192,32 +192,32 @@ func (g *GamingRateLimiter) checkDDoSProtection(ctx context.Context, request *Ga
 	if err != nil {
 		return false, fmt.Errorf("failed to check DDoS protection: %w", err)
 	}
-	
+
 	count := results[0].(*redis.IntCmd).Val()
-	
+
 	// Block if threshold exceeded
 	if int(count) > g.config.DDoSProtection.RequestThreshold {
 		// Add to blocked IPs
 		blockKey := fmt.Sprintf("blocked:ip:%s", request.ClientIP)
 		g.redis.Set(ctx, blockKey, "ddos_blocked", g.config.DDoSProtection.BlockDuration)
-		
+
 		return true, nil
 	}
-	
+
 	// Check if IP is already blocked
 	blockKey := fmt.Sprintf("blocked:ip:%s", request.ClientIP)
 	blocked, err := g.redis.Exists(ctx, blockKey).Result()
 	if err != nil {
 		return false, err
 	}
-	
+
 	return blocked > 0, nil
 }
 
 // checkTierLimits checks subscription tier-based limits
 func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *GamingRateLimitRequest) (*RateLimitResult, error) {
 	var limits *TierLimits
-	
+
 	// Get limits based on subscription tier
 	switch request.SubscriptionTier {
 	case "free":
@@ -231,10 +231,10 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 	default:
 		limits = g.config.FreeTierLimits // Default to free tier
 	}
-	
+
 	// Check multiple time windows
 	now := time.Now()
-	
+
 	// Minute window
 	minuteKey := fmt.Sprintf("tier:%s:user:%s:minute:%d", request.SubscriptionTier, request.UserID, now.Unix()/60)
 	minuteCount, err := g.redis.Incr(ctx, minuteKey).Result()
@@ -242,7 +242,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 		return nil, err
 	}
 	g.redis.Expire(ctx, minuteKey, time.Minute)
-	
+
 	if int(minuteCount) > limits.RequestsPerMinute {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -253,7 +253,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 			LimitType:  "tier_minute_limit",
 		}, nil
 	}
-	
+
 	// Hour window
 	hourKey := fmt.Sprintf("tier:%s:user:%s:hour:%d", request.SubscriptionTier, request.UserID, now.Unix()/3600)
 	hourCount, err := g.redis.Incr(ctx, hourKey).Result()
@@ -261,7 +261,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 		return nil, err
 	}
 	g.redis.Expire(ctx, hourKey, time.Hour)
-	
+
 	if int(hourCount) > limits.RequestsPerHour {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -272,7 +272,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 			LimitType:  "tier_hour_limit",
 		}, nil
 	}
-	
+
 	// Day window
 	dayKey := fmt.Sprintf("tier:%s:user:%s:day:%d", request.SubscriptionTier, request.UserID, now.Unix()/86400)
 	dayCount, err := g.redis.Incr(ctx, dayKey).Result()
@@ -280,7 +280,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 		return nil, err
 	}
 	g.redis.Expire(ctx, dayKey, 24*time.Hour)
-	
+
 	if int(dayCount) > limits.RequestsPerDay {
 		return &RateLimitResult{
 			Allowed:    false,
@@ -291,7 +291,7 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 			LimitType:  "tier_day_limit",
 		}, nil
 	}
-	
+
 	return &RateLimitResult{
 		Allowed:            true,
 		Remaining:          limits.RequestsPerMinute - int(minuteCount),
@@ -308,26 +308,26 @@ func (g *GamingRateLimiter) checkTierLimits(ctx context.Context, request *Gaming
 func (g *GamingRateLimiter) updateCounters(ctx context.Context, request *GamingRateLimitRequest) error {
 	pipe := g.redis.Pipeline()
 	now := time.Now()
-	
+
 	// Update user counters
 	userMinuteKey := fmt.Sprintf("user:%s:minute:%d", request.UserID, now.Unix()/60)
 	userHourKey := fmt.Sprintf("user:%s:hour:%d", request.UserID, now.Unix()/3600)
 	userDayKey := fmt.Sprintf("user:%s:day:%d", request.UserID, now.Unix()/86400)
-	
+
 	pipe.Incr(ctx, userMinuteKey)
 	pipe.Expire(ctx, userMinuteKey, time.Minute)
 	pipe.Incr(ctx, userHourKey)
 	pipe.Expire(ctx, userHourKey, time.Hour)
 	pipe.Incr(ctx, userDayKey)
 	pipe.Expire(ctx, userDayKey, 24*time.Hour)
-	
+
 	// Update endpoint-specific counters
 	if request.Endpoint != "" {
 		endpointKey := fmt.Sprintf("endpoint:%s:minute:%d", request.Endpoint, now.Unix()/60)
 		pipe.Incr(ctx, endpointKey)
 		pipe.Expire(ctx, endpointKey, time.Minute)
 	}
-	
+
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -360,7 +360,7 @@ func (g *GamingRateLimiter) GamingRateLimitMiddleware() gin.HandlerFunc {
 			Region:           c.Param("region"),
 			GameType:         c.Query("game_type"),
 		}
-		
+
 		// Check rate limits
 		result, err := g.CheckGamingRateLimit(c.Request.Context(), request)
 		if err != nil {
@@ -371,16 +371,16 @@ func (g *GamingRateLimiter) GamingRateLimitMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// Add rate limit headers
 		c.Header("X-Gaming-Rate-Limit", strconv.Itoa(getTierLimit(request.SubscriptionTier)))
 		c.Header("X-Gaming-Rate-Remaining", strconv.Itoa(result.Remaining))
 		c.Header("X-Gaming-Rate-Reset", strconv.FormatInt(result.Reset.Unix(), 10))
 		c.Header("X-Gaming-Rate-Tier", result.Tier)
-		
+
 		if !result.Allowed {
 			c.Header("Retry-After", strconv.FormatInt(int64(result.RetryAfter.Seconds()), 10))
-			
+
 			c.JSON(429, gin.H{
 				"error":               "Gaming rate limit exceeded",
 				"limit_type":          result.LimitType,
@@ -391,7 +391,7 @@ func (g *GamingRateLimiter) GamingRateLimitMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		c.Next()
 	}
 }
@@ -423,7 +423,7 @@ func getTierLimit(tier string) int {
 		"pro":        1200,
 		"enterprise": 6000,
 	}
-	
+
 	if limit, exists := limits[tier]; exists {
 		return limit
 	}

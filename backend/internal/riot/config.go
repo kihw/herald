@@ -10,54 +10,54 @@ import (
 // RiotAPIConfig contains global Riot API configuration
 type RiotAPIConfig struct {
 	// API Keys
-	PersonalAPIKey    string `json:"personal_api_key"`
-	ProductionAPIKey  string `json:"production_api_key,omitempty"`
-	
+	PersonalAPIKey   string `json:"personal_api_key"`
+	ProductionAPIKey string `json:"production_api_key,omitempty"`
+
 	// Rate Limiting
-	UsePersonalKey    bool `json:"use_personal_key"`    // true = 100req/2min, false = production limits
+	UsePersonalKey    bool `json:"use_personal_key"` // true = 100req/2min, false = production limits
 	RequestsPerMinute int  `json:"requests_per_minute"`
 	BurstLimit        int  `json:"burst_limit"`
-	
+
 	// Caching
-	CacheEnabled         bool          `json:"cache_enabled"`
-	SummonerCacheTTL     time.Duration `json:"summoner_cache_ttl"`
-	MatchCacheTTL        time.Duration `json:"match_cache_ttl"`
-	RankedCacheTTL       time.Duration `json:"ranked_cache_ttl"`
-	MasteryCacheTTL      time.Duration `json:"mastery_cache_ttl"`
-	
+	CacheEnabled     bool          `json:"cache_enabled"`
+	SummonerCacheTTL time.Duration `json:"summoner_cache_ttl"`
+	MatchCacheTTL    time.Duration `json:"match_cache_ttl"`
+	RankedCacheTTL   time.Duration `json:"ranked_cache_ttl"`
+	MasteryCacheTTL  time.Duration `json:"mastery_cache_ttl"`
+
 	// Request Settings
-	RequestTimeout       time.Duration `json:"request_timeout"`
-	MaxRetries          int           `json:"max_retries"`
-	RetryBackoff        time.Duration `json:"retry_backoff"`
-	
+	RequestTimeout time.Duration `json:"request_timeout"`
+	MaxRetries     int           `json:"max_retries"`
+	RetryBackoff   time.Duration `json:"retry_backoff"`
+
 	// Client Settings
-	UserAgent           string `json:"user_agent"`
-	EnableCompression   bool   `json:"enable_compression"`
-	
+	UserAgent         string `json:"user_agent"`
+	EnableCompression bool   `json:"enable_compression"`
+
 	// Regional Settings
-	DefaultRegion       string            `json:"default_region"`
-	RegionalEndpoints   map[string]string `json:"regional_endpoints"`
-	
+	DefaultRegion     string            `json:"default_region"`
+	RegionalEndpoints map[string]string `json:"regional_endpoints"`
+
 	// Analytics Settings
-	EnableAnalytics     bool `json:"enable_analytics"`
-	AnalyticsDepth      int  `json:"analytics_depth"`      // Number of matches to analyze
-	CacheAnalytics      bool `json:"cache_analytics"`
-	AnalyticsCacheTTL   time.Duration `json:"analytics_cache_ttl"`
-	
+	EnableAnalytics   bool          `json:"enable_analytics"`
+	AnalyticsDepth    int           `json:"analytics_depth"` // Number of matches to analyze
+	CacheAnalytics    bool          `json:"cache_analytics"`
+	AnalyticsCacheTTL time.Duration `json:"analytics_cache_ttl"`
+
 	// Compliance Settings
-	RespectRiotLimits   bool `json:"respect_riot_limits"`
-	LogAPIRequests      bool `json:"log_api_requests"`
-	MonitorUsage        bool `json:"monitor_usage"`
+	RespectRiotLimits bool `json:"respect_riot_limits"`
+	LogAPIRequests    bool `json:"log_api_requests"`
+	MonitorUsage      bool `json:"monitor_usage"`
 }
 
 // RegionConfig contains region-specific configuration
 type RegionConfig struct {
-	RegionCode      string `json:"region_code"`     // NA1, EUW1, etc.
-	DisplayName     string `json:"display_name"`   // North America, Europe West, etc.
-	BaseURL         string `json:"base_url"`       // Regional API base URL
-	Timezone        string `json:"timezone"`       // Region timezone
-	Language        string `json:"language"`       // Primary language
-	Enabled         bool   `json:"enabled"`        // Whether region is enabled
+	RegionCode          string  `json:"region_code"`           // NA1, EUW1, etc.
+	DisplayName         string  `json:"display_name"`          // North America, Europe West, etc.
+	BaseURL             string  `json:"base_url"`              // Regional API base URL
+	Timezone            string  `json:"timezone"`              // Region timezone
+	Language            string  `json:"language"`              // Primary language
+	Enabled             bool    `json:"enabled"`               // Whether region is enabled
 	RateLimitMultiplier float64 `json:"rate_limit_multiplier"` // Regional rate limit adjustment
 }
 
@@ -66,11 +66,11 @@ type QueueConfig struct {
 	QueueID     int    `json:"queue_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
-	Category    string `json:"category"`    // "Ranked", "Normal", "ARAM", etc.
+	Category    string `json:"category"` // "Ranked", "Normal", "ARAM", etc.
 	IsRanked    bool   `json:"is_ranked"`
 	TeamSize    int    `json:"team_size"`
 	Enabled     bool   `json:"enabled"`
-	Priority    int    `json:"priority"`   // Higher priority queues get more analysis
+	Priority    int    `json:"priority"` // Higher priority queues get more analysis
 }
 
 // ChampionConfig contains champion-specific configuration
@@ -90,25 +90,25 @@ func DefaultRiotAPIConfig() *RiotAPIConfig {
 	return &RiotAPIConfig{
 		// Rate Limiting (Personal Development Key limits)
 		UsePersonalKey:    true,
-		RequestsPerMinute: 50,  // Conservative limit under 100/2min
-		BurstLimit:        20,  // Allow short bursts
-		
+		RequestsPerMinute: 50, // Conservative limit under 100/2min
+		BurstLimit:        20, // Allow short bursts
+
 		// Caching
 		CacheEnabled:     true,
 		SummonerCacheTTL: 15 * time.Minute,
-		MatchCacheTTL:    24 * time.Hour,     // Matches don't change
-		RankedCacheTTL:   10 * time.Minute,   // Ranked data changes frequently
+		MatchCacheTTL:    24 * time.Hour,   // Matches don't change
+		RankedCacheTTL:   10 * time.Minute, // Ranked data changes frequently
 		MasteryCacheTTL:  30 * time.Minute,
-		
+
 		// Request Settings
-		RequestTimeout:   30 * time.Second,
-		MaxRetries:      3,
-		RetryBackoff:    2 * time.Second,
-		
+		RequestTimeout: 30 * time.Second,
+		MaxRetries:     3,
+		RetryBackoff:   2 * time.Second,
+
 		// Client Settings
 		UserAgent:         "Herald.lol/1.0 (Gaming Analytics Platform)",
 		EnableCompression: true,
-		
+
 		// Regional Settings
 		DefaultRegion: "NA1",
 		RegionalEndpoints: map[string]string{
@@ -124,17 +124,17 @@ func DefaultRiotAPIConfig() *RiotAPIConfig {
 			"TR1":  "https://tr1.api.riotgames.com",
 			"RU":   "https://ru.api.riotgames.com",
 		},
-		
+
 		// Analytics Settings
 		EnableAnalytics:   true,
-		AnalyticsDepth:   20,  // Analyze last 20 matches
-		CacheAnalytics:   true,
+		AnalyticsDepth:    20, // Analyze last 20 matches
+		CacheAnalytics:    true,
 		AnalyticsCacheTTL: 30 * time.Minute,
-		
+
 		// Compliance Settings
 		RespectRiotLimits: true,
-		LogAPIRequests:   true,
-		MonitorUsage:     true,
+		LogAPIRequests:    true,
+		MonitorUsage:      true,
 	}
 }
 
@@ -144,100 +144,100 @@ func GetSupportedRegions() []RegionConfig {
 		{
 			RegionCode:          "NA1",
 			DisplayName:         "North America",
-			BaseURL:            "https://na1.api.riotgames.com",
-			Timezone:           "America/Los_Angeles",
-			Language:           "en_US",
-			Enabled:            true,
+			BaseURL:             "https://na1.api.riotgames.com",
+			Timezone:            "America/Los_Angeles",
+			Language:            "en_US",
+			Enabled:             true,
 			RateLimitMultiplier: 1.0,
 		},
 		{
 			RegionCode:          "EUW1",
 			DisplayName:         "Europe West",
-			BaseURL:            "https://euw1.api.riotgames.com",
-			Timezone:           "Europe/London",
-			Language:           "en_GB",
-			Enabled:            true,
+			BaseURL:             "https://euw1.api.riotgames.com",
+			Timezone:            "Europe/London",
+			Language:            "en_GB",
+			Enabled:             true,
 			RateLimitMultiplier: 1.0,
 		},
 		{
 			RegionCode:          "EUN1",
 			DisplayName:         "Europe Nordic & East",
-			BaseURL:            "https://eun1.api.riotgames.com",
-			Timezone:           "Europe/Stockholm",
-			Language:           "en_GB",
-			Enabled:            true,
+			BaseURL:             "https://eun1.api.riotgames.com",
+			Timezone:            "Europe/Stockholm",
+			Language:            "en_GB",
+			Enabled:             true,
 			RateLimitMultiplier: 1.0,
 		},
 		{
 			RegionCode:          "KR",
 			DisplayName:         "Korea",
-			BaseURL:            "https://kr.api.riotgames.com",
-			Timezone:           "Asia/Seoul",
-			Language:           "ko_KR",
-			Enabled:            true,
+			BaseURL:             "https://kr.api.riotgames.com",
+			Timezone:            "Asia/Seoul",
+			Language:            "ko_KR",
+			Enabled:             true,
 			RateLimitMultiplier: 0.8, // Higher traffic region
 		},
 		{
 			RegionCode:          "JP1",
 			DisplayName:         "Japan",
-			BaseURL:            "https://jp1.api.riotgames.com",
-			Timezone:           "Asia/Tokyo",
-			Language:           "ja_JP",
-			Enabled:            true,
+			BaseURL:             "https://jp1.api.riotgames.com",
+			Timezone:            "Asia/Tokyo",
+			Language:            "ja_JP",
+			Enabled:             true,
 			RateLimitMultiplier: 0.9,
 		},
 		{
 			RegionCode:          "BR1",
 			DisplayName:         "Brazil",
-			BaseURL:            "https://br1.api.riotgames.com",
-			Timezone:           "America/Sao_Paulo",
-			Language:           "pt_BR",
-			Enabled:            true,
+			BaseURL:             "https://br1.api.riotgames.com",
+			Timezone:            "America/Sao_Paulo",
+			Language:            "pt_BR",
+			Enabled:             true,
 			RateLimitMultiplier: 1.1,
 		},
 		{
 			RegionCode:          "LA1",
 			DisplayName:         "Latin America North",
-			BaseURL:            "https://la1.api.riotgames.com",
-			Timezone:           "America/Mexico_City",
-			Language:           "es_MX",
-			Enabled:            true,
+			BaseURL:             "https://la1.api.riotgames.com",
+			Timezone:            "America/Mexico_City",
+			Language:            "es_MX",
+			Enabled:             true,
 			RateLimitMultiplier: 1.2,
 		},
 		{
 			RegionCode:          "LA2",
 			DisplayName:         "Latin America South",
-			BaseURL:            "https://la2.api.riotgames.com",
-			Timezone:           "America/Santiago",
-			Language:           "es_CL",
-			Enabled:            true,
+			BaseURL:             "https://la2.api.riotgames.com",
+			Timezone:            "America/Santiago",
+			Language:            "es_CL",
+			Enabled:             true,
 			RateLimitMultiplier: 1.2,
 		},
 		{
 			RegionCode:          "OC1",
 			DisplayName:         "Oceania",
-			BaseURL:            "https://oc1.api.riotgames.com",
-			Timezone:           "Australia/Sydney",
-			Language:           "en_AU",
-			Enabled:            true,
+			BaseURL:             "https://oc1.api.riotgames.com",
+			Timezone:            "Australia/Sydney",
+			Language:            "en_AU",
+			Enabled:             true,
 			RateLimitMultiplier: 1.3, // Lower traffic region
 		},
 		{
 			RegionCode:          "TR1",
 			DisplayName:         "Turkey",
-			BaseURL:            "https://tr1.api.riotgames.com",
-			Timezone:           "Europe/Istanbul",
-			Language:           "tr_TR",
-			Enabled:            true,
+			BaseURL:             "https://tr1.api.riotgames.com",
+			Timezone:            "Europe/Istanbul",
+			Language:            "tr_TR",
+			Enabled:             true,
 			RateLimitMultiplier: 1.1,
 		},
 		{
 			RegionCode:          "RU",
 			DisplayName:         "Russia",
-			BaseURL:            "https://ru.api.riotgames.com",
-			Timezone:           "Europe/Moscow",
-			Language:           "ru_RU",
-			Enabled:            true,
+			BaseURL:             "https://ru.api.riotgames.com",
+			Timezone:            "Europe/Moscow",
+			Language:            "ru_RU",
+			Enabled:             true,
 			RateLimitMultiplier: 1.0,
 		},
 	}

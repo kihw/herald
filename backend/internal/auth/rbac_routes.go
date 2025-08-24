@@ -83,7 +83,7 @@ func (r *RBACRoutes) RegisterRoutes(group *gin.RouterGroup) {
 // ListRoles handles GET /api/v1/rbac/roles
 func (r *RBACRoutes) ListRoles(c *gin.Context) {
 	filters := &RoleFilters{}
-	
+
 	// Parse query parameters
 	if roleType := c.Query("type"); roleType != "" {
 		filters.Type = &roleType
@@ -110,16 +110,16 @@ func (r *RBACRoutes) ListRoles(c *gin.Context) {
 	roles, err := r.rbac.ListRoles(c.Request.Context(), filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to list gaming roles",
-			"details": err.Error(),
+			"error":           "Failed to list gaming roles",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"roles": roles,
-		"total": len(roles),
+		"roles":           roles,
+		"total":           len(roles),
 		"gaming_platform": "herald-lol",
 	})
 }
@@ -127,19 +127,19 @@ func (r *RBACRoutes) ListRoles(c *gin.Context) {
 // GetRole handles GET /api/v1/rbac/roles/:id
 func (r *RBACRoutes) GetRole(c *gin.Context) {
 	roleID := c.Param("id")
-	
+
 	role, err := r.rbac.GetRole(c.Request.Context(), roleID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
-			"error": "Gaming role not found",
-			"details": err.Error(),
+			"error":           "Gaming role not found",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"role": role,
+		"role":            role,
 		"gaming_platform": "herald-lol",
 	})
 }
@@ -162,8 +162,8 @@ func (r *RBACRoutes) CreateRole(c *gin.Context) {
 	var req CreateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid gaming role data",
-			"details": err.Error(),
+			"error":           "Invalid gaming role data",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
@@ -171,8 +171,8 @@ func (r *RBACRoutes) CreateRole(c *gin.Context) {
 
 	if err := r.validator.Struct(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Gaming role validation failed",
-			"details": err.Error(),
+			"error":           "Gaming role validation failed",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
@@ -180,34 +180,34 @@ func (r *RBACRoutes) CreateRole(c *gin.Context) {
 
 	// Get current user info from context
 	userID := GetUserIDFromContext(c)
-	
+
 	role := &GamingRole{
-		Name:           req.Name,
-		DisplayName:    req.DisplayName,
-		Description:    req.Description,
-		Type:           RoleType(req.Type),
-		Category:       req.Category,
-		Level:          req.Level,
-		ParentRoleID:   req.ParentRoleID,
-		GamingContext:  req.Context,
-		Metadata:       req.Metadata,
-		IsSystem:       false,
-		IsActive:       true,
-		CreatedBy:      userID,
+		Name:          req.Name,
+		DisplayName:   req.DisplayName,
+		Description:   req.Description,
+		Type:          RoleType(req.Type),
+		Category:      req.Category,
+		Level:         req.Level,
+		ParentRoleID:  req.ParentRoleID,
+		GamingContext: req.Context,
+		Metadata:      req.Metadata,
+		IsSystem:      false,
+		IsActive:      true,
+		CreatedBy:     userID,
 	}
 
 	if err := r.rbac.CreateRole(c.Request.Context(), role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create gaming role",
-			"details": err.Error(),
+			"error":           "Failed to create gaming role",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Gaming role created successfully",
-		"role": role,
+		"message":         "Gaming role created successfully",
+		"role":            role,
 		"gaming_platform": "herald-lol",
 	})
 }
@@ -215,21 +215,21 @@ func (r *RBACRoutes) CreateRole(c *gin.Context) {
 // GetUserPermissions handles GET /api/v1/rbac/users/:id/permissions
 func (r *RBACRoutes) GetUserPermissions(c *gin.Context) {
 	userID := c.Param("id")
-	
+
 	permissions, err := r.rbac.GetUserPermissions(c.Request.Context(), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get user gaming permissions",
-			"details": err.Error(),
+			"error":           "Failed to get user gaming permissions",
+			"details":         err.Error(),
 			"gaming_platform": "herald-lol",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
-		"permissions": permissions,
-		"total": len(permissions),
+		"user_id":         userID,
+		"permissions":     permissions,
+		"total":           len(permissions),
 		"gaming_platform": "herald-lol",
 	})
 }
@@ -325,10 +325,10 @@ func GetUserIDFromContext(c *gin.Context) string {
 	if !exists {
 		return "system"
 	}
-	
+
 	if id, ok := userID.(string); ok {
 		return id
 	}
-	
+
 	return "system"
 }

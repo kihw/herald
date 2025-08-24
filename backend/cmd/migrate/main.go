@@ -8,8 +8,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/herald-lol/backend/internal/config"
-	"github.com/herald-lol/backend/internal/models"
+	"github.com/herald-lol/herald/backend/internal/config"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 
 	// Run migrations
 	log.Println("Running database migrations...")
-	
+
 	err = db.AutoMigrate(
 		&models.User{},
 		&models.RiotAccount{},
@@ -49,7 +49,7 @@ func main() {
 		&models.TFTTrait{},
 		&models.TFTAugment{},
 	)
-	
+
 	if err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
@@ -104,7 +104,7 @@ func createDevUser(db *gorm.DB) {
 	// Create development user
 	devUser := models.User{
 		Email:        "dev@herald.lol",
-		Username:     "developer", 
+		Username:     "developer",
 		PasswordHash: "$2a$10$N9qo8uLOickgx2ZMRZoMye1QOPWm3/fXLNqynVtK8ZP5KHlJOQpWi", // "password123"
 		DisplayName:  "Developer",
 		IsActive:     true,
@@ -121,25 +121,25 @@ func createDevUser(db *gorm.DB) {
 
 	// Create default preferences for dev user
 	preferences := models.UserPreferences{
-		UserID:                      devUser.ID,
-		Theme:                       "dark",
-		CompactMode:                 false,
-		ShowDetailedStats:           true,
-		DefaultTimeframe:            "7d",
-		EmailNotifications:          true,
-		PushNotifications:           true,
-		MatchNotifications:          true,
-		RankChangeNotifications:     true,
-		AutoSyncMatches:             true,
-		SyncInterval:                300,
-		IncludeNormalGames:          true,
-		IncludeARAMGames:            true,
-		PublicProfile:               true,
-		ShowInLeaderboards:          true,
-		AllowDataExport:             true,
-		ReceiveAICoaching:           true,
-		SkillLevel:                  "intermediate",
-		PreferredCoachingStyle:      "balanced",
+		UserID:                  devUser.ID,
+		Theme:                   "dark",
+		CompactMode:             false,
+		ShowDetailedStats:       true,
+		DefaultTimeframe:        "7d",
+		EmailNotifications:      true,
+		PushNotifications:       true,
+		MatchNotifications:      true,
+		RankChangeNotifications: true,
+		AutoSyncMatches:         true,
+		SyncInterval:            300,
+		IncludeNormalGames:      true,
+		IncludeARAMGames:        true,
+		PublicProfile:           true,
+		ShowInLeaderboards:      true,
+		AllowDataExport:         true,
+		ReceiveAICoaching:       true,
+		SkillLevel:              "intermediate",
+		PreferredCoachingStyle:  "balanced",
 	}
 
 	if err := db.Create(&preferences).Error; err != nil {

@@ -8,8 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/herald-lol/herald/backend/internal/models"
 	"gorm.io/gorm"
-	"github.com/herald-lol/backend/internal/models"
 )
 
 type CoachingService struct {
@@ -38,64 +38,64 @@ func NewCoachingService(
 
 // Core Data Structures
 type CoachingInsights struct {
-	ID                string                   `json:"id"`
-	SummonerID        string                   `json:"summonerId"`
-	InsightType       string                   `json:"insightType"` // match_analysis, skill_development, strategic, tactical, mental
-	AnalysisPeriod    TimePeriod               `json:"analysisPeriod"`
-	OverallAssessment OverallAssessment        `json:"overallAssessment"`
-	KeyFindings       []KeyFinding             `json:"keyFindings"`
-	ImprovementPlan   ImprovementPlan          `json:"improvementPlan"`
-	TacticalAdvice    []TacticalAdvice         `json:"tacticalAdvice"`
-	StrategicGuidance []StrategicGuidance      `json:"strategicGuidance"`
-	MentalCoaching    MentalCoaching           `json:"mentalCoaching"`
-	CustomizedTips    []CustomizedTip          `json:"customizedTips"`
-	PracticeRoutine   PracticeRoutine          `json:"practiceRoutine"`
-	MatchAnalysis     []MatchAnalysisInsight   `json:"matchAnalysis"`
-	ChampionCoaching  []ChampionCoachingTip    `json:"championCoaching"`
-	MetaAdaptation    MetaAdaptationGuidance   `json:"metaAdaptation"`
-	PerformanceGoals  []PerformanceGoal        `json:"performanceGoals"`
-	CoachingSchedule  CoachingSchedule         `json:"coachingSchedule"`
-	ProgressTracking  ProgressTracking         `json:"progressTracking"`
-	Confidence        float64                  `json:"confidence"`
-	CreatedAt         time.Time                `json:"createdAt"`
+	ID                string                 `json:"id"`
+	SummonerID        string                 `json:"summonerId"`
+	InsightType       string                 `json:"insightType"` // match_analysis, skill_development, strategic, tactical, mental
+	AnalysisPeriod    TimePeriod             `json:"analysisPeriod"`
+	OverallAssessment OverallAssessment      `json:"overallAssessment"`
+	KeyFindings       []KeyFinding           `json:"keyFindings"`
+	ImprovementPlan   ImprovementPlan        `json:"improvementPlan"`
+	TacticalAdvice    []TacticalAdvice       `json:"tacticalAdvice"`
+	StrategicGuidance []StrategicGuidance    `json:"strategicGuidance"`
+	MentalCoaching    MentalCoaching         `json:"mentalCoaching"`
+	CustomizedTips    []CustomizedTip        `json:"customizedTips"`
+	PracticeRoutine   PracticeRoutine        `json:"practiceRoutine"`
+	MatchAnalysis     []MatchAnalysisInsight `json:"matchAnalysis"`
+	ChampionCoaching  []ChampionCoachingTip  `json:"championCoaching"`
+	MetaAdaptation    MetaAdaptationGuidance `json:"metaAdaptation"`
+	PerformanceGoals  []PerformanceGoal      `json:"performanceGoals"`
+	CoachingSchedule  CoachingSchedule       `json:"coachingSchedule"`
+	ProgressTracking  ProgressTracking       `json:"progressTracking"`
+	Confidence        float64                `json:"confidence"`
+	CreatedAt         time.Time              `json:"createdAt"`
 }
 
 type TimePeriod struct {
-	StartDate    time.Time `json:"startDate"`
-	EndDate      time.Time `json:"endDate"`
-	PeriodType   string    `json:"periodType"` // recent, week, month, season
-	GamesCount   int       `json:"gamesCount"`
-	RankedOnly   bool      `json:"rankedOnly"`
+	StartDate  time.Time `json:"startDate"`
+	EndDate    time.Time `json:"endDate"`
+	PeriodType string    `json:"periodType"` // recent, week, month, season
+	GamesCount int       `json:"gamesCount"`
+	RankedOnly bool      `json:"rankedOnly"`
 }
 
 type OverallAssessment struct {
-	CurrentLevel        string              `json:"currentLevel"` // beginner, intermediate, advanced, expert
-	SkillRating         float64             `json:"skillRating"` // 0-100 overall skill
-	ImprovementRate     float64             `json:"improvementRate"` // recent improvement velocity
-	Consistency         float64             `json:"consistency"` // performance consistency
-	Potential           PotentialAssessment `json:"potential"`
-	MainStrengths       []string            `json:"mainStrengths"`
-	CriticalWeaknesses  []string            `json:"criticalWeaknesses"`
-	ReadinessLevel      ReadinessLevel      `json:"readinessLevel"`
-	CoachingFocus       []string            `json:"coachingFocus"`
-	ExpectedTimeframe   ExpectedTimeframe   `json:"expectedTimeframe"`
+	CurrentLevel       string              `json:"currentLevel"`    // beginner, intermediate, advanced, expert
+	SkillRating        float64             `json:"skillRating"`     // 0-100 overall skill
+	ImprovementRate    float64             `json:"improvementRate"` // recent improvement velocity
+	Consistency        float64             `json:"consistency"`     // performance consistency
+	Potential          PotentialAssessment `json:"potential"`
+	MainStrengths      []string            `json:"mainStrengths"`
+	CriticalWeaknesses []string            `json:"criticalWeaknesses"`
+	ReadinessLevel     ReadinessLevel      `json:"readinessLevel"`
+	CoachingFocus      []string            `json:"coachingFocus"`
+	ExpectedTimeframe  ExpectedTimeframe   `json:"expectedTimeframe"`
 }
 
 type PotentialAssessment struct {
-	ShortTermPotential  float64  `json:"shortTermPotential"` // 1-3 months
-	LongTermPotential   float64  `json:"longTermPotential"`  // 6-12 months
-	PeakRankEstimate    string   `json:"peakRankEstimate"`
-	LimitingFactors     []string `json:"limitingFactors"`
-	Accelerators        []string `json:"accelerators"`
-	RecommendedPath     string   `json:"recommendedPath"`
+	ShortTermPotential float64  `json:"shortTermPotential"` // 1-3 months
+	LongTermPotential  float64  `json:"longTermPotential"`  // 6-12 months
+	PeakRankEstimate   string   `json:"peakRankEstimate"`
+	LimitingFactors    []string `json:"limitingFactors"`
+	Accelerators       []string `json:"accelerators"`
+	RecommendedPath    string   `json:"recommendedPath"`
 }
 
 type ReadinessLevel struct {
-	RankAdvancement  string  `json:"rankAdvancement"` // ready, needs_work, not_ready
-	CompetitivePlay  string  `json:"competitivePlay"`
-	ChampionExpansion string `json:"championExpansion"`
-	AdvancedConcepts string  `json:"advancedConcepts"`
-	Confidence       float64 `json:"confidence"`
+	RankAdvancement   string  `json:"rankAdvancement"` // ready, needs_work, not_ready
+	CompetitivePlay   string  `json:"competitivePlay"`
+	ChampionExpansion string  `json:"championExpansion"`
+	AdvancedConcepts  string  `json:"advancedConcepts"`
+	Confidence        float64 `json:"confidence"`
 }
 
 type ExpectedTimeframe struct {
@@ -106,16 +106,16 @@ type ExpectedTimeframe struct {
 }
 
 type KeyFinding struct {
-	FindingType   string            `json:"findingType"` // strength, weakness, opportunity, threat
-	Category      string            `json:"category"` // mechanical, tactical, strategic, mental
-	Title         string            `json:"title"`
-	Description   string            `json:"description"`
-	Evidence      []Evidence        `json:"evidence"`
-	Impact        ImpactAssessment  `json:"impact"`
-	Urgency       string            `json:"urgency"` // critical, high, medium, low
-	ActionItems   []string          `json:"actionItems"`
-	Resources     []Resource        `json:"resources"`
-	Timeline      string            `json:"timeline"`
+	FindingType string           `json:"findingType"` // strength, weakness, opportunity, threat
+	Category    string           `json:"category"`    // mechanical, tactical, strategic, mental
+	Title       string           `json:"title"`
+	Description string           `json:"description"`
+	Evidence    []Evidence       `json:"evidence"`
+	Impact      ImpactAssessment `json:"impact"`
+	Urgency     string           `json:"urgency"` // critical, high, medium, low
+	ActionItems []string         `json:"actionItems"`
+	Resources   []Resource       `json:"resources"`
+	Timeline    string           `json:"timeline"`
 }
 
 type Evidence struct {
@@ -142,16 +142,16 @@ type Resource struct {
 }
 
 type ImprovementPlan struct {
-	PlanID          string                `json:"planId"`
-	Duration        string                `json:"duration"`
-	MainObjectives  []string              `json:"mainObjectives"`
-	Phases          []ImprovementPhase    `json:"phases"`
-	DailyRoutine    DailyRoutine          `json:"dailyRoutine"`
-	WeeklyGoals     []WeeklyGoal          `json:"weeklyGoals"`
-	Checkpoints     []ProgressCheckpoint  `json:"checkpoints"`
-	SuccessMetrics  []SuccessMetric       `json:"successMetrics"`
-	Adaptations     []PlanAdaptation      `json:"adaptations"`
-	MotivationTips  []string              `json:"motivationTips"`
+	PlanID         string               `json:"planId"`
+	Duration       string               `json:"duration"`
+	MainObjectives []string             `json:"mainObjectives"`
+	Phases         []ImprovementPhase   `json:"phases"`
+	DailyRoutine   DailyRoutine         `json:"dailyRoutine"`
+	WeeklyGoals    []WeeklyGoal         `json:"weeklyGoals"`
+	Checkpoints    []ProgressCheckpoint `json:"checkpoints"`
+	SuccessMetrics []SuccessMetric      `json:"successMetrics"`
+	Adaptations    []PlanAdaptation     `json:"adaptations"`
+	MotivationTips []string             `json:"motivationTips"`
 }
 
 type ImprovementPhase struct {
@@ -166,22 +166,22 @@ type ImprovementPhase struct {
 }
 
 type PhaseGoal struct {
-	Goal        string  `json:"goal"`
-	Target      float64 `json:"target"`
-	Current     float64 `json:"current"`
-	Progress    float64 `json:"progress"`
-	Deadline    string  `json:"deadline"`
-	Priority    string  `json:"priority"`
+	Goal     string  `json:"goal"`
+	Target   float64 `json:"target"`
+	Current  float64 `json:"current"`
+	Progress float64 `json:"progress"`
+	Deadline string  `json:"deadline"`
+	Priority string  `json:"priority"`
 }
 
 type TrainingMethod struct {
-	Method      string   `json:"method"`
-	Description string   `json:"description"`
-	Duration    string   `json:"duration"`
-	Frequency   string   `json:"frequency"`
-	Tools       []string `json:"tools"`
-	Difficulty  string   `json:"difficulty"`
-	Effectiveness float64 `json:"effectiveness"`
+	Method        string   `json:"method"`
+	Description   string   `json:"description"`
+	Duration      string   `json:"duration"`
+	Frequency     string   `json:"frequency"`
+	Tools         []string `json:"tools"`
+	Difficulty    string   `json:"difficulty"`
+	Effectiveness float64  `json:"effectiveness"`
 }
 
 type DailyRoutine struct {
@@ -194,19 +194,19 @@ type DailyRoutine struct {
 }
 
 type RoutineActivity struct {
-	Activity    string   `json:"activity"`
-	Duration    string   `json:"duration"`
-	Focus       []string `json:"focus"`
-	Optional    bool     `json:"optional"`
+	Activity     string   `json:"activity"`
+	Duration     string   `json:"duration"`
+	Focus        []string `json:"focus"`
+	Optional     bool     `json:"optional"`
 	Alternatives []string `json:"alternatives"`
 }
 
 type WeeklyGoal struct {
-	Week        int     `json:"week"`
-	Goal        string  `json:"goal"`
-	Target      float64 `json:"target"`
-	Measurement string  `json:"measurement"`
-	Status      string  `json:"status"` // pending, in_progress, completed, failed
+	Week         int     `json:"week"`
+	Goal         string  `json:"goal"`
+	Target       float64 `json:"target"`
+	Measurement  string  `json:"measurement"`
+	Status       string  `json:"status"` // pending, in_progress, completed, failed
 	ActualResult float64 `json:"actualResult,omitempty"`
 }
 
@@ -229,26 +229,26 @@ type SuccessMetric struct {
 }
 
 type PlanAdaptation struct {
-	Trigger     string   `json:"trigger"`
-	Adjustment  string   `json:"adjustment"`
-	Reason      string   `json:"reason"`
-	Impact      string   `json:"impact"`
+	Trigger      string   `json:"trigger"`
+	Adjustment   string   `json:"adjustment"`
+	Reason       string   `json:"reason"`
+	Impact       string   `json:"impact"`
 	Alternatives []string `json:"alternatives"`
 }
 
 type TacticalAdvice struct {
-	AdviceID    string            `json:"adviceId"`
-	Category    string            `json:"category"` // laning, teamfighting, positioning, vision, etc.
-	Situation   string            `json:"situation"`
-	Problem     string            `json:"problem"`
-	Solution    string            `json:"solution"`
-	Reasoning   string            `json:"reasoning"`
-	Examples    []PracticalExample `json:"examples"`
-	Difficulty  string            `json:"difficulty"`
-	Impact      float64           `json:"impact"` // 0-100
-	Frequency   string            `json:"frequency"` // how often this situation occurs
-	Urgency     string            `json:"urgency"`
-	Related     []string          `json:"related"` // related advice IDs
+	AdviceID   string             `json:"adviceId"`
+	Category   string             `json:"category"` // laning, teamfighting, positioning, vision, etc.
+	Situation  string             `json:"situation"`
+	Problem    string             `json:"problem"`
+	Solution   string             `json:"solution"`
+	Reasoning  string             `json:"reasoning"`
+	Examples   []PracticalExample `json:"examples"`
+	Difficulty string             `json:"difficulty"`
+	Impact     float64            `json:"impact"`    // 0-100
+	Frequency  string             `json:"frequency"` // how often this situation occurs
+	Urgency    string             `json:"urgency"`
+	Related    []string           `json:"related"` // related advice IDs
 }
 
 type PracticalExample struct {
@@ -262,10 +262,10 @@ type PracticalExample struct {
 }
 
 type StrategicGuidance struct {
-	GuidanceID   string              `json:"guidanceId"`
-	StrategyType string              `json:"strategyType"` // macro, draft, adaptation, win_conditions
-	Title        string              `json:"title"`
-	Overview     string              `json:"overview"`
+	GuidanceID   string               `json:"guidanceId"`
+	StrategyType string               `json:"strategyType"` // macro, draft, adaptation, win_conditions
+	Title        string               `json:"title"`
+	Overview     string               `json:"overview"`
 	Principles   []StrategicPrinciple `json:"principles"`
 	Application  StrategyApplication  `json:"application"`
 	Counters     []StrategyCounter    `json:"counters"`
@@ -274,42 +274,42 @@ type StrategicGuidance struct {
 }
 
 type StrategicPrinciple struct {
-	Principle   string   `json:"principle"`
-	Explanation string   `json:"explanation"`
-	KeyPoints   []string `json:"keyPoints"`
+	Principle      string   `json:"principle"`
+	Explanation    string   `json:"explanation"`
+	KeyPoints      []string `json:"keyPoints"`
 	CommonMistakes []string `json:"commonMistakes"`
-	Examples    []string `json:"examples"`
+	Examples       []string `json:"examples"`
 }
 
 type StrategyApplication struct {
-	WhenToUse   []string          `json:"whenToUse"`
-	HowToExecute []ExecutionStep   `json:"howToExecute"`
-	KeyTimings  []TimingAdvice    `json:"keyTimings"`
-	TeamCoord   []TeamCoordination `json:"teamCoord"`
-	Variations  []StrategyVariation `json:"variations"`
+	WhenToUse    []string            `json:"whenToUse"`
+	HowToExecute []ExecutionStep     `json:"howToExecute"`
+	KeyTimings   []TimingAdvice      `json:"keyTimings"`
+	TeamCoord    []TeamCoordination  `json:"teamCoord"`
+	Variations   []StrategyVariation `json:"variations"`
 }
 
 type ExecutionStep struct {
-	Step        string   `json:"step"`
-	Details     string   `json:"details"`
-	Priority    string   `json:"priority"`
+	Step         string   `json:"step"`
+	Details      string   `json:"details"`
+	Priority     string   `json:"priority"`
 	Dependencies []string `json:"dependencies"`
 	CommonErrors []string `json:"commonErrors"`
 }
 
 type TimingAdvice struct {
-	Phase       string `json:"phase"` // early, mid, late, specific_time
-	Action      string `json:"action"`
-	Timing      string `json:"timing"`
+	Phase       string   `json:"phase"` // early, mid, late, specific_time
+	Action      string   `json:"action"`
+	Timing      string   `json:"timing"`
 	Indicators  []string `json:"indicators"`
-	Flexibility string `json:"flexibility"`
+	Flexibility string   `json:"flexibility"`
 }
 
 type TeamCoordination struct {
-	Role         string   `json:"role"`
-	Responsibility string `json:"responsibility"`
-	Communication []string `json:"communication"`
-	Coordination  string   `json:"coordination"`
+	Role           string   `json:"role"`
+	Responsibility string   `json:"responsibility"`
+	Communication  []string `json:"communication"`
+	Coordination   string   `json:"coordination"`
 }
 
 type StrategyVariation struct {
@@ -338,43 +338,43 @@ type MasteryProgression struct {
 }
 
 type AdvancedConcept struct {
-	Concept     string   `json:"concept"`
+	Concept       string   `json:"concept"`
 	Prerequisites []string `json:"prerequisites"`
-	Explanation string   `json:"explanation"`
-	Applications []string `json:"applications"`
-	Mastery     string   `json:"mastery"`
+	Explanation   string   `json:"explanation"`
+	Applications  []string `json:"applications"`
+	Mastery       string   `json:"mastery"`
 }
 
 type MentalCoaching struct {
-	MentalState      MentalStateAnalysis     `json:"mentalState"`
-	PerformanceZone  PerformanceZoneGuidance `json:"performanceZone"`
-	TiltManagement   TiltManagementPlan      `json:"tiltManagement"`
-	ConfidenceBuilding ConfidencePlan        `json:"confidenceBuilding"`
-	FocusTraining    FocusTraining           `json:"focusTraining"`
-	MotivationSystem MotivationSystem        `json:"motivationSystem"`
-	StressManagement StressManagement        `json:"stressManagement"`
-	Mindfulness      MindfulnessProgram      `json:"mindfulness"`
+	MentalState        MentalStateAnalysis     `json:"mentalState"`
+	PerformanceZone    PerformanceZoneGuidance `json:"performanceZone"`
+	TiltManagement     TiltManagementPlan      `json:"tiltManagement"`
+	ConfidenceBuilding ConfidencePlan          `json:"confidenceBuilding"`
+	FocusTraining      FocusTraining           `json:"focusTraining"`
+	MotivationSystem   MotivationSystem        `json:"motivationSystem"`
+	StressManagement   StressManagement        `json:"stressManagement"`
+	Mindfulness        MindfulnessProgram      `json:"mindfulness"`
 }
 
 type MentalStateAnalysis struct {
-	CurrentState    string            `json:"currentState"` // optimal, good, struggling, tilted
-	Confidence      float64           `json:"confidence"`   // 0-100
-	FocusLevel      float64           `json:"focusLevel"`
-	StressLevel     float64           `json:"stressLevel"`
-	Motivation      float64           `json:"motivation"`
-	TiltTriggers    []TiltTrigger     `json:"tiltTriggers"`
-	PerformancePeak PerformancePeak   `json:"performancePeak"`
-	MentalBarriers  []MentalBarrier   `json:"mentalBarriers"`
-	Strengths       []string          `json:"strengths"`
+	CurrentState    string          `json:"currentState"` // optimal, good, struggling, tilted
+	Confidence      float64         `json:"confidence"`   // 0-100
+	FocusLevel      float64         `json:"focusLevel"`
+	StressLevel     float64         `json:"stressLevel"`
+	Motivation      float64         `json:"motivation"`
+	TiltTriggers    []TiltTrigger   `json:"tiltTriggers"`
+	PerformancePeak PerformancePeak `json:"performancePeak"`
+	MentalBarriers  []MentalBarrier `json:"mentalBarriers"`
+	Strengths       []string        `json:"strengths"`
 }
 
 type TiltTrigger struct {
-	Trigger     string   `json:"trigger"`
-	Frequency   string   `json:"frequency"`
-	Severity    string   `json:"severity"`
-	Impact      string   `json:"impact"`
-	Patterns    []string `json:"patterns"`
-	Mitigation  []string `json:"mitigation"`
+	Trigger    string   `json:"trigger"`
+	Frequency  string   `json:"frequency"`
+	Severity   string   `json:"severity"`
+	Impact     string   `json:"impact"`
+	Patterns   []string `json:"patterns"`
+	Mitigation []string `json:"mitigation"`
 }
 
 type PerformancePeak struct {
@@ -385,68 +385,68 @@ type PerformancePeak struct {
 }
 
 type MentalBarrier struct {
-	Barrier     string   `json:"barrier"`
-	Type        string   `json:"type"` // limiting_belief, fear, habit, mindset
-	Impact      string   `json:"impact"`
-	Origin      string   `json:"origin"`
-	Solutions   []string `json:"solutions"`
-	Timeline    string   `json:"timeline"`
+	Barrier   string   `json:"barrier"`
+	Type      string   `json:"type"` // limiting_belief, fear, habit, mindset
+	Impact    string   `json:"impact"`
+	Origin    string   `json:"origin"`
+	Solutions []string `json:"solutions"`
+	Timeline  string   `json:"timeline"`
 }
 
 type PerformanceZoneGuidance struct {
-	ZoneIdentification []string           `json:"zoneIdentification"`
-	EntryTechniques    []ZoneTechnique    `json:"entryTechniques"`
-	MaintenanceStrategies []string        `json:"maintenanceStrategies"`
-	RecoveryMethods    []RecoveryMethod   `json:"recoveryMethods"`
-	PersonalizedPlan   PersonalizedZonePlan `json:"personalizedPlan"`
+	ZoneIdentification    []string             `json:"zoneIdentification"`
+	EntryTechniques       []ZoneTechnique      `json:"entryTechniques"`
+	MaintenanceStrategies []string             `json:"maintenanceStrategies"`
+	RecoveryMethods       []RecoveryMethod     `json:"recoveryMethods"`
+	PersonalizedPlan      PersonalizedZonePlan `json:"personalizedPlan"`
 }
 
 type ZoneTechnique struct {
-	Technique   string   `json:"technique"`
-	Description string   `json:"description"`
-	Steps       []string `json:"steps"`
-	Duration    string   `json:"duration"`
-	Effectiveness float64 `json:"effectiveness"`
+	Technique     string   `json:"technique"`
+	Description   string   `json:"description"`
+	Steps         []string `json:"steps"`
+	Duration      string   `json:"duration"`
+	Effectiveness float64  `json:"effectiveness"`
 }
 
 type RecoveryMethod struct {
-	Method      string   `json:"method"`
-	Situation   string   `json:"situation"` // after_loss, during_tilt, performance_drop
-	Steps       []string `json:"steps"`
-	TimeNeeded  string   `json:"timeNeeded"`
-	Success     float64  `json:"success"` // success rate
+	Method     string   `json:"method"`
+	Situation  string   `json:"situation"` // after_loss, during_tilt, performance_drop
+	Steps      []string `json:"steps"`
+	TimeNeeded string   `json:"timeNeeded"`
+	Success    float64  `json:"success"` // success rate
 }
 
 type PersonalizedZonePlan struct {
-	PreGameRoutine  []string `json:"preGameRoutine"`
+	PreGameRoutine   []string `json:"preGameRoutine"`
 	InGameTechniques []string `json:"inGameTechniques"`
-	BetweenGames    []string `json:"betweenGames"`
-	RecoveryPlan    []string `json:"recoveryPlan"`
-	Customizations  []string `json:"customizations"`
+	BetweenGames     []string `json:"betweenGames"`
+	RecoveryPlan     []string `json:"recoveryPlan"`
+	Customizations   []string `json:"customizations"`
 }
 
 type CustomizedTip struct {
-	TipID       string            `json:"tipId"`
-	Category    string            `json:"category"`
-	Type        string            `json:"type"` // quick_tip, deep_insight, warning, opportunity
-	Title       string            `json:"title"`
-	Content     string            `json:"content"`
-	Context     TipContext        `json:"context"`
-	Relevance   float64           `json:"relevance"` // 0-100 how relevant to player
-	Actionable  bool              `json:"actionable"`
-	Difficulty  string            `json:"difficulty"`
-	Expected    ExpectedOutcome   `json:"expected"`
-	Related     []string          `json:"related"` // related tip IDs
-	Feedback    TipFeedback       `json:"feedback"`
+	TipID      string          `json:"tipId"`
+	Category   string          `json:"category"`
+	Type       string          `json:"type"` // quick_tip, deep_insight, warning, opportunity
+	Title      string          `json:"title"`
+	Content    string          `json:"content"`
+	Context    TipContext      `json:"context"`
+	Relevance  float64         `json:"relevance"` // 0-100 how relevant to player
+	Actionable bool            `json:"actionable"`
+	Difficulty string          `json:"difficulty"`
+	Expected   ExpectedOutcome `json:"expected"`
+	Related    []string        `json:"related"` // related tip IDs
+	Feedback   TipFeedback     `json:"feedback"`
 }
 
 type TipContext struct {
-	Situation   string   `json:"situation"`
-	Champion    string   `json:"champion,omitempty"`
-	Role        string   `json:"role,omitempty"`
-	MatchType   string   `json:"matchType,omitempty"`
-	GamePhase   string   `json:"gamePhase,omitempty"`
-	Conditions  []string `json:"conditions"`
+	Situation  string   `json:"situation"`
+	Champion   string   `json:"champion,omitempty"`
+	Role       string   `json:"role,omitempty"`
+	MatchType  string   `json:"matchType,omitempty"`
+	GamePhase  string   `json:"gamePhase,omitempty"`
+	Conditions []string `json:"conditions"`
 }
 
 type ExpectedOutcome struct {
@@ -457,33 +457,33 @@ type ExpectedOutcome struct {
 }
 
 type TipFeedback struct {
-	Helpful     bool      `json:"helpful"`
-	Applied     bool      `json:"applied"`
-	Effective   bool      `json:"effective"`
-	Comments    string    `json:"comments"`
-	Rating      float64   `json:"rating"` // 1-10
-	UpdatedAt   time.Time `json:"updatedAt"`
+	Helpful   bool      `json:"helpful"`
+	Applied   bool      `json:"applied"`
+	Effective bool      `json:"effective"`
+	Comments  string    `json:"comments"`
+	Rating    float64   `json:"rating"` // 1-10
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 // Additional data structures continue...
 type PracticeRoutine struct {
-	RoutineID       string              `json:"routineId"`
-	Duration        string              `json:"duration"` // daily, weekly
-	Customized      bool                `json:"customized"`
-	Phases          []PracticePhase     `json:"phases"`
-	SkillFocus      []string            `json:"skillFocus"`
-	Equipment       []string            `json:"equipment"`
-	Progression     ProgressionPlan     `json:"progression"`
-	Alternatives    []AlternativeRoutine `json:"alternatives"`
-	Effectiveness   float64             `json:"effectiveness"`
+	RoutineID     string               `json:"routineId"`
+	Duration      string               `json:"duration"` // daily, weekly
+	Customized    bool                 `json:"customized"`
+	Phases        []PracticePhase      `json:"phases"`
+	SkillFocus    []string             `json:"skillFocus"`
+	Equipment     []string             `json:"equipment"`
+	Progression   ProgressionPlan      `json:"progression"`
+	Alternatives  []AlternativeRoutine `json:"alternatives"`
+	Effectiveness float64              `json:"effectiveness"`
 }
 
 type PracticePhase struct {
-	Name        string             `json:"name"`
-	Duration    string             `json:"duration"`
-	Objectives  []string           `json:"objectives"`
-	Activities  []PracticeActivity `json:"activities"`
-	Success     []string           `json:"success"` // success criteria
+	Name       string             `json:"name"`
+	Duration   string             `json:"duration"`
+	Objectives []string           `json:"objectives"`
+	Activities []PracticeActivity `json:"activities"`
+	Success    []string           `json:"success"` // success criteria
 }
 
 type PracticeActivity struct {
@@ -497,26 +497,26 @@ type PracticeActivity struct {
 }
 
 type ProgressionPlan struct {
-	CurrentLevel string            `json:"currentLevel"`
-	NextLevel    string            `json:"nextLevel"`
-	Requirements []string          `json:"requirements"`
-	Timeline     string            `json:"timeline"`
-	Adjustments  []PlanAdjustment  `json:"adjustments"`
+	CurrentLevel string           `json:"currentLevel"`
+	NextLevel    string           `json:"nextLevel"`
+	Requirements []string         `json:"requirements"`
+	Timeline     string           `json:"timeline"`
+	Adjustments  []PlanAdjustment `json:"adjustments"`
 }
 
 type PlanAdjustment struct {
-	Condition   string   `json:"condition"`
-	Adjustment  string   `json:"adjustment"`
-	Reason      string   `json:"reason"`
+	Condition    string   `json:"condition"`
+	Adjustment   string   `json:"adjustment"`
+	Reason       string   `json:"reason"`
 	Alternatives []string `json:"alternatives"`
 }
 
 type AlternativeRoutine struct {
-	Name        string   `json:"name"`
-	Context     string   `json:"context"` // limited_time, specific_goal, etc.
-	Duration    string   `json:"duration"`
-	Activities  []string `json:"activities"`
-	Tradeoffs   []string `json:"tradeoffs"`
+	Name       string   `json:"name"`
+	Context    string   `json:"context"` // limited_time, specific_goal, etc.
+	Duration   string   `json:"duration"`
+	Activities []string `json:"activities"`
+	Tradeoffs  []string `json:"tradeoffs"`
 }
 
 // Main Service Methods
@@ -730,17 +730,17 @@ func (s *CoachingService) generateTacticalAdvice(summonerID string, findings []K
 	for _, finding := range findings {
 		if finding.Category == "tactical" {
 			tacticalAdvice := TacticalAdvice{
-				AdviceID:  fmt.Sprintf("advice_%s_%d", finding.Category, time.Now().Unix()),
-				Category:  finding.Category,
-				Situation: s.identifySituation(finding),
-				Problem:   finding.Description,
-				Solution:  s.generateSolution(finding),
-				Reasoning: s.generateReasoning(finding),
-				Examples:  s.generatePracticalExamples(finding),
+				AdviceID:   fmt.Sprintf("advice_%s_%d", finding.Category, time.Now().Unix()),
+				Category:   finding.Category,
+				Situation:  s.identifySituation(finding),
+				Problem:    finding.Description,
+				Solution:   s.generateSolution(finding),
+				Reasoning:  s.generateReasoning(finding),
+				Examples:   s.generatePracticalExamples(finding),
 				Difficulty: finding.Impact.Difficulty,
-				Impact:    finding.Impact.PotentialImpact,
-				Frequency: s.assessFrequency(finding),
-				Urgency:   finding.Urgency,
+				Impact:     finding.Impact.PotentialImpact,
+				Frequency:  s.assessFrequency(finding),
+				Urgency:    finding.Urgency,
 			}
 			advice = append(advice, tacticalAdvice)
 		}
@@ -759,12 +759,12 @@ func (s *CoachingService) storeCoachingInsights(insights *CoachingInsights) erro
 
 	// Store in database
 	coachingAnalysis := &models.CoachingInsight{
-		ID:           insights.ID,
-		SummonerID:   insights.SummonerID,
-		InsightType:  insights.InsightType,
-		InsightData:  string(insightsJSON),
-		Confidence:   insights.Confidence,
-		CreatedAt:    insights.CreatedAt,
+		ID:          insights.ID,
+		SummonerID:  insights.SummonerID,
+		InsightType: insights.InsightType,
+		InsightData: string(insightsJSON),
+		Confidence:  insights.Confidence,
+		CreatedAt:   insights.CreatedAt,
 	}
 
 	return s.db.Create(coachingAnalysis).Error
@@ -794,23 +794,27 @@ func (s *CoachingService) identifyLimitingFactors(summonerID string) []string {
 func (s *CoachingService) identifyAccelerators(summonerID string) []string {
 	return []string{"Strong mechanics", "Good game sense"}
 }
-func (s *CoachingService) recommendLearningPath(summonerID string) string { return "focus_fundamentals" }
+func (s *CoachingService) recommendLearningPath(summonerID string) string {
+	return "focus_fundamentals"
+}
 func (s *CoachingService) identifyMainStrengths(summonerID string, period TimePeriod) []string {
 	return []string{"Mechanical skill", "Champion mastery"}
 }
 func (s *CoachingService) identifyCriticalWeaknesses(summonerID string, period TimePeriod) []string {
 	return []string{"Wave management", "Vision control"}
 }
-func (s *CoachingService) assessRankReadiness(summonerID string) string           { return "ready" }
-func (s *CoachingService) assessCompetitiveReadiness(summonerID string) string    { return "needs_work" }
+func (s *CoachingService) assessRankReadiness(summonerID string) string              { return "ready" }
+func (s *CoachingService) assessCompetitiveReadiness(summonerID string) string       { return "needs_work" }
 func (s *CoachingService) assessChampionExpansionReadiness(summonerID string) string { return "ready" }
-func (s *CoachingService) assessAdvancedConceptsReadiness(summonerID string) string  { return "needs_work" }
+func (s *CoachingService) assessAdvancedConceptsReadiness(summonerID string) string {
+	return "needs_work"
+}
 func (s *CoachingService) determineCoachingFocus(assessment OverallAssessment) []string {
 	return []string{"Tactical improvement", "Mental coaching"}
 }
-func (s *CoachingService) estimateRankUpTime(summonerID string) string       { return "4-6 weeks" }
-func (s *CoachingService) estimatePlateauTime(summonerID string) string      { return "8-10 weeks" }
-func (s *CoachingService) estimateMasteryTime(summonerID string) string      { return "3-4 months" }
+func (s *CoachingService) estimateRankUpTime(summonerID string) string           { return "4-6 weeks" }
+func (s *CoachingService) estimatePlateauTime(summonerID string) string          { return "8-10 weeks" }
+func (s *CoachingService) estimateMasteryTime(summonerID string) string          { return "3-4 months" }
 func (s *CoachingService) estimateCompetitiveReadyTime(summonerID string) string { return "2-3 months" }
 
 // Additional placeholder methods for complete compilation
@@ -888,9 +892,11 @@ func (s *CoachingService) generatePracticeRoutine(summonerID string, assessment 
 	}, nil
 }
 
-func (s *CoachingService) identifySituation(finding KeyFinding) string { return "Common game situation" }
-func (s *CoachingService) generateSolution(finding KeyFinding) string   { return "Recommended solution" }
-func (s *CoachingService) generateReasoning(finding KeyFinding) string  { return "Strategic reasoning" }
+func (s *CoachingService) identifySituation(finding KeyFinding) string {
+	return "Common game situation"
+}
+func (s *CoachingService) generateSolution(finding KeyFinding) string  { return "Recommended solution" }
+func (s *CoachingService) generateReasoning(finding KeyFinding) string { return "Strategic reasoning" }
 func (s *CoachingService) generatePracticalExamples(finding KeyFinding) []PracticalExample {
 	return []PracticalExample{}
 }

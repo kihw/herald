@@ -1,0 +1,102 @@
+{
+  "_comment": "Herald.lol Backend Claude Settings",
+  "_description": "Claude Code settings specific to Herald.lol backend development",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/load-context.sh",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/validate-stack.py",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command", 
+            "command": ".claude/hooks/pre-task-gaming.sh",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/gaming-lint.sh",
+            "timeout": 45
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/post-bash-gaming.sh",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/deploy-check.sh",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/prompt-gaming-context.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "_herald_gaming_config": {
+    "performance_targets": {
+      "analytics_response_ms": 5000,
+      "concurrent_users": 1000000,
+      "uptime_percent": 99.9
+    },
+    "gaming_focus": [
+      "League of Legends",
+      "Teamfight Tactics"
+    ],
+    "stack": [
+      "Go",
+      "React",
+      "TypeScript", 
+      "PostgreSQL",
+      "Redis",
+      "Kubernetes"
+    ]
+  }
+}

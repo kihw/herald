@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herald-gaming-analytics-blue
+  namespace: herald-blue
+  labels:
+    app: herald-gaming-analytics
+    version: blue
+    tier: backend
+    component: analytics-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: herald-gaming-analytics
+      version: blue
+  template:
+    metadata:
+      labels:
+        app: herald-gaming-analytics
+        version: blue
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: herald-analytics
+        image: herald/gaming-analytics:blue
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http-api
+        - containerPort: 50051
+          name: grpc-server
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: ENVIRONMENT
+          value: "blue"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: herald-db-config
+              key: host
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: herald-db-config
+              key: password
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: herald-config
+              key: redis-host
+        - name: RIOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: herald-secrets
+              key: riot-api-key
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: herald-config
+      terminationGracePeriodSeconds: 30
+      restartPolicy: Always

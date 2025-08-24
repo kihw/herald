@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // ChampionAnalyticsService handles champion-specific performance analytics
@@ -25,202 +25,202 @@ func NewChampionAnalyticsService(analyticsService *AnalyticsService) *ChampionAn
 
 // ChampionAnalysis represents comprehensive champion performance analysis
 type ChampionAnalysis struct {
-	ID               string                      `json:"id"`
-	PlayerID         string                      `json:"player_id"`
-	Champion         string                      `json:"champion"`
-	Position         string                      `json:"position"`
-	TimeRange        string                      `json:"time_range"`
-	
+	ID        string `json:"id"`
+	PlayerID  string `json:"player_id"`
+	Champion  string `json:"champion"`
+	Position  string `json:"position"`
+	TimeRange string `json:"time_range"`
+
 	// Core Performance Metrics
-	MasteryLevel     int                         `json:"mastery_level"`
-	MasteryPoints    int64                       `json:"mastery_points"`
-	PlayRate         float64                     `json:"play_rate"`
-	WinRate          float64                     `json:"win_rate"`
-	TotalGames       int                         `json:"total_games"`
-	RecentForm       string                      `json:"recent_form"`
-	
+	MasteryLevel  int     `json:"mastery_level"`
+	MasteryPoints int64   `json:"mastery_points"`
+	PlayRate      float64 `json:"play_rate"`
+	WinRate       float64 `json:"win_rate"`
+	TotalGames    int     `json:"total_games"`
+	RecentForm    string  `json:"recent_form"`
+
 	// Performance Scoring
-	OverallRating    float64                     `json:"overall_rating"`
-	MechanicsScore   float64                     `json:"mechanics_score"`
-	GameKnowledgeScore float64                   `json:"game_knowledge_score"`
-	ConsistencyScore float64                     `json:"consistency_score"`
-	AdaptabilityScore float64                    `json:"adaptability_score"`
-	
+	OverallRating      float64 `json:"overall_rating"`
+	MechanicsScore     float64 `json:"mechanics_score"`
+	GameKnowledgeScore float64 `json:"game_knowledge_score"`
+	ConsistencyScore   float64 `json:"consistency_score"`
+	AdaptabilityScore  float64 `json:"adaptability_score"`
+
 	// Champion-Specific Metrics
-	ChampionStats    ChampionSpecificStats       `json:"champion_stats"`
-	PowerSpikes      []PowerSpikeData            `json:"power_spikes"`
-	ItemBuilds       ItemBuildAnalysis           `json:"item_builds"`
-	SkillOrder       SkillOrderAnalysis          `json:"skill_order"`
-	RuneOptimization RuneOptimizationData        `json:"rune_optimization"`
-	
+	ChampionStats    ChampionSpecificStats `json:"champion_stats"`
+	PowerSpikes      []PowerSpikeData      `json:"power_spikes"`
+	ItemBuilds       ItemBuildAnalysis     `json:"item_builds"`
+	SkillOrder       SkillOrderAnalysis    `json:"skill_order"`
+	RuneOptimization RuneOptimizationData  `json:"rune_optimization"`
+
 	// Matchup Analysis
-	MatchupPerformance MatchupAnalysisData       `json:"matchup_performance"`
-	StrengthMatchups []MatchupData               `json:"strength_matchups"`
-	WeaknessMatchups []MatchupData               `json:"weakness_matchups"`
-	
+	MatchupPerformance MatchupAnalysisData `json:"matchup_performance"`
+	StrengthMatchups   []MatchupData       `json:"strength_matchups"`
+	WeaknessMatchups   []MatchupData       `json:"weakness_matchups"`
+
 	// Game Phase Performance
-	LanePhasePerformance GamePhaseData           `json:"lane_phase_performance"`
-	MidGamePerformance   GamePhaseData           `json:"mid_game_performance"`
-	LateGamePerformance  GamePhaseData           `json:"late_game_performance"`
-	
+	LanePhasePerformance GamePhaseData `json:"lane_phase_performance"`
+	MidGamePerformance   GamePhaseData `json:"mid_game_performance"`
+	LateGamePerformance  GamePhaseData `json:"late_game_performance"`
+
 	// Team Fighting Analysis
-	TeamFightRole    string                      `json:"team_fight_role"`
-	TeamFightRating  float64                     `json:"team_fight_rating"`
-	TeamFightStats   TeamFightAnalysisData       `json:"team_fight_stats"`
-	
+	TeamFightRole   string                `json:"team_fight_role"`
+	TeamFightRating float64               `json:"team_fight_rating"`
+	TeamFightStats  TeamFightAnalysisData `json:"team_fight_stats"`
+
 	// Comparative Analysis
-	RoleBenchmark    ChampionBenchmarkData       `json:"role_benchmark"`
-	RankBenchmark    ChampionBenchmarkData       `json:"rank_benchmark"`
-	GlobalBenchmark  ChampionBenchmarkData       `json:"global_benchmark"`
-	
+	RoleBenchmark   ChampionBenchmarkData `json:"role_benchmark"`
+	RankBenchmark   ChampionBenchmarkData `json:"rank_benchmark"`
+	GlobalBenchmark ChampionBenchmarkData `json:"global_benchmark"`
+
 	// Performance Trends
-	TrendData        []ChampionTrendPoint        `json:"trend_data"`
-	TrendDirection   string                      `json:"trend_direction"`
-	TrendConfidence  float64                     `json:"trend_confidence"`
-	
+	TrendData       []ChampionTrendPoint `json:"trend_data"`
+	TrendDirection  string               `json:"trend_direction"`
+	TrendConfidence float64              `json:"trend_confidence"`
+
 	// Strengths and Weaknesses
-	CoreStrengths    []PerformanceInsight        `json:"core_strengths"`
-	ImprovementAreas []PerformanceInsight        `json:"improvement_areas"`
-	
+	CoreStrengths    []PerformanceInsight `json:"core_strengths"`
+	ImprovementAreas []PerformanceInsight `json:"improvement_areas"`
+
 	// Recommendations
 	PlayStyleRecommendations []PlayStyleRecommendation `json:"playstyle_recommendations"`
 	TrainingRecommendations  []TrainingRecommendation  `json:"training_recommendations"`
-	
+
 	// Advanced Analytics
-	CarryPotential    float64                    `json:"carry_potential"`
-	ClutchFactor      float64                    `json:"clutch_factor"`
-	LearningCurve     LearningCurveData          `json:"learning_curve"`
-	MetaAlignment     float64                    `json:"meta_alignment"`
-	
+	CarryPotential float64           `json:"carry_potential"`
+	ClutchFactor   float64           `json:"clutch_factor"`
+	LearningCurve  LearningCurveData `json:"learning_curve"`
+	MetaAlignment  float64           `json:"meta_alignment"`
+
 	// Metadata
-	GeneratedAt      time.Time                   `json:"generated_at"`
-	LastUpdated      time.Time                   `json:"last_updated"`
+	GeneratedAt time.Time `json:"generated_at"`
+	LastUpdated time.Time `json:"last_updated"`
 }
 
 // ChampionSpecificStats holds champion-specific performance statistics
 type ChampionSpecificStats struct {
 	// Core Stats
-	AverageKDA        float64                    `json:"average_kda"`
-	AverageKills      float64                    `json:"average_kills"`
-	AverageDeaths     float64                    `json:"average_deaths"`
-	AverageAssists    float64                    `json:"average_assists"`
-	
+	AverageKDA     float64 `json:"average_kda"`
+	AverageKills   float64 `json:"average_kills"`
+	AverageDeaths  float64 `json:"average_deaths"`
+	AverageAssists float64 `json:"average_assists"`
+
 	// Champion-Specific Metrics
-	AverageCS         float64                    `json:"average_cs"`
-	CSPerMinute       float64                    `json:"cs_per_minute"`
-	GoldPerMinute     float64                    `json:"gold_per_minute"`
-	DamagePerMinute   float64                    `json:"damage_per_minute"`
-	VisionScore       float64                    `json:"vision_score"`
-	
+	AverageCS       float64 `json:"average_cs"`
+	CSPerMinute     float64 `json:"cs_per_minute"`
+	GoldPerMinute   float64 `json:"gold_per_minute"`
+	DamagePerMinute float64 `json:"damage_per_minute"`
+	VisionScore     float64 `json:"vision_score"`
+
 	// Game Impact
-	KillParticipation float64                    `json:"kill_participation"`
-	DamageShare       float64                    `json:"damage_share"`
-	GoldShare         float64                    `json:"gold_share"`
-	
+	KillParticipation float64 `json:"kill_participation"`
+	DamageShare       float64 `json:"damage_share"`
+	GoldShare         float64 `json:"gold_share"`
+
 	// Efficiency Metrics
-	GoldEfficiency    float64                    `json:"gold_efficiency"`
-	DamageEfficiency  float64                    `json:"damage_efficiency"`
-	ObjectiveControl  float64                    `json:"objective_control"`
-	
+	GoldEfficiency   float64 `json:"gold_efficiency"`
+	DamageEfficiency float64 `json:"damage_efficiency"`
+	ObjectiveControl float64 `json:"objective_control"`
+
 	// Champion-Specific Abilities
-	SkillAccuracy     map[string]float64         `json:"skill_accuracy"`
-	UltimateUsage     UltimateUsageStats         `json:"ultimate_usage"`
-	PassiveUtilization float64                   `json:"passive_utilization"`
+	SkillAccuracy      map[string]float64 `json:"skill_accuracy"`
+	UltimateUsage      UltimateUsageStats `json:"ultimate_usage"`
+	PassiveUtilization float64            `json:"passive_utilization"`
 }
 
 // UltimateUsageStats tracks ultimate ability usage patterns
 type UltimateUsageStats struct {
-	AverageUsesPerGame    float64   `json:"average_uses_per_game"`
-	AccuracyRate          float64   `json:"accuracy_rate"`
-	ImpactScore           float64   `json:"impact_score"`
-	TimingOptimality      float64   `json:"timing_optimality"`
-	TeamFightUsage        float64   `json:"team_fight_usage"`
-	ClutchUsage           float64   `json:"clutch_usage"`
+	AverageUsesPerGame float64 `json:"average_uses_per_game"`
+	AccuracyRate       float64 `json:"accuracy_rate"`
+	ImpactScore        float64 `json:"impact_score"`
+	TimingOptimality   float64 `json:"timing_optimality"`
+	TeamFightUsage     float64 `json:"team_fight_usage"`
+	ClutchUsage        float64 `json:"clutch_usage"`
 }
 
 // PowerSpikeData represents champion power spike analysis
 type PowerSpikeData struct {
-	Level            int       `json:"level"`
-	ItemThreshold    string    `json:"item_threshold"`
-	PowerRating      float64   `json:"power_rating"`
-	WinRateIncrease  float64   `json:"win_rate_increase"`
-	OptimalTiming    int       `json:"optimal_timing"` // Game time in seconds
-	UtilizationRate  float64   `json:"utilization_rate"`
+	Level           int     `json:"level"`
+	ItemThreshold   string  `json:"item_threshold"`
+	PowerRating     float64 `json:"power_rating"`
+	WinRateIncrease float64 `json:"win_rate_increase"`
+	OptimalTiming   int     `json:"optimal_timing"` // Game time in seconds
+	UtilizationRate float64 `json:"utilization_rate"`
 }
 
 // ItemBuildAnalysis analyzes item build performance
 type ItemBuildAnalysis struct {
-	MostSuccessfulBuild    []ItemBuildPath        `json:"most_successful_build"`
-	AdaptabilityScore      float64                `json:"adaptability_score"`
-	BuildVariety           int                    `json:"build_variety"`
-	CounterBuildRate       float64                `json:"counter_build_rate"`
-	CoreItemTiming         map[string]float64     `json:"core_item_timing"`
-	SituationalItems       []SituationalItemData  `json:"situational_items"`
+	MostSuccessfulBuild []ItemBuildPath       `json:"most_successful_build"`
+	AdaptabilityScore   float64               `json:"adaptability_score"`
+	BuildVariety        int                   `json:"build_variety"`
+	CounterBuildRate    float64               `json:"counter_build_rate"`
+	CoreItemTiming      map[string]float64    `json:"core_item_timing"`
+	SituationalItems    []SituationalItemData `json:"situational_items"`
 }
 
 // ItemBuildPath represents an item build sequence
 type ItemBuildPath struct {
-	Items       []string  `json:"items"`
-	WinRate     float64   `json:"win_rate"`
-	PlayRate    float64   `json:"play_rate"`
-	AverageTiming []int   `json:"average_timing"` // Time to complete each item
-	Situations  []string  `json:"situations"`     // When this build is optimal
+	Items         []string `json:"items"`
+	WinRate       float64  `json:"win_rate"`
+	PlayRate      float64  `json:"play_rate"`
+	AverageTiming []int    `json:"average_timing"` // Time to complete each item
+	Situations    []string `json:"situations"`     // When this build is optimal
 }
 
 // SituationalItemData tracks situational item usage
 type SituationalItemData struct {
-	ItemID       int       `json:"item_id"`
-	ItemName     string    `json:"item_name"`
-	UsageRate    float64   `json:"usage_rate"`
-	SuccessRate  float64   `json:"success_rate"`
-	Situations   []string  `json:"situations"`
-	Triggers     []string  `json:"triggers"`
+	ItemID      int      `json:"item_id"`
+	ItemName    string   `json:"item_name"`
+	UsageRate   float64  `json:"usage_rate"`
+	SuccessRate float64  `json:"success_rate"`
+	Situations  []string `json:"situations"`
+	Triggers    []string `json:"triggers"`
 }
 
 // SkillOrderAnalysis analyzes skill leveling patterns
 type SkillOrderAnalysis struct {
-	MostCommonOrder     string                 `json:"most_common_order"`
-	OptimalOrder        string                 `json:"optimal_order"`
-	AdaptabilityRate    float64                `json:"adaptability_rate"`
-	SkillMaxOrder       []SkillMaxData         `json:"skill_max_order"`
-	SituationalOrders   []SituationalSkillData `json:"situational_orders"`
+	MostCommonOrder   string                 `json:"most_common_order"`
+	OptimalOrder      string                 `json:"optimal_order"`
+	AdaptabilityRate  float64                `json:"adaptability_rate"`
+	SkillMaxOrder     []SkillMaxData         `json:"skill_max_order"`
+	SituationalOrders []SituationalSkillData `json:"situational_orders"`
 }
 
 // SkillMaxData tracks skill maxing patterns
 type SkillMaxData struct {
-	Skill        string    `json:"skill"`
-	MaxOrder     int       `json:"max_order"`
-	WinRate      float64   `json:"win_rate"`
-	Situations   []string  `json:"situations"`
+	Skill      string   `json:"skill"`
+	MaxOrder   int      `json:"max_order"`
+	WinRate    float64  `json:"win_rate"`
+	Situations []string `json:"situations"`
 }
 
 // SituationalSkillData tracks situational skill order adaptations
 type SituationalSkillData struct {
-	Situation    string    `json:"situation"`
-	SkillOrder   string    `json:"skill_order"`
-	UsageRate    float64   `json:"usage_rate"`
-	SuccessRate  float64   `json:"success_rate"`
+	Situation   string  `json:"situation"`
+	SkillOrder  string  `json:"skill_order"`
+	UsageRate   float64 `json:"usage_rate"`
+	SuccessRate float64 `json:"success_rate"`
 }
 
 // RuneOptimizationData analyzes rune setup performance
 type RuneOptimizationData struct {
-	PrimaryTree          string                 `json:"primary_tree"`
-	SecondaryTree        string                 `json:"secondary_tree"`
-	KeystoneOptimality   float64                `json:"keystone_optimality"`
-	RuneAdaptation       float64                `json:"rune_adaptation"`
-	MostSuccessfulSetup  RuneSetupData          `json:"most_successful_setup"`
-	SituationalSetups    []SituationalRuneData  `json:"situational_setups"`
+	PrimaryTree         string                `json:"primary_tree"`
+	SecondaryTree       string                `json:"secondary_tree"`
+	KeystoneOptimality  float64               `json:"keystone_optimality"`
+	RuneAdaptation      float64               `json:"rune_adaptation"`
+	MostSuccessfulSetup RuneSetupData         `json:"most_successful_setup"`
+	SituationalSetups   []SituationalRuneData `json:"situational_setups"`
 }
 
 // RuneSetupData represents a complete rune setup
 type RuneSetupData struct {
-	PrimaryTree    string    `json:"primary_tree"`
-	PrimaryRunes   []string  `json:"primary_runes"`
-	SecondaryTree  string    `json:"secondary_tree"`
-	SecondaryRunes []string  `json:"secondary_runes"`
-	StatShards     []string  `json:"stat_shards"`
-	WinRate        float64   `json:"win_rate"`
-	PlayRate       float64   `json:"play_rate"`
+	PrimaryTree    string   `json:"primary_tree"`
+	PrimaryRunes   []string `json:"primary_runes"`
+	SecondaryTree  string   `json:"secondary_tree"`
+	SecondaryRunes []string `json:"secondary_runes"`
+	StatShards     []string `json:"stat_shards"`
+	WinRate        float64  `json:"win_rate"`
+	PlayRate       float64  `json:"play_rate"`
 }
 
 // SituationalRuneData tracks situational rune adaptations
@@ -233,126 +233,126 @@ type SituationalRuneData struct {
 
 // MatchupAnalysisData contains overall matchup performance
 type MatchupAnalysisData struct {
-	TotalMatchups       int                    `json:"total_matchups"`
-	FavorableMatchups   int                    `json:"favorable_matchups"`
-	UnfavorableMatchups int                    `json:"unfavorable_matchups"`
-	MatchupAdaptability float64                `json:"matchup_adaptability"`
-	LanePhaseWinRate    float64                `json:"lane_phase_win_rate"`
-	ScalingAdvantage    float64                `json:"scaling_advantage"`
+	TotalMatchups       int     `json:"total_matchups"`
+	FavorableMatchups   int     `json:"favorable_matchups"`
+	UnfavorableMatchups int     `json:"unfavorable_matchups"`
+	MatchupAdaptability float64 `json:"matchup_adaptability"`
+	LanePhaseWinRate    float64 `json:"lane_phase_win_rate"`
+	ScalingAdvantage    float64 `json:"scaling_advantage"`
 }
 
 // MatchupData represents performance against specific opponents
 type MatchupData struct {
-	OpponentChampion     string    `json:"opponent_champion"`
-	GamesPlayed          int       `json:"games_played"`
-	WinRate              float64   `json:"win_rate"`
-	LanePhasePerformance float64   `json:"lane_phase_performance"`
-	ScalingComparison    float64   `json:"scaling_comparison"`
-	AverageCSAdvantage   float64   `json:"average_cs_advantage"`
-	AverageGoldAdvantage float64   `json:"average_gold_advantage"`
-	KeyStrategies        []string  `json:"key_strategies"`
-	CommonMistakes       []string  `json:"common_mistakes"`
+	OpponentChampion     string   `json:"opponent_champion"`
+	GamesPlayed          int      `json:"games_played"`
+	WinRate              float64  `json:"win_rate"`
+	LanePhasePerformance float64  `json:"lane_phase_performance"`
+	ScalingComparison    float64  `json:"scaling_comparison"`
+	AverageCSAdvantage   float64  `json:"average_cs_advantage"`
+	AverageGoldAdvantage float64  `json:"average_gold_advantage"`
+	KeyStrategies        []string `json:"key_strategies"`
+	CommonMistakes       []string `json:"common_mistakes"`
 }
 
 // GamePhaseData represents performance in specific game phases
 type GamePhaseData struct {
-	PhaseRating         float64   `json:"phase_rating"`
-	PhaseWinRate        float64   `json:"phase_win_rate"`
-	AveragePerformance  float64   `json:"average_performance"`
-	ConsistencyScore    float64   `json:"consistency_score"`
-	KeyMetrics          map[string]float64 `json:"key_metrics"`
-	StrengthAreas       []string  `json:"strength_areas"`
-	WeaknessAreas       []string  `json:"weakness_areas"`
+	PhaseRating        float64            `json:"phase_rating"`
+	PhaseWinRate       float64            `json:"phase_win_rate"`
+	AveragePerformance float64            `json:"average_performance"`
+	ConsistencyScore   float64            `json:"consistency_score"`
+	KeyMetrics         map[string]float64 `json:"key_metrics"`
+	StrengthAreas      []string           `json:"strength_areas"`
+	WeaknessAreas      []string           `json:"weakness_areas"`
 }
 
 // TeamFightAnalysisData analyzes team fight performance
 type TeamFightAnalysisData struct {
-	ParticipationRate    float64   `json:"participation_rate"`
-	SurvivalRate         float64   `json:"survival_rate"`
-	DamageContribution   float64   `json:"damage_contribution"`
-	CCContribution       float64   `json:"cc_contribution"`
-	PositioningScore     float64   `json:"positioning_score"`
-	EngageTiming         float64   `json:"engage_timing"`
-	TargetPriority       float64   `json:"target_priority"`
-	UltimateEfficiency   float64   `json:"ultimate_efficiency"`
+	ParticipationRate  float64 `json:"participation_rate"`
+	SurvivalRate       float64 `json:"survival_rate"`
+	DamageContribution float64 `json:"damage_contribution"`
+	CCContribution     float64 `json:"cc_contribution"`
+	PositioningScore   float64 `json:"positioning_score"`
+	EngageTiming       float64 `json:"engage_timing"`
+	TargetPriority     float64 `json:"target_priority"`
+	UltimateEfficiency float64 `json:"ultimate_efficiency"`
 }
 
 // ChampionBenchmarkData provides comparative performance data
 type ChampionBenchmarkData struct {
-	Percentile           float64   `json:"percentile"`
-	AverageRating        float64   `json:"average_rating"`
-	TopPercentileRating  float64   `json:"top_percentile_rating"`
-	SampleSize           int       `json:"sample_size"`
-	ComparisonType       string    `json:"comparison_type"`
-	FilterValue          string    `json:"filter_value"`
+	Percentile          float64 `json:"percentile"`
+	AverageRating       float64 `json:"average_rating"`
+	TopPercentileRating float64 `json:"top_percentile_rating"`
+	SampleSize          int     `json:"sample_size"`
+	ComparisonType      string  `json:"comparison_type"`
+	FilterValue         string  `json:"filter_value"`
 }
 
 // ChampionTrendPoint represents a data point in champion performance trends
 type ChampionTrendPoint struct {
-	Date           string    `json:"date"`
-	OverallRating  float64   `json:"overall_rating"`
-	WinRate        float64   `json:"win_rate"`
-	KDA            float64   `json:"kda"`
-	CSPerMinute    float64   `json:"cs_per_minute"`
-	DamageShare    float64   `json:"damage_share"`
-	MatchID        string    `json:"match_id,omitempty"`
-	GameLength     int       `json:"game_length,omitempty"`
+	Date          string  `json:"date"`
+	OverallRating float64 `json:"overall_rating"`
+	WinRate       float64 `json:"win_rate"`
+	KDA           float64 `json:"kda"`
+	CSPerMinute   float64 `json:"cs_per_minute"`
+	DamageShare   float64 `json:"damage_share"`
+	MatchID       string  `json:"match_id,omitempty"`
+	GameLength    int     `json:"game_length,omitempty"`
 }
 
 // PerformanceInsight represents insights about champion performance
 type PerformanceInsight struct {
-	Category     string    `json:"category"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description"`
-	MetricValue  float64   `json:"metric_value"`
+	Category       string  `json:"category"`
+	Title          string  `json:"title"`
+	Description    string  `json:"description"`
+	MetricValue    float64 `json:"metric_value"`
 	BenchmarkValue float64 `json:"benchmark_value"`
-	Confidence   float64   `json:"confidence"`
-	Impact       string    `json:"impact"` // "high", "medium", "low"
+	Confidence     float64 `json:"confidence"`
+	Impact         string  `json:"impact"` // "high", "medium", "low"
 }
 
 // PlayStyleRecommendation suggests play style improvements
 type PlayStyleRecommendation struct {
-	Category          string    `json:"category"`
-	Title             string    `json:"title"`
-	Description       string    `json:"description"`
-	Priority          string    `json:"priority"`
-	Difficulty        string    `json:"difficulty"`
-	ExpectedImprovement float64 `json:"expected_improvement"`
-	KeyFocus          []string  `json:"key_focus"`
+	Category            string   `json:"category"`
+	Title               string   `json:"title"`
+	Description         string   `json:"description"`
+	Priority            string   `json:"priority"`
+	Difficulty          string   `json:"difficulty"`
+	ExpectedImprovement float64  `json:"expected_improvement"`
+	KeyFocus            []string `json:"key_focus"`
 }
 
 // TrainingRecommendation suggests specific training exercises
 type TrainingRecommendation struct {
-	Type              string    `json:"type"`
-	Title             string    `json:"title"`
-	Description       string    `json:"description"`
-	Duration          string    `json:"duration"`
-	Frequency         string    `json:"frequency"`
-	SkillsImproved    []string  `json:"skills_improved"`
-	ExpectedTimeline  string    `json:"expected_timeline"`
+	Type             string   `json:"type"`
+	Title            string   `json:"title"`
+	Description      string   `json:"description"`
+	Duration         string   `json:"duration"`
+	Frequency        string   `json:"frequency"`
+	SkillsImproved   []string `json:"skills_improved"`
+	ExpectedTimeline string   `json:"expected_timeline"`
 }
 
 // LearningCurveData analyzes champion learning progression
 type LearningCurveData struct {
-	CurrentStage      string    `json:"current_stage"`
-	ProgressScore     float64   `json:"progress_score"`
-	MasteryTrajectory string    `json:"mastery_trajectory"`
-	PlateauRisk       float64   `json:"plateau_risk"`
-	NextMilestone     string    `json:"next_milestone"`
-	EstimatedTimeToMastery int  `json:"estimated_time_to_mastery"` // In games
+	CurrentStage           string  `json:"current_stage"`
+	ProgressScore          float64 `json:"progress_score"`
+	MasteryTrajectory      string  `json:"mastery_trajectory"`
+	PlateauRisk            float64 `json:"plateau_risk"`
+	NextMilestone          string  `json:"next_milestone"`
+	EstimatedTimeToMastery int     `json:"estimated_time_to_mastery"` // In games
 }
 
 // AnalyzeChampion performs comprehensive champion-specific analysis
 func (cas *ChampionAnalyticsService) AnalyzeChampion(ctx context.Context, playerID string, champion string, timeRange string, position string) (*ChampionAnalysis, error) {
 	// Generate analysis data
 	analysis := &ChampionAnalysis{
-		ID:               fmt.Sprintf("champion_%s_%s_%s", playerID, champion, timeRange),
-		PlayerID:         playerID,
-		Champion:         champion,
-		Position:         position,
-		TimeRange:        timeRange,
-		GeneratedAt:      time.Now(),
-		LastUpdated:      time.Now(),
+		ID:          fmt.Sprintf("champion_%s_%s_%s", playerID, champion, timeRange),
+		PlayerID:    playerID,
+		Champion:    champion,
+		Position:    position,
+		TimeRange:   timeRange,
+		GeneratedAt: time.Now(),
+		LastUpdated: time.Now(),
 	}
 
 	// Calculate core performance metrics
@@ -423,17 +423,17 @@ func (cas *ChampionAnalyticsService) calculateCoreMetrics(ctx context.Context, a
 	analysis.WinRate = 62.3
 	analysis.TotalGames = 45
 	analysis.RecentForm = "W-W-L-W-W"
-	
+
 	analysis.OverallRating = 85.5
 	analysis.MechanicsScore = 88.2
 	analysis.GameKnowledgeScore = 82.1
 	analysis.ConsistencyScore = 86.7
 	analysis.AdaptabilityScore = 79.4
-	
+
 	analysis.CarryPotential = 78.5
 	analysis.ClutchFactor = 84.2
 	analysis.MetaAlignment = 72.3
-	
+
 	return nil
 }
 
@@ -471,7 +471,7 @@ func (cas *ChampionAnalyticsService) analyzeChampionStats(ctx context.Context, a
 		},
 		PassiveUtilization: 73.2,
 	}
-	
+
 	return nil
 }
 
@@ -510,18 +510,18 @@ func (cas *ChampionAnalyticsService) analyzeItemBuilds(ctx context.Context, anal
 	return ItemBuildAnalysis{
 		MostSuccessfulBuild: []ItemBuildPath{
 			{
-				Items:     []string{"Doran's Blade", "Kraken Slayer", "Phantom Dancer", "Infinity Edge"},
-				WinRate:   68.5,
-				PlayRate:  45.2,
+				Items:         []string{"Doran's Blade", "Kraken Slayer", "Phantom Dancer", "Infinity Edge"},
+				WinRate:       68.5,
+				PlayRate:      45.2,
 				AverageTiming: []int{0, 720, 1080, 1440}, // Item completion times
-				Situations: []string{"Standard ADC build", "Against squishy teams"},
+				Situations:    []string{"Standard ADC build", "Against squishy teams"},
 			},
 		},
 		AdaptabilityScore: 82.4,
 		BuildVariety:      12,
 		CounterBuildRate:  73.6,
 		CoreItemTiming: map[string]float64{
-			"Kraken Slayer": 12.5,    // Minutes to complete
+			"Kraken Slayer":  12.5, // Minutes to complete
 			"Phantom Dancer": 18.2,
 			"Infinity Edge":  24.8,
 		},
@@ -558,10 +558,10 @@ func (cas *ChampionAnalyticsService) analyzeSkillOrder(ctx context.Context, anal
 // analyzeRuneOptimization analyzes rune setup performance
 func (cas *ChampionAnalyticsService) analyzeRuneOptimization(ctx context.Context, analysis *ChampionAnalysis) RuneOptimizationData {
 	return RuneOptimizationData{
-		PrimaryTree:         "Precision",
-		SecondaryTree:       "Domination",
-		KeystoneOptimality:  88.5,
-		RuneAdaptation:      72.3,
+		PrimaryTree:        "Precision",
+		SecondaryTree:      "Domination",
+		KeystoneOptimality: 88.5,
+		RuneAdaptation:     72.3,
 		MostSuccessfulSetup: RuneSetupData{
 			PrimaryTree:    "Precision",
 			PrimaryRunes:   []string{"Lethal Tempo", "Triumph", "Legend: Alacrity", "Coup de Grace"},
@@ -584,7 +584,7 @@ func (cas *ChampionAnalyticsService) analyzeMatchupPerformance(ctx context.Conte
 		LanePhaseWinRate:    62.1,
 		ScalingAdvantage:    85.3,
 	}
-	
+
 	analysis.StrengthMatchups = []MatchupData{
 		{
 			OpponentChampion:     "Vayne",
@@ -597,7 +597,7 @@ func (cas *ChampionAnalyticsService) analyzeMatchupPerformance(ctx context.Conte
 			KeyStrategies:        []string{"Early aggression", "Zone control"},
 		},
 	}
-	
+
 	analysis.WeaknessMatchups = []MatchupData{
 		{
 			OpponentChampion:     "Draven",
@@ -610,7 +610,7 @@ func (cas *ChampionAnalyticsService) analyzeMatchupPerformance(ctx context.Conte
 			CommonMistakes:       []string{"Trading too aggressively", "Not respecting all-in"},
 		},
 	}
-	
+
 	return nil
 }
 
@@ -622,14 +622,14 @@ func (cas *ChampionAnalyticsService) analyzeGamePhasePerformance(ctx context.Con
 		AveragePerformance: 78.9,
 		ConsistencyScore:   85.2,
 		KeyMetrics: map[string]float64{
-			"cs_at_15":        145.8,
-			"gold_diff_15":    425.6,
+			"cs_at_15":           145.8,
+			"gold_diff_15":       425.6,
 			"kill_participation": 72.4,
 		},
 		StrengthAreas: []string{"CS efficiency", "Trading patterns"},
 		WeaknessAreas: []string{"All-in timing", "Wave management"},
 	}
-	
+
 	analysis.MidGamePerformance = GamePhaseData{
 		PhaseRating:        88.7,
 		PhaseWinRate:       71.2,
@@ -638,12 +638,12 @@ func (cas *ChampionAnalyticsService) analyzeGamePhasePerformance(ctx context.Con
 		KeyMetrics: map[string]float64{
 			"teamfight_participation": 89.5,
 			"objective_control":       76.8,
-			"damage_share":           32.1,
+			"damage_share":            32.1,
 		},
 		StrengthAreas: []string{"Team fighting", "Power spike utilization"},
 		WeaknessAreas: []string{"Positioning", "Target selection"},
 	}
-	
+
 	analysis.LateGamePerformance = GamePhaseData{
 		PhaseRating:        85.3,
 		PhaseWinRate:       73.8,
@@ -657,7 +657,7 @@ func (cas *ChampionAnalyticsService) analyzeGamePhasePerformance(ctx context.Con
 		StrengthAreas: []string{"DPS output", "Scaling potential"},
 		WeaknessAreas: []string{"Decision making under pressure"},
 	}
-	
+
 	return nil
 }
 
@@ -675,7 +675,7 @@ func (cas *ChampionAnalyticsService) analyzeTeamFightPerformance(ctx context.Con
 		TargetPriority:     85.7,
 		UltimateEfficiency: 88.3,
 	}
-	
+
 	return nil
 }
 
@@ -689,7 +689,7 @@ func (cas *ChampionAnalyticsService) calculateBenchmarks(ctx context.Context, an
 		ComparisonType:      "role",
 		FilterValue:         analysis.Position,
 	}
-	
+
 	analysis.RankBenchmark = ChampionBenchmarkData{
 		Percentile:          82.7,
 		AverageRating:       75.8,
@@ -698,7 +698,7 @@ func (cas *ChampionAnalyticsService) calculateBenchmarks(ctx context.Context, an
 		ComparisonType:      "rank",
 		FilterValue:         "Gold",
 	}
-	
+
 	analysis.GlobalBenchmark = ChampionBenchmarkData{
 		Percentile:          75.2,
 		AverageRating:       68.9,
@@ -707,7 +707,7 @@ func (cas *ChampionAnalyticsService) calculateBenchmarks(ctx context.Context, an
 		ComparisonType:      "global",
 		FilterValue:         "All",
 	}
-	
+
 	return nil
 }
 
@@ -715,12 +715,12 @@ func (cas *ChampionAnalyticsService) calculateBenchmarks(ctx context.Context, an
 func (cas *ChampionAnalyticsService) generateTrendData(ctx context.Context, analysis *ChampionAnalysis) []ChampionTrendPoint {
 	trends := make([]ChampionTrendPoint, 0)
 	baseDate := time.Now().AddDate(0, 0, -30)
-	
+
 	for i := 0; i < 30; i++ {
 		date := baseDate.AddDate(0, 0, i)
 		// Simulate trend data with some growth pattern
 		baseRating := 80.0 + float64(i)*0.2 + math.Sin(float64(i)*0.3)*5
-		
+
 		trend := ChampionTrendPoint{
 			Date:          date.Format("2006-01-02"),
 			OverallRating: math.Max(0, math.Min(100, baseRating)),
@@ -731,22 +731,22 @@ func (cas *ChampionAnalyticsService) generateTrendData(ctx context.Context, anal
 		}
 		trends = append(trends, trend)
 	}
-	
+
 	// Calculate trend direction
 	if len(trends) >= 7 {
 		recentAvg := 0.0
 		earlierAvg := 0.0
-		
-		for i := len(trends)-7; i < len(trends); i++ {
+
+		for i := len(trends) - 7; i < len(trends); i++ {
 			recentAvg += trends[i].OverallRating
 		}
 		recentAvg /= 7
-		
+
 		for i := 0; i < 7; i++ {
 			earlierAvg += trends[i].OverallRating
 		}
 		earlierAvg /= 7
-		
+
 		if recentAvg > earlierAvg+2 {
 			analysis.TrendDirection = "improving"
 			analysis.TrendConfidence = 0.85
@@ -758,7 +758,7 @@ func (cas *ChampionAnalyticsService) generateTrendData(ctx context.Context, anal
 			analysis.TrendConfidence = 0.92
 		}
 	}
-	
+
 	return trends
 }
 
@@ -820,7 +820,7 @@ func (cas *ChampionAnalyticsService) generatePlayStyleRecommendations(ctx contex
 			Priority:            "high",
 			Difficulty:          "medium",
 			ExpectedImprovement: 8.5,
-			KeyFocus:           []string{"Range management", "Threat assessment", "Escape routes"},
+			KeyFocus:            []string{"Range management", "Threat assessment", "Escape routes"},
 		},
 		{
 			Category:            "Item Building",
@@ -829,7 +829,7 @@ func (cas *ChampionAnalyticsService) generatePlayStyleRecommendations(ctx contex
 			Priority:            "medium",
 			Difficulty:          "medium",
 			ExpectedImprovement: 6.2,
-			KeyFocus:           []string{"Enemy composition analysis", "Situational items", "Power spike timing"},
+			KeyFocus:            []string{"Enemy composition analysis", "Situational items", "Power spike timing"},
 		},
 	}
 }
@@ -892,12 +892,12 @@ func (cas *ChampionAnalyticsService) GetChampionMasteryRanking(ctx context.Conte
 			Rank:          2,
 		},
 	}
-	
+
 	// Sort by rating
 	sort.Slice(rankings, func(i, j int) bool {
 		return rankings[i].Rating > rankings[j].Rating
 	})
-	
+
 	return rankings, nil
 }
 
@@ -918,37 +918,37 @@ func (cas *ChampionAnalyticsService) GetChampionComparison(ctx context.Context, 
 		TimeRange: timeRange,
 		Champions: make([]ChampionComparisonEntry, 0, len(champions)),
 	}
-	
+
 	for _, champion := range champions {
 		entry := ChampionComparisonEntry{
-			Champion:         champion,
-			WinRate:          60.0 + (math.Sin(float64(len(champion)))*10), // Simulate data
-			PlayRate:         5.0 + (math.Cos(float64(len(champion)))*8),
-			AverageKDA:       2.5 + (math.Sin(float64(len(champion)*2))*0.8),
-			DamagePerMinute:  500.0 + (math.Cos(float64(len(champion)*3))*150),
-			CSPerMinute:      7.0 + (math.Sin(float64(len(champion)*4))*1.5),
-			OverallRating:    75.0 + (math.Cos(float64(len(champion)*5))*15),
+			Champion:        champion,
+			WinRate:         60.0 + (math.Sin(float64(len(champion))) * 10), // Simulate data
+			PlayRate:        5.0 + (math.Cos(float64(len(champion))) * 8),
+			AverageKDA:      2.5 + (math.Sin(float64(len(champion)*2)) * 0.8),
+			DamagePerMinute: 500.0 + (math.Cos(float64(len(champion)*3)) * 150),
+			CSPerMinute:     7.0 + (math.Sin(float64(len(champion)*4)) * 1.5),
+			OverallRating:   75.0 + (math.Cos(float64(len(champion)*5)) * 15),
 		}
 		comparison.Champions = append(comparison.Champions, entry)
 	}
-	
+
 	return comparison, nil
 }
 
 // ChampionComparisonData represents multi-champion comparison data
 type ChampionComparisonData struct {
-	PlayerID  string                     `json:"player_id"`
-	TimeRange string                     `json:"time_range"`
-	Champions []ChampionComparisonEntry  `json:"champions"`
+	PlayerID  string                    `json:"player_id"`
+	TimeRange string                    `json:"time_range"`
+	Champions []ChampionComparisonEntry `json:"champions"`
 }
 
 // ChampionComparisonEntry represents a single champion's comparison data
 type ChampionComparisonEntry struct {
-	Champion         string  `json:"champion"`
-	WinRate          float64 `json:"win_rate"`
-	PlayRate         float64 `json:"play_rate"`
-	AverageKDA       float64 `json:"average_kda"`
-	DamagePerMinute  float64 `json:"damage_per_minute"`
-	CSPerMinute      float64 `json:"cs_per_minute"`
-	OverallRating    float64 `json:"overall_rating"`
+	Champion        string  `json:"champion"`
+	WinRate         float64 `json:"win_rate"`
+	PlayRate        float64 `json:"play_rate"`
+	AverageKDA      float64 `json:"average_kda"`
+	DamagePerMinute float64 `json:"damage_per_minute"`
+	CSPerMinute     float64 `json:"cs_per_minute"`
+	OverallRating   float64 `json:"overall_rating"`
 }

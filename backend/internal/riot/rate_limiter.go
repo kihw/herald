@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 )
 
 // Herald.lol Gaming Analytics - Riot API Rate Limiter
@@ -13,7 +13,7 @@ import (
 
 // RiotRateLimiter handles Riot API specific rate limiting
 type RiotRateLimiter struct {
-	redis         *redis.Client
+	redis          *redis.Client
 	requestsPerMin int
 	burstLimit     int
 }
@@ -39,7 +39,7 @@ func NewRiotRateLimiter(redis *redis.Client, requestsPerMin, burstLimit int) *Ri
 // CheckRateLimit checks if request is allowed under Riot API limits
 func (r *RiotRateLimiter) CheckRateLimit(ctx context.Context) (bool, time.Duration, error) {
 	now := time.Now()
-	
+
 	// Check Riot's 100 requests per 2 minutes limit (personal dev key)
 	allowed, waitTime, err := r.checkRiotPersonalLimit(ctx, now)
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *RiotRateLimiter) CheckRateLimit(ctx context.Context) (bool, time.Durati
 		r.incrementRateLimitHits(ctx)
 		return false, waitTime, nil
 	}
-	
+
 	// Check burst limit (prevent too many requests in short time)
 	allowed, waitTime, err = r.checkBurstLimit(ctx, now)
 	if err != nil {
@@ -60,12 +60,12 @@ func (r *RiotRateLimiter) CheckRateLimit(ctx context.Context) (bool, time.Durati
 		r.incrementBurstLimitHits(ctx)
 		return false, waitTime, nil
 	}
-	
+
 	// Request is allowed, increment counters
 	if err := r.incrementCounters(ctx, now); err != nil {
 		return false, 0, fmt.Errorf("failed to increment counters: %w", err)
 	}
-	
+
 	return true, 0, nil
 }
 
@@ -74,13 +74,13 @@ func (r *RiotRateLimiter) checkRiotPersonalLimit(ctx context.Context, now time.T
 	// Use 2-minute sliding window
 	twoMinWindow := now.Unix() / 120 // 120 seconds = 2 minutes
 	key := fmt.Sprintf("riot:personal_limit:2min:%d", twoMinWindow)
-	
+
 	// Get current count
 	count, err := r.redis.Get(ctx, key).Int()
 	if err != nil && err != redis.Nil {
 		return false, 0, fmt.Errorf("failed to get rate limit count: %w", err)
 	}
-	
+
 	// Check if we're at the limit
 	if count >= 100 {
 		// Calculate wait time until next 2-minute window
@@ -88,7 +88,7 @@ func (r *RiotRateLimiter) checkRiotPersonalLimit(ctx context.Context, now time.T
 		waitTime := time.Until(time.Unix(nextWindow, 0))
 		return false, waitTime, nil
 	}
-	
+
 	return true, 0, nil
 }
 
@@ -97,46 +97,46 @@ func (r *RiotRateLimiter) checkBurstLimit(ctx context.Context, now time.Time) (b
 	// Use 10-second burst window
 	burstWindow := now.Unix() / 10 // 10-second windows
 	key := fmt.Sprintf("riot:burst_limit:10s:%d", burstWindow)
-	
+
 	count, err := r.redis.Get(ctx, key).Int()
 	if err != nil && err != redis.Nil {
 		return false, 0, fmt.Errorf("failed to get burst limit count: %w", err)
 	}
-	
+
 	if count >= r.burstLimit {
 		// Calculate wait time until next 10-second window
 		nextWindow := (burstWindow + 1) * 10
 		waitTime := time.Until(time.Unix(nextWindow, 0))
 		return false, waitTime, nil
 	}
-	
+
 	return true, 0, nil
 }
 
 // incrementCounters increments all rate limiting counters
 func (r *RiotRateLimiter) incrementCounters(ctx context.Context, now time.Time) error {
 	pipe := r.redis.Pipeline()
-	
+
 	// 2-minute window (Riot limit)
 	twoMinKey := fmt.Sprintf("riot:personal_limit:2min:%d", now.Unix()/120)
 	pipe.Incr(ctx, twoMinKey)
 	pipe.Expire(ctx, twoMinKey, 3*time.Minute) // Keep a bit longer than window
-	
+
 	// 10-second burst window
 	burstKey := fmt.Sprintf("riot:burst_limit:10s:%d", now.Unix()/10)
 	pipe.Incr(ctx, burstKey)
 	pipe.Expire(ctx, burstKey, 30*time.Second)
-	
+
 	// Daily counter (for statistics)
 	dailyKey := fmt.Sprintf("riot:daily_requests:%d", now.Unix()/86400)
 	pipe.Incr(ctx, dailyKey)
 	pipe.Expire(ctx, dailyKey, 48*time.Hour)
-	
+
 	// Minute counter (for statistics)
 	minuteKey := fmt.Sprintf("riot:minute_requests:%d", now.Unix()/60)
 	pipe.Incr(ctx, minuteKey)
 	pipe.Expire(ctx, minuteKey, 5*time.Minute)
-	
+
 	_, err := pipe.Exec(ctx)
 	return err
 }
@@ -161,37 +161,37 @@ func (r *RiotRateLimiter) incrementBurstLimitHits(ctx context.Context) {
 func (r *RiotRateLimiter) GetStats(ctx context.Context) (*RiotRateLimiterStats, error) {
 	now := time.Now()
 	stats := &RiotRateLimiterStats{}
-	
+
 	// Get requests this minute
 	minuteKey := fmt.Sprintf("riot:minute_requests:%d", now.Unix()/60)
 	if count, err := r.redis.Get(ctx, minuteKey).Int(); err == nil {
 		stats.RequestsThisMinute = count
 	}
-	
+
 	// Get requests in last 2 minutes (current Riot limit window)
 	twoMinKey := fmt.Sprintf("riot:personal_limit:2min:%d", now.Unix()/120)
 	if count, err := r.redis.Get(ctx, twoMinKey).Int(); err == nil {
 		stats.RequestsLast2Min = count
 	}
-	
+
 	// Get requests today
 	dailyKey := fmt.Sprintf("riot:daily_requests:%d", now.Unix()/86400)
 	if count, err := r.redis.Get(ctx, dailyKey).Int(); err == nil {
 		stats.RequestsToday = count
 	}
-	
+
 	// Get rate limit hits this hour
 	rateLimitKey := fmt.Sprintf("riot:rate_limit_hits:%d", now.Unix()/3600)
 	if count, err := r.redis.Get(ctx, rateLimitKey).Int(); err == nil {
 		stats.RateLimitHits = count
 	}
-	
+
 	// Get burst limit hits this hour
 	burstLimitKey := fmt.Sprintf("riot:burst_limit_hits:%d", now.Unix()/3600)
 	if count, err := r.redis.Get(ctx, burstLimitKey).Int(); err == nil {
 		stats.BurstLimitHits = count
 	}
-	
+
 	return stats, nil
 }
 
@@ -199,17 +199,17 @@ func (r *RiotRateLimiter) GetStats(ctx context.Context) (*RiotRateLimiterStats, 
 func (r *RiotRateLimiter) GetRemainingRequests(ctx context.Context) (int, error) {
 	now := time.Now()
 	twoMinKey := fmt.Sprintf("riot:personal_limit:2min:%d", now.Unix()/120)
-	
+
 	count, err := r.redis.Get(ctx, twoMinKey).Int()
 	if err != nil && err != redis.Nil {
 		return 0, err
 	}
-	
+
 	remaining := 100 - count
 	if remaining < 0 {
 		remaining = 0
 	}
-	
+
 	return remaining, nil
 }
 
@@ -223,7 +223,7 @@ func (r *RiotRateLimiter) WaitForRateLimit(ctx context.Context) error {
 		if allowed {
 			return nil
 		}
-		
+
 		// Wait for the specified time or until context is cancelled
 		select {
 		case <-time.After(waitTime):
@@ -244,7 +244,7 @@ func (r *RiotRateLimiter) ResetCounters(ctx context.Context) error {
 		"riot:rate_limit_hits:*",
 		"riot:burst_limit_hits:*",
 	}
-	
+
 	for _, pattern := range patterns {
 		keys, err := r.redis.Keys(ctx, pattern).Result()
 		if err != nil {
@@ -254,39 +254,39 @@ func (r *RiotRateLimiter) ResetCounters(ctx context.Context) error {
 			r.redis.Del(ctx, keys...)
 		}
 	}
-	
+
 	return nil
 }
 
 // IsRateLimited checks if currently rate limited without making a request
 func (r *RiotRateLimiter) IsRateLimited(ctx context.Context) (bool, time.Duration, error) {
 	now := time.Now()
-	
+
 	// Check 2-minute limit
 	twoMinKey := fmt.Sprintf("riot:personal_limit:2min:%d", now.Unix()/120)
 	count, err := r.redis.Get(ctx, twoMinKey).Int()
 	if err != nil && err != redis.Nil {
 		return false, 0, err
 	}
-	
+
 	if count >= 100 {
 		nextWindow := ((now.Unix() / 120) + 1) * 120
 		waitTime := time.Until(time.Unix(nextWindow, 0))
 		return true, waitTime, nil
 	}
-	
+
 	// Check burst limit
 	burstKey := fmt.Sprintf("riot:burst_limit:10s:%d", now.Unix()/10)
 	burstCount, err := r.redis.Get(ctx, burstKey).Int()
 	if err != nil && err != redis.Nil {
 		return false, 0, err
 	}
-	
+
 	if burstCount >= r.burstLimit {
 		nextWindow := ((now.Unix() / 10) + 1) * 10
 		waitTime := time.Until(time.Unix(nextWindow, 0))
 		return true, waitTime, nil
 	}
-	
+
 	return false, 0, nil
 }

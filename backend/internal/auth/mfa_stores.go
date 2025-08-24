@@ -90,7 +90,7 @@ func (s *DatabaseMFAStore) StoreTOTPSecret(ctx context.Context, userID string, s
 	if err != nil {
 		return fmt.Errorf("failed to marshal gaming backup codes: %w", err)
 	}
-	
+
 	record := &GamingTOTPRecord{
 		UserID:      userID,
 		Secret:      secret.Secret, // In production, encrypt this
@@ -103,18 +103,18 @@ func (s *DatabaseMFAStore) StoreTOTPSecret(ctx context.Context, userID string, s
 		LastUsed:    secret.LastUsed,
 		UpdatedAt:   time.Now(),
 	}
-	
+
 	if err := s.db.WithContext(ctx).Save(record).Error; err != nil {
 		return fmt.Errorf("failed to store gaming TOTP secret: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetTOTPSecret retrieves TOTP secret from database
 func (s *DatabaseMFAStore) GetTOTPSecret(ctx context.Context, userID string) (*TOTPSecret, error) {
 	var record GamingTOTPRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ?", userID).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -122,7 +122,7 @@ func (s *DatabaseMFAStore) GetTOTPSecret(ctx context.Context, userID string) (*T
 		}
 		return nil, fmt.Errorf("failed to get gaming TOTP secret: %w", err)
 	}
-	
+
 	// Parse backup codes
 	var backupCodes []string
 	if record.BackupCodes != "" {
@@ -130,7 +130,7 @@ func (s *DatabaseMFAStore) GetTOTPSecret(ctx context.Context, userID string) (*T
 			backupCodes = []string{} // Continue without backup codes if parsing fails
 		}
 	}
-	
+
 	return &TOTPSecret{
 		UserID:      record.UserID,
 		Secret:      record.Secret, // In production, decrypt this
@@ -151,23 +151,23 @@ func (s *DatabaseMFAStore) VerifyTOTPCode(ctx context.Context, userID, code stri
 	if err != nil {
 		return err
 	}
-	
+
 	if !secret.Enabled {
 		return fmt.Errorf("gaming TOTP not enabled")
 	}
-	
+
 	// Verify with TOTP library (this would be done in the manager)
 	// For now, just update last used time
 	now := time.Now()
-	
+
 	result := s.db.WithContext(ctx).Model(&GamingTOTPRecord{}).
 		Where("user_id = ?", userID).
 		Update("last_used", now)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to update gaming TOTP last used: %w", result.Error)
 	}
-	
+
 	return nil
 }
 
@@ -179,15 +179,15 @@ func (s *DatabaseMFAStore) DisableTOTP(ctx context.Context, userID string) error
 			"enabled":    false,
 			"updated_at": time.Now(),
 		})
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to disable gaming TOTP: %w", result.Error)
 	}
-	
+
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("gaming TOTP record not found")
 	}
-	
+
 	return nil
 }
 
@@ -200,7 +200,7 @@ func (s *DatabaseMFAStore) StoreWebAuthnCredential(ctx context.Context, userID s
 	if err != nil {
 		return fmt.Errorf("failed to marshal WebAuthn transports: %w", err)
 	}
-	
+
 	record := &GamingWebAuthnRecord{
 		ID:              credential.ID,
 		UserID:          userID,
@@ -219,23 +219,23 @@ func (s *DatabaseMFAStore) StoreWebAuthnCredential(ctx context.Context, userID s
 		LastUsed:        credential.LastUsed,
 		UpdatedAt:       time.Now(),
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to store WebAuthn credential: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetWebAuthnCredentials retrieves all WebAuthn credentials for user
 func (s *DatabaseMFAStore) GetWebAuthnCredentials(ctx context.Context, userID string) ([]*WebAuthnCredential, error) {
 	var records []GamingWebAuthnRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ? AND enabled = ?", userID, true).Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get WebAuthn credentials: %w", err)
 	}
-	
+
 	var credentials []*WebAuthnCredential
 	for _, record := range records {
 		// Parse transports
@@ -245,7 +245,7 @@ func (s *DatabaseMFAStore) GetWebAuthnCredentials(ctx context.Context, userID st
 				transports = []string{} // Continue without transports if parsing fails
 			}
 		}
-		
+
 		credential := &WebAuthnCredential{
 			ID:              record.ID,
 			UserID:          record.UserID,
@@ -263,10 +263,10 @@ func (s *DatabaseMFAStore) GetWebAuthnCredentials(ctx context.Context, userID st
 			CreatedAt:       record.CreatedAt,
 			LastUsed:        record.LastUsed,
 		}
-		
+
 		credentials = append(credentials, credential)
 	}
-	
+
 	return credentials, nil
 }
 
@@ -277,27 +277,27 @@ func (s *DatabaseMFAStore) UpdateWebAuthnCredential(ctx context.Context, credent
 	if err != nil {
 		return fmt.Errorf("failed to marshal WebAuthn transports: %w", err)
 	}
-	
+
 	updates := map[string]interface{}{
-		"sign_count":      credential.SignCount,
-		"transports":      string(transportsJSON),
-		"device_name":     credential.DeviceName,
-		"last_used":       credential.LastUsed,
-		"updated_at":      time.Now(),
+		"sign_count":  credential.SignCount,
+		"transports":  string(transportsJSON),
+		"device_name": credential.DeviceName,
+		"last_used":   credential.LastUsed,
+		"updated_at":  time.Now(),
 	}
-	
+
 	result := s.db.WithContext(ctx).Model(&GamingWebAuthnRecord{}).
 		Where("id = ?", credentialID).
 		Updates(updates)
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to update WebAuthn credential: %w", result.Error)
 	}
-	
+
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("WebAuthn credential not found")
 	}
-	
+
 	return nil
 }
 
@@ -305,15 +305,15 @@ func (s *DatabaseMFAStore) UpdateWebAuthnCredential(ctx context.Context, credent
 func (s *DatabaseMFAStore) DeleteWebAuthnCredential(ctx context.Context, userID, credentialID string) error {
 	result := s.db.WithContext(ctx).Where("id = ? AND user_id = ?", credentialID, userID).
 		Delete(&GamingWebAuthnRecord{})
-	
+
 	if result.Error != nil {
 		return fmt.Errorf("failed to delete WebAuthn credential: %w", result.Error)
 	}
-	
+
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("WebAuthn credential not found")
 	}
-	
+
 	return nil
 }
 
@@ -326,7 +326,7 @@ func (s *DatabaseMFAStore) StoreBackupCodes(ctx context.Context, userID string, 
 	if err != nil {
 		return fmt.Errorf("failed to marshal gaming backup codes: %w", err)
 	}
-	
+
 	record := &GamingBackupCodesRecord{
 		UserID:    userID,
 		Codes:     string(codesJSON),
@@ -334,18 +334,18 @@ func (s *DatabaseMFAStore) StoreBackupCodes(ctx context.Context, userID string, 
 		UsedCount: codes.UsedCount,
 		UpdatedAt: time.Now(),
 	}
-	
+
 	if err := s.db.WithContext(ctx).Save(record).Error; err != nil {
 		return fmt.Errorf("failed to store gaming backup codes: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetBackupCodes retrieves backup codes from database
 func (s *DatabaseMFAStore) GetBackupCodes(ctx context.Context, userID string) (*BackupCodes, error) {
 	var record GamingBackupCodesRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ?", userID).First(&record).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -353,13 +353,13 @@ func (s *DatabaseMFAStore) GetBackupCodes(ctx context.Context, userID string) (*
 		}
 		return nil, fmt.Errorf("failed to get gaming backup codes: %w", err)
 	}
-	
+
 	// Parse codes map
 	var codes map[string]bool
 	if err := json.Unmarshal([]byte(record.Codes), &codes); err != nil {
 		return nil, fmt.Errorf("failed to parse gaming backup codes: %w", err)
 	}
-	
+
 	return &BackupCodes{
 		UserID:    record.UserID,
 		Codes:     codes,
@@ -375,21 +375,21 @@ func (s *DatabaseMFAStore) UseBackupCode(ctx context.Context, userID, code strin
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if code exists and is unused
 	used, exists := backupCodes.Codes[code]
 	if !exists {
 		return fmt.Errorf("invalid gaming backup code")
 	}
-	
+
 	if used {
 		return fmt.Errorf("gaming backup code already used")
 	}
-	
+
 	// Mark code as used
 	backupCodes.Codes[code] = true
 	backupCodes.UsedCount++
-	
+
 	// Update in database
 	return s.StoreBackupCodes(ctx, userID, backupCodes)
 }
@@ -413,55 +413,55 @@ func NewRedisMFAChallengeStore(redisClient RedisClient) *RedisMFAChallengeStore 
 // StoreMFAChallenge stores MFA challenge in Redis
 func (s *RedisMFAChallengeStore) StoreMFAChallenge(ctx context.Context, challengeID string, challenge *MFAChallenge) error {
 	key := s.keyPrefix + challengeID
-	
+
 	data, err := json.Marshal(challenge)
 	if err != nil {
 		return fmt.Errorf("failed to marshal gaming MFA challenge: %w", err)
 	}
-	
+
 	ttl := time.Until(challenge.ExpiresAt)
 	if ttl <= 0 {
 		return fmt.Errorf("gaming MFA challenge already expired")
 	}
-	
+
 	if err := s.redisClient.Set(ctx, key, data, ttl); err != nil {
 		return fmt.Errorf("failed to store gaming MFA challenge: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetMFAChallenge retrieves MFA challenge from Redis
 func (s *RedisMFAChallengeStore) GetMFAChallenge(ctx context.Context, challengeID string) (*MFAChallenge, error) {
 	key := s.keyPrefix + challengeID
-	
+
 	data, err := s.redisClient.Get(ctx, key)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gaming MFA challenge: %w", err)
 	}
-	
+
 	var challenge MFAChallenge
 	if err := json.Unmarshal([]byte(data), &challenge); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal gaming MFA challenge: %w", err)
 	}
-	
+
 	// Check if challenge has expired
 	if time.Now().After(challenge.ExpiresAt) {
 		s.redisClient.Del(ctx, key)
 		return nil, fmt.Errorf("gaming MFA challenge expired")
 	}
-	
+
 	return &challenge, nil
 }
 
 // DeleteMFAChallenge deletes MFA challenge from Redis
 func (s *RedisMFAChallengeStore) DeleteMFAChallenge(ctx context.Context, challengeID string) error {
 	key := s.keyPrefix + challengeID
-	
+
 	if err := s.redisClient.Del(ctx, key); err != nil {
 		return fmt.Errorf("failed to delete gaming MFA challenge: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -481,24 +481,24 @@ func (s *DatabaseMFAStore) TrackMFAAttempt(ctx context.Context, userID string, a
 		AttemptedAt:  attempt.AttemptedAt,
 		CreatedAt:    time.Now(),
 	}
-	
+
 	if err := s.db.WithContext(ctx).Create(record).Error; err != nil {
 		return fmt.Errorf("failed to track gaming MFA attempt: %w", err)
 	}
-	
+
 	return nil
 }
 
 // GetMFAAttempts retrieves MFA attempts for user since specified time
 func (s *DatabaseMFAStore) GetMFAAttempts(ctx context.Context, userID string, since time.Time) ([]*MFAAttempt, error) {
 	var records []GamingMFAAttemptRecord
-	
+
 	err := s.db.WithContext(ctx).Where("user_id = ? AND attempted_at > ?", userID, since).
 		Order("attempted_at DESC").Find(&records).Error
 	if err != nil {
 		return nil, fmt.Errorf("failed to get gaming MFA attempts: %w", err)
 	}
-	
+
 	var attempts []*MFAAttempt
 	for _, record := range records {
 		attempt := &MFAAttempt{
@@ -514,7 +514,7 @@ func (s *DatabaseMFAStore) GetMFAAttempts(ctx context.Context, userID string, si
 		}
 		attempts = append(attempts, attempt)
 	}
-	
+
 	return attempts, nil
 }
 
@@ -540,26 +540,26 @@ var _ MFAStore = (*CombinedGamingMFAStore)(nil)
 // GetMFAStatus returns comprehensive MFA status for user
 func (s *DatabaseMFAStore) GetMFAStatus(ctx context.Context, userID string) (*MFAStatus, error) {
 	status := &MFAStatus{
-		UserID:    userID,
-		HasTOTP:   false,
-		HasWebAuthn: false,
+		UserID:         userID,
+		HasTOTP:        false,
+		HasWebAuthn:    false,
 		HasBackupCodes: false,
-		Methods:   []string{},
+		Methods:        []string{},
 	}
-	
+
 	// Check TOTP
 	if totpSecret, err := s.GetTOTPSecret(ctx, userID); err == nil && totpSecret.Enabled {
 		status.HasTOTP = true
 		status.Methods = append(status.Methods, "totp")
 	}
-	
+
 	// Check WebAuthn
 	if credentials, err := s.GetWebAuthnCredentials(ctx, userID); err == nil && len(credentials) > 0 {
 		status.HasWebAuthn = true
 		status.WebAuthnCredentials = len(credentials)
 		status.Methods = append(status.Methods, "webauthn")
 	}
-	
+
 	// Check backup codes
 	if backupCodes, err := s.GetBackupCodes(ctx, userID); err == nil {
 		status.HasBackupCodes = true
@@ -570,9 +570,9 @@ func (s *DatabaseMFAStore) GetMFAStatus(ctx context.Context, userID string) (*MF
 			}
 		}
 	}
-	
+
 	status.Enabled = len(status.Methods) > 0
-	
+
 	return status, nil
 }
 

@@ -52,17 +52,17 @@ type HubStats struct {
 
 // Message types for Herald.lol gaming platform
 const (
-	MessageTypeMatchUpdate     = "match_update"
-	MessageTypePerformanceUpdate = "performance_update"
-	MessageTypeRankUpdate      = "rank_update"
-	MessageTypeFriendActivity  = "friend_activity"
-	MessageTypeLiveMatch       = "live_match"
+	MessageTypeMatchUpdate        = "match_update"
+	MessageTypePerformanceUpdate  = "performance_update"
+	MessageTypeRankUpdate         = "rank_update"
+	MessageTypeFriendActivity     = "friend_activity"
+	MessageTypeLiveMatch          = "live_match"
 	MessageTypeCoachingSuggestion = "coaching_suggestion"
-	MessageTypeChampionMastery = "champion_mastery"
+	MessageTypeChampionMastery    = "champion_mastery"
 	MessageTypeSystemNotification = "system_notification"
-	MessageTypeError           = "error"
-	MessageTypePing            = "ping"
-	MessageTypePong            = "pong"
+	MessageTypeError              = "error"
+	MessageTypePing               = "ping"
+	MessageTypePong               = "pong"
 )
 
 // Message represents a WebSocket message
@@ -78,12 +78,12 @@ type Message struct {
 
 // Gaming-specific message data structures
 type MatchUpdateData struct {
-	GameID        string            `json:"game_id"`
-	Status        string            `json:"status"`
-	GameTime      int               `json:"game_time"`
-	Participants  []ParticipantData `json:"participants"`
-	TeamStats     TeamStatsData     `json:"team_stats"`
-	EventData     interface{}       `json:"event_data,omitempty"`
+	GameID       string            `json:"game_id"`
+	Status       string            `json:"status"`
+	GameTime     int               `json:"game_time"`
+	Participants []ParticipantData `json:"participants"`
+	TeamStats    TeamStatsData     `json:"team_stats"`
+	EventData    interface{}       `json:"event_data,omitempty"`
 }
 
 type ParticipantData struct {
@@ -105,25 +105,25 @@ type TeamStatsData struct {
 }
 
 type TeamData struct {
-	Kills           int `json:"kills"`
-	Deaths          int `json:"deaths"`
-	Assists         int `json:"assists"`
-	Gold            int `json:"gold"`
-	Dragons         int `json:"dragons"`
-	Barons          int `json:"barons"`
-	Towers          int `json:"towers"`
-	Inhibitors      int `json:"inhibitors"`
+	Kills      int `json:"kills"`
+	Deaths     int `json:"deaths"`
+	Assists    int `json:"assists"`
+	Gold       int `json:"gold"`
+	Dragons    int `json:"dragons"`
+	Barons     int `json:"barons"`
+	Towers     int `json:"towers"`
+	Inhibitors int `json:"inhibitors"`
 }
 
 type PerformanceUpdateData struct {
-	UserID        string  `json:"user_id"`
-	CurrentKDA    float64 `json:"current_kda"`
-	AverageKDA    float64 `json:"average_kda"`
-	CSPerMinute   float64 `json:"cs_per_minute"`
-	VisionScore   float64 `json:"vision_score"`
-	DamageShare   float64 `json:"damage_share"`
+	UserID         string  `json:"user_id"`
+	CurrentKDA     float64 `json:"current_kda"`
+	AverageKDA     float64 `json:"average_kda"`
+	CSPerMinute    float64 `json:"cs_per_minute"`
+	VisionScore    float64 `json:"vision_score"`
+	DamageShare    float64 `json:"damage_share"`
 	GoldEfficiency float64 `json:"gold_efficiency"`
-	Improvement   string  `json:"improvement_suggestion"`
+	Improvement    string  `json:"improvement_suggestion"`
 }
 
 // WebSocket upgrader with gaming-specific configuration
@@ -136,9 +136,9 @@ var upgrader = websocket.Upgrader{
 		// Allow connections from Herald.lol domains
 		origin := r.Header.Get("Origin")
 		return origin == "https://herald.lol" ||
-			   origin == "https://www.herald.lol" ||
-			   origin == "http://localhost:3000" || // Development
-			   origin == "http://localhost:5173"   // Vite dev server
+			origin == "https://www.herald.lol" ||
+			origin == "http://localhost:3000" || // Development
+			origin == "http://localhost:5173" // Vite dev server
 	},
 }
 
@@ -173,7 +173,7 @@ func (h *Hub) Run(ctx context.Context) {
 			h.stats.TotalConnections++
 			h.stats.ActiveConnections = len(h.clients)
 			h.mu.Unlock()
-			
+
 			log.Printf("Client connected: %s (total: %d)", client.userID, len(h.clients))
 
 		case client := <-h.unregister:
@@ -182,12 +182,12 @@ func (h *Hub) Run(ctx context.Context) {
 				delete(h.clients, client)
 				h.stats.ActiveConnections = len(h.clients)
 				close(client.send)
-				
+
 				// Remove from all subscriptions
 				h.removeClientFromSubscriptions(client)
 			}
 			h.mu.Unlock()
-			
+
 			log.Printf("Client disconnected: %s (total: %d)", client.userID, len(h.clients))
 
 		case message := <-h.broadcast:
@@ -222,7 +222,7 @@ func (h *Hub) HandleWebSocket(c *gin.Context) {
 	// Extract user authentication
 	userID := c.Query("user_id")
 	token := c.Query("token")
-	
+
 	if userID == "" || token == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
 		return
@@ -386,7 +386,7 @@ func (h *Hub) SubscribeUserToMatch(userID, matchID string) {
 func (h *Hub) GetStats() HubStats {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
-	
+
 	stats := h.stats
 	stats.ActiveConnections = len(h.clients)
 	return stats

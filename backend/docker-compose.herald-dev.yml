@@ -1,0 +1,480 @@
+version: '3.8'
+
+# Herald.lol Gaming Analytics - Development Environment
+# VPS Docker Compose setup for Phase 1 infrastructure foundation
+
+services:
+  # PostgreSQL database for Herald.lol development
+  herald-postgres:
+    image: postgres:15-alpine
+    container_name: herald-postgres-dev
+    restart: unless-stopped
+    
+    environment:
+      POSTGRES_DB: herald_gaming_dev
+      POSTGRES_USER: herald_dev
+      POSTGRES_PASSWORD: herald_gaming_dev_2025
+      POSTGRES_INITDB_ARGS: "--data-checksums --encoding=UTF8 --locale=en_US.utf8"
+      
+      # Gaming performance optimizations
+      POSTGRES_SHARED_BUFFERS: 256MB
+      POSTGRES_EFFECTIVE_CACHE_SIZE: 1GB
+      POSTGRES_WORK_MEM: 16MB
+      POSTGRES_MAINTENANCE_WORK_MEM: 128MB
+      POSTGRES_MAX_CONNECTIONS: 200
+    
+    ports:
+      - "5432:5432"
+    
+    volumes:
+      - herald_postgres_data:/var/lib/postgresql/data
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U herald_dev -d herald_gaming_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    labels:
+      - "com.herald.service=database"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=core"
+
+  # Redis for Herald.lol gaming cache and sessions
+  herald-redis:
+    image: redis:7-alpine
+    container_name: herald-redis-dev
+    restart: unless-stopped
+    
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+      --timeout 60
+      --tcp-keepalive 300
+    
+    ports:
+      - "6379:6379"
+    
+    volumes:
+      - herald_redis_data:/data
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    
+    labels:
+      - "com.herald.service=cache"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=performance"
+
+  # InfluxDB for Herald.lol gaming time-series metrics
+  herald-influxdb:
+    image: influxdb:2.7-alpine
+    container_name: herald-influxdb-dev
+    restart: unless-stopped
+    
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: herald_admin
+      DOCKER_INFLUXDB_INIT_PASSWORD: herald_gaming_metrics_2025
+      DOCKER_INFLUXDB_INIT_ORG: herald-gaming
+      DOCKER_INFLUXDB_INIT_BUCKET: gaming-metrics
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: herald-gaming-analytics-token-dev
+    
+    ports:
+      - "8086:8086"
+    
+    volumes:
+      - herald_influxdb_data:/var/lib/influxdb2
+      - herald_influxdb_config:/etc/influxdb2
+    
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    labels:
+      - "com.herald.service=timeseries"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=analytics"
+
+  # Prometheus for Herald.lol gaming monitoring
+  herald-prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: herald-prometheus-dev
+    restart: unless-stopped
+    
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    
+    ports:
+      - "9090:9090"
+    
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules:ro
+      - herald_prometheus_data:/prometheus
+    
+    depends_on:
+      - herald-postgres
+      - herald-redis
+      - herald-influxdb
+    
+    labels:
+      - "com.herald.service=monitoring"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=observability"
+
+  # Grafana for Herald.lol gaming dashboards
+  herald-grafana:
+    image: grafana/grafana:10.2.0
+    container_name: herald-grafana-dev
+    restart: unless-stopped
+    
+    environment:
+      GF_SECURITY_ADMIN_USER: herald_admin
+      GF_SECURITY_ADMIN_PASSWORD: herald_gaming_grafana_2025
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_SERVER_DOMAIN: localhost
+      GF_SERVER_ROOT_URL: http://localhost:3001
+      GF_DATABASE_TYPE: postgres
+      GF_DATABASE_HOST: herald-postgres:5432
+      GF_DATABASE_NAME: herald_gaming_dev
+      GF_DATABASE_USER: herald_dev
+      GF_DATABASE_PASSWORD: herald_gaming_dev_2025
+      
+      # Gaming theme
+      GF_DEFAULT_THEME: dark
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/herald-gaming-overview.json
+    
+    ports:
+      - "3001:3000"
+    
+    volumes:
+      - herald_grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    
+    depends_on:
+      herald-postgres:
+        condition: service_healthy
+      herald-prometheus:
+        condition: service_started
+    
+    labels:
+      - "com.herald.service=visualization"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=dashboard"
+
+  # Elasticsearch for Herald.lol gaming logs
+  herald-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: herald-elasticsearch-dev
+    restart: unless-stopped
+    
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: "-Xms1g -Xmx1g"
+      xpack.security.enabled: false
+      xpack.security.enrollment.enabled: false
+      
+      # Gaming-optimized settings
+      indices.memory.index_buffer_size: 20%
+      indices.memory.min_index_buffer_size: 96mb
+    
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    
+    volumes:
+      - herald_elasticsearch_data:/usr/share/elasticsearch/data
+    
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    
+    labels:
+      - "com.herald.service=search"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=logging"
+
+  # Logstash for Herald.lol gaming log processing
+  herald-logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: herald-logstash-dev
+    restart: unless-stopped
+    
+    environment:
+      LS_JAVA_OPTS: "-Xms512m -Xmx512m"
+      PIPELINE_WORKERS: 2
+      
+      # Gaming log processing
+      XPACK_MONITORING_ENABLED: false
+    
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    
+    volumes:
+      - ./monitoring/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./monitoring/logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+    
+    depends_on:
+      herald-elasticsearch:
+        condition: service_healthy
+    
+    labels:
+      - "com.herald.service=log-processing"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=pipeline"
+
+  # Kibana for Herald.lol gaming log visualization
+  herald-kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: herald-kibana-dev
+    restart: unless-stopped
+    
+    environment:
+      ELASTICSEARCH_HOSTS: http://herald-elasticsearch:9200
+      SERVER_NAME: herald-kibana-dev
+      XPACK_SECURITY_ENABLED: false
+      XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY: herald-gaming-kibana-encryption-key-32-chars
+      
+      # Gaming dashboard
+      SERVER_PUBLICBASEURL: http://localhost:5601
+    
+    ports:
+      - "5601:5601"
+    
+    depends_on:
+      herald-elasticsearch:
+        condition: service_healthy
+    
+    labels:
+      - "com.herald.service=log-visualization"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=dashboard"
+
+  # Herald.lol Backend API Service
+  herald-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: herald-api-dev
+    restart: unless-stopped
+    
+    environment:
+      # Gaming environment
+      HERALD_ENV: development
+      HERALD_DEBUG: true
+      HERALD_PORT: 8080
+      
+      # Database
+      DB_HOST: herald-postgres
+      DB_PORT: 5432
+      DB_NAME: herald_gaming_dev
+      DB_USER: herald_dev
+      DB_PASSWORD: herald_gaming_dev_2025
+      DB_SSL_MODE: disable
+      
+      # Redis
+      REDIS_HOST: herald-redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      
+      # InfluxDB
+      INFLUX_URL: http://herald-influxdb:8086
+      INFLUX_TOKEN: herald-gaming-analytics-token-dev
+      INFLUX_ORG: herald-gaming
+      INFLUX_BUCKET: gaming-metrics
+      
+      # Gaming performance
+      GAMING_PERFORMANCE_TARGET_MS: 5000
+      GAMING_MAX_CONCURRENT_USERS: 1000000
+      
+      # Riot API
+      RIOT_API_KEY: ${RIOT_API_KEY}
+      RIOT_REGION: ${RIOT_REGION:-euw1}
+      RIOT_RATE_LIMIT_ENABLED: true
+    
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # gRPC
+      - "9091:9091"  # Metrics
+    
+    volumes:
+      - .:/app
+      - /app/bin  # Exclude binary from volume mount
+    
+    depends_on:
+      herald-postgres:
+        condition: service_healthy
+      herald-redis:
+        condition: service_healthy
+      herald-influxdb:
+        condition: service_started
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    labels:
+      - "com.herald.service=api"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=backend"
+
+  # HashiCorp Vault for Herald.lol secrets management
+  herald-vault:
+    image: vault:1.15.2
+    container_name: herald-vault-dev
+    restart: unless-stopped
+    
+    cap_add:
+      - IPC_LOCK
+    
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: herald-gaming-vault-root-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+      VAULT_ADDR: http://localhost:8200
+    
+    ports:
+      - "8200:8200"
+    
+    volumes:
+      - herald_vault_data:/vault/data
+      - ./vault/config:/vault/config:ro
+    
+    command: >
+      vault server -dev
+      -dev-root-token-id=herald-gaming-vault-root-token
+      -dev-listen-address=0.0.0.0:8200
+    
+    labels:
+      - "com.herald.service=secrets"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=security"
+
+  # NGINX Reverse Proxy for Herald.lol
+  herald-nginx:
+    image: nginx:1.25-alpine
+    container_name: herald-nginx-dev
+    restart: unless-stopped
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - herald_nginx_logs:/var/log/nginx
+    
+    depends_on:
+      - herald-api
+      - herald-grafana
+      - herald-kibana
+    
+    labels:
+      - "com.herald.service=reverse-proxy"
+      - "com.herald.environment=development"
+      - "com.herald.gaming=infrastructure"
+
+# Gaming-optimized volumes for Herald.lol development
+volumes:
+  herald_postgres_data:
+    driver: local
+    labels:
+      com.herald.volume: "postgres-data"
+      com.herald.gaming: "database"
+  
+  herald_redis_data:
+    driver: local
+    labels:
+      com.herald.volume: "redis-data"
+      com.herald.gaming: "cache"
+  
+  herald_influxdb_data:
+    driver: local
+    labels:
+      com.herald.volume: "influxdb-data"
+      com.herald.gaming: "metrics"
+  
+  herald_influxdb_config:
+    driver: local
+    labels:
+      com.herald.volume: "influxdb-config"
+  
+  herald_prometheus_data:
+    driver: local
+    labels:
+      com.herald.volume: "prometheus-data"
+      com.herald.gaming: "monitoring"
+  
+  herald_grafana_data:
+    driver: local
+    labels:
+      com.herald.volume: "grafana-data"
+      com.herald.gaming: "dashboards"
+  
+  herald_elasticsearch_data:
+    driver: local
+    labels:
+      com.herald.volume: "elasticsearch-data"
+      com.herald.gaming: "search"
+  
+  herald_vault_data:
+    driver: local
+    labels:
+      com.herald.volume: "vault-data"
+      com.herald.gaming: "secrets"
+  
+  herald_nginx_logs:
+    driver: local
+    labels:
+      com.herald.volume: "nginx-logs"
+
+# Gaming platform network for Herald.lol
+networks:
+  default:
+    name: herald-gaming-dev
+    driver: bridge
+    labels:
+      com.herald.network: "development"
+      com.herald.gaming: "platform"
+    ipam:
+      config:
+        - subnet: 172.19.0.0/16
+          gateway: 172.19.0.1
+
+# Gaming platform metadata
+x-herald-gaming:
+  name: "Herald.lol Gaming Analytics Development"
+  description: "Complete VPS development environment for Herald.lol gaming platform"
+  performance_target: "<5000ms analytics response"
+  concurrent_users: "1M+ supported"
+  services:
+    - "PostgreSQL: Gaming database with performance tuning"
+    - "Redis: Gaming cache and session management"
+    - "InfluxDB: Gaming time-series metrics"
+    - "Prometheus: Gaming monitoring and alerting"
+    - "Grafana: Gaming performance dashboards" 
+    - "ELK Stack: Gaming log analytics"
+    - "Vault: Gaming secrets management"
+    - "NGINX: Gaming reverse proxy"
+    - "Herald API: Gaming analytics backend"

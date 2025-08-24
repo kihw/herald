@@ -4,16 +4,16 @@ import (
 	"log"
 	"net/http"
 	"time"
-	
+
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	
-	"github.com/herald-lol/backend/internal/config"
-	"github.com/herald-lol/backend/internal/handlers"
-	"github.com/herald-lol/backend/internal/models"
-	"github.com/herald-lol/backend/internal/services"
+
+	"github.com/herald-lol/herald/backend/internal/config"
+	"github.com/herald-lol/herald/backend/internal/handlers"
+	"github.com/herald-lol/herald/backend/internal/models"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 func main() {
@@ -71,7 +71,7 @@ func main() {
 	if !cfg.IsDevelopment() {
 		gin.SetMode(gin.ReleaseMode)
 	}
-	
+
 	r := gin.Default()
 
 	// Add CORS middleware
@@ -96,7 +96,7 @@ func main() {
 			auth.POST("/login", authHandler.Login)
 			auth.POST("/refresh", authHandler.RefreshToken)
 			auth.POST("/reset-password", authHandler.ResetPassword)
-			
+
 			// Protected routes
 			protected := auth.Group("/")
 			protected.Use(authHandler.AuthMiddleware())
@@ -161,7 +161,7 @@ func main() {
 	log.Printf("🚀 Herald.lol API server starting on :%s", cfg.Server.Port)
 	log.Printf("📊 Environment: %s", cfg.Server.Environment)
 	log.Printf("🗄️  Database: %s", cfg.Database.Driver)
-	
+
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("Server failed to start: %v", err)
 	}
@@ -325,7 +325,7 @@ func runMigrations(db *gorm.DB) error {
 func corsMiddleware() gin.HandlerFunc {
 	return gin.HandlerFunc(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
-		
+
 		// List of allowed origins
 		allowedOrigins := []string{
 			"http://localhost:3000",

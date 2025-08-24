@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // WardAnalyticsService handles ward placement and map control analytics
@@ -18,279 +18,279 @@ type WardAnalyticsService struct {
 
 // WardAnalysis represents comprehensive ward placement and map control analysis
 type WardAnalysis struct {
-	PlayerID              string                    `json:"player_id"`
-	Champion              string                    `json:"champion,omitempty"`
-	Position              string                    `json:"position,omitempty"`
-	TimeRange             string                    `json:"time_range"`
-	
+	PlayerID  string `json:"player_id"`
+	Champion  string `json:"champion,omitempty"`
+	Position  string `json:"position,omitempty"`
+	TimeRange string `json:"time_range"`
+
 	// Core Ward Metrics
-	AverageWardsPlaced    float64                   `json:"average_wards_placed"`
-	AverageWardsKilled    float64                   `json:"average_wards_killed"`
-	WardEfficiency        float64                   `json:"ward_efficiency"` // Wards killed / Wards placed
-	WardSurvivalRate      float64                   `json:"ward_survival_rate"` // % wards that survive full duration
-	
+	AverageWardsPlaced float64 `json:"average_wards_placed"`
+	AverageWardsKilled float64 `json:"average_wards_killed"`
+	WardEfficiency     float64 `json:"ward_efficiency"`    // Wards killed / Wards placed
+	WardSurvivalRate   float64 `json:"ward_survival_rate"` // % wards that survive full duration
+
 	// Map Control Analysis
-	MapControlScore       float64                   `json:"map_control_score"` // 0-100 comprehensive score
-	TerritoryControlled   float64                   `json:"territory_controlled"` // % of map under vision
-	StrategicCoverage     StrategicCoverageData     `json:"strategic_coverage"`
-	
+	MapControlScore     float64               `json:"map_control_score"`    // 0-100 comprehensive score
+	TerritoryControlled float64               `json:"territory_controlled"` // % of map under vision
+	StrategicCoverage   StrategicCoverageData `json:"strategic_coverage"`
+
 	// Ward Placement Analysis
-	PlacementPatterns     WardPlacementPatterns     `json:"placement_patterns"`
-	OptimalPlacements     OptimalPlacementData      `json:"optimal_placements"`
-	PlacementTiming       PlacementTimingData       `json:"placement_timing"`
-	
+	PlacementPatterns WardPlacementPatterns `json:"placement_patterns"`
+	OptimalPlacements OptimalPlacementData  `json:"optimal_placements"`
+	PlacementTiming   PlacementTimingData   `json:"placement_timing"`
+
 	// Ward Types Analysis
-	YellowWardsAnalysis   WardTypeAnalysis          `json:"yellow_wards_analysis"`
-	ControlWardsAnalysis  WardTypeAnalysis          `json:"control_wards_analysis"`
-	BlueWardAnalysis      WardTypeAnalysis          `json:"blue_ward_analysis"`
-	
+	YellowWardsAnalysis  WardTypeAnalysis `json:"yellow_wards_analysis"`
+	ControlWardsAnalysis WardTypeAnalysis `json:"control_wards_analysis"`
+	BlueWardAnalysis     WardTypeAnalysis `json:"blue_ward_analysis"`
+
 	// Clearing Analysis
-	WardClearingPatterns  WardClearingData          `json:"ward_clearing_patterns"`
-	CounterWardingScore   float64                   `json:"counter_warding_score"` // 0-100 score
-	
+	WardClearingPatterns WardClearingData `json:"ward_clearing_patterns"`
+	CounterWardingScore  float64          `json:"counter_warding_score"` // 0-100 score
+
 	// Game Phase Analysis
-	EarlyGameWards        WardPhaseData             `json:"early_game_wards"`
-	MidGameWards          WardPhaseData             `json:"mid_game_wards"`
-	LateGameWards         WardPhaseData             `json:"late_game_wards"`
-	
+	EarlyGameWards WardPhaseData `json:"early_game_wards"`
+	MidGameWards   WardPhaseData `json:"mid_game_wards"`
+	LateGameWards  WardPhaseData `json:"late_game_wards"`
+
 	// Zone-Specific Analysis
-	ZoneControl           map[string]ZoneControlData `json:"zone_control"`
-	RiverControl          RiverControlData          `json:"river_control"`
-	JungleControl         JungleControlData         `json:"jungle_control"`
-	
+	ZoneControl   map[string]ZoneControlData `json:"zone_control"`
+	RiverControl  RiverControlData           `json:"river_control"`
+	JungleControl JungleControlData          `json:"jungle_control"`
+
 	// Impact Analysis
-	VisionDeniedScore     float64                   `json:"vision_denied_score"`
-	ObjectiveSetup        ObjectiveSetupData        `json:"objective_setup"`
-	SafetyProvided        SafetyData                `json:"safety_provided"`
-	
+	VisionDeniedScore float64            `json:"vision_denied_score"`
+	ObjectiveSetup    ObjectiveSetupData `json:"objective_setup"`
+	SafetyProvided    SafetyData         `json:"safety_provided"`
+
 	// Comparative Analysis
-	RoleBenchmark         WardBenchmark             `json:"role_benchmark"`
-	RankBenchmark         WardBenchmark             `json:"rank_benchmark"`
-	GlobalBenchmark       WardBenchmark             `json:"global_benchmark"`
-	
+	RoleBenchmark   WardBenchmark `json:"role_benchmark"`
+	RankBenchmark   WardBenchmark `json:"rank_benchmark"`
+	GlobalBenchmark WardBenchmark `json:"global_benchmark"`
+
 	// Performance Impact
-	HighVisionWinRate     float64                   `json:"high_vision_win_rate"`
-	LowVisionWinRate      float64                   `json:"low_vision_win_rate"`
-	WardImpactScore       float64                   `json:"ward_impact_score"`
-	
+	HighVisionWinRate float64 `json:"high_vision_win_rate"`
+	LowVisionWinRate  float64 `json:"low_vision_win_rate"`
+	WardImpactScore   float64 `json:"ward_impact_score"`
+
 	// Trend Analysis
-	TrendDirection        string                    `json:"trend_direction"`
-	TrendSlope            float64                   `json:"trend_slope"`
-	TrendConfidence       float64                   `json:"trend_confidence"`
-	TrendData             []WardTrendPoint          `json:"trend_data"`
-	
+	TrendDirection  string           `json:"trend_direction"`
+	TrendSlope      float64          `json:"trend_slope"`
+	TrendConfidence float64          `json:"trend_confidence"`
+	TrendData       []WardTrendPoint `json:"trend_data"`
+
 	// Optimization
 	PlacementOptimization PlacementOptimizationData `json:"placement_optimization"`
 	ClearingOptimization  ClearingOptimizationData  `json:"clearing_optimization"`
-	
+
 	// Insights and Recommendations
-	StrengthAreas         []string                  `json:"strength_areas"`
-	ImprovementAreas      []string                  `json:"improvement_areas"`
-	Recommendations       []WardRecommendation      `json:"recommendations"`
-	
+	StrengthAreas    []string             `json:"strength_areas"`
+	ImprovementAreas []string             `json:"improvement_areas"`
+	Recommendations  []WardRecommendation `json:"recommendations"`
+
 	// Match Performance
-	RecentMatches         []MatchWardData           `json:"recent_matches"`
+	RecentMatches []MatchWardData `json:"recent_matches"`
 }
 
 // StrategicCoverageData represents coverage of strategic map areas
 type StrategicCoverageData struct {
-	DragonPitCoverage     float64                   `json:"dragon_pit_coverage"`     // % of time dragon pit is warded
-	BaronPitCoverage      float64                   `json:"baron_pit_coverage"`      // % of time baron pit is warded
-	RiverBrushesCoverage  float64                   `json:"river_brushes_coverage"`  // % of time river brushes are warded
-	JungleEntryCoverage   float64                   `json:"jungle_entry_coverage"`   // % of jungle entrances covered
-	LaneBrushesCoverage   float64                   `json:"lane_brushes_coverage"`   // % of lane brushes covered
-	OverallStrategicScore float64                   `json:"overall_strategic_score"` // Weighted strategic coverage score
+	DragonPitCoverage     float64 `json:"dragon_pit_coverage"`     // % of time dragon pit is warded
+	BaronPitCoverage      float64 `json:"baron_pit_coverage"`      // % of time baron pit is warded
+	RiverBrushesCoverage  float64 `json:"river_brushes_coverage"`  // % of time river brushes are warded
+	JungleEntryCoverage   float64 `json:"jungle_entry_coverage"`   // % of jungle entrances covered
+	LaneBrushesCoverage   float64 `json:"lane_brushes_coverage"`   // % of lane brushes covered
+	OverallStrategicScore float64 `json:"overall_strategic_score"` // Weighted strategic coverage score
 }
 
 // WardPlacementPatterns represents analysis of ward placement patterns
 type WardPlacementPatterns struct {
-	AggregateScore        float64                   `json:"aggregate_score"`        // How well wards are clustered
-	DiversityScore        float64                   `json:"diversity_score"`        // How diverse placement locations are
-	PredictabilityScore   float64                   `json:"predictability_score"`   // How predictable placements are
-	AdaptabilityScore     float64                   `json:"adaptability_score"`     // How well player adapts to game state
-	OptimalityScore       float64                   `json:"optimality_score"`       // How often optimal spots are chosen
-	
+	AggregateScore      float64 `json:"aggregate_score"`      // How well wards are clustered
+	DiversityScore      float64 `json:"diversity_score"`      // How diverse placement locations are
+	PredictabilityScore float64 `json:"predictability_score"` // How predictable placements are
+	AdaptabilityScore   float64 `json:"adaptability_score"`   // How well player adapts to game state
+	OptimalityScore     float64 `json:"optimality_score"`     // How often optimal spots are chosen
+
 	// Common Placement Zones
-	FavoriteZones         []ZonePlacementData       `json:"favorite_zones"`
-	AvoidedZones          []ZonePlacementData       `json:"avoided_zones"`
-	UnderUtilizedZones    []ZonePlacementData       `json:"under_utilized_zones"`
+	FavoriteZones      []ZonePlacementData `json:"favorite_zones"`
+	AvoidedZones       []ZonePlacementData `json:"avoided_zones"`
+	UnderUtilizedZones []ZonePlacementData `json:"under_utilized_zones"`
 }
 
 // OptimalPlacementData represents analysis of placement optimality
 type OptimalPlacementData struct {
-	OptimalPlacements     int                       `json:"optimal_placements"`     // Count of optimal placements
-	SuboptimalPlacements  int                       `json:"suboptimal_placements"`  // Count of suboptimal placements
-	WastedPlacements      int                       `json:"wasted_placements"`      // Count of wasted placements
-	OptimalityRate        float64                   `json:"optimality_rate"`        // % of placements that are optimal
-	
+	OptimalPlacements    int     `json:"optimal_placements"`    // Count of optimal placements
+	SuboptimalPlacements int     `json:"suboptimal_placements"` // Count of suboptimal placements
+	WastedPlacements     int     `json:"wasted_placements"`     // Count of wasted placements
+	OptimalityRate       float64 `json:"optimality_rate"`       // % of placements that are optimal
+
 	// Specific Optimization Areas
-	TimingOptimization    float64                   `json:"timing_optimization"`    // % improvement possible through timing
-	LocationOptimization  float64                   `json:"location_optimization"`  // % improvement possible through location
-	TypeOptimization      float64                   `json:"type_optimization"`      // % improvement possible through ward type
+	TimingOptimization   float64 `json:"timing_optimization"`   // % improvement possible through timing
+	LocationOptimization float64 `json:"location_optimization"` // % improvement possible through location
+	TypeOptimization     float64 `json:"type_optimization"`     // % improvement possible through ward type
 }
 
 // PlacementTimingData represents ward placement timing analysis
 type PlacementTimingData struct {
-	PreObjectiveWarding   float64                   `json:"pre_objective_warding"`   // % wards placed before objectives
-	ReactiveWarding       float64                   `json:"reactive_warding"`        // % wards placed reactively
-	ProactiveWarding      float64                   `json:"proactive_warding"`       // % wards placed proactively
-	EmergencyWarding      float64                   `json:"emergency_warding"`       // % wards placed in emergency
-	
+	PreObjectiveWarding float64 `json:"pre_objective_warding"` // % wards placed before objectives
+	ReactiveWarding     float64 `json:"reactive_warding"`      // % wards placed reactively
+	ProactiveWarding    float64 `json:"proactive_warding"`     // % wards placed proactively
+	EmergencyWarding    float64 `json:"emergency_warding"`     // % wards placed in emergency
+
 	// Timing Quality
-	ExcellentTiming       int                       `json:"excellent_timing"`        // Count of perfectly timed wards
-	GoodTiming            int                       `json:"good_timing"`             // Count of well-timed wards
-	PoorTiming            int                       `json:"poor_timing"`             // Count of poorly timed wards
-	TimingScore           float64                   `json:"timing_score"`            // Overall timing score 0-100
+	ExcellentTiming int     `json:"excellent_timing"` // Count of perfectly timed wards
+	GoodTiming      int     `json:"good_timing"`      // Count of well-timed wards
+	PoorTiming      int     `json:"poor_timing"`      // Count of poorly timed wards
+	TimingScore     float64 `json:"timing_score"`     // Overall timing score 0-100
 }
 
 // WardTypeAnalysis represents analysis for specific ward types
 type WardTypeAnalysis struct {
-	WardType              string                    `json:"ward_type"`               // "YELLOW", "CONTROL", "BLUE_TRINKET"
-	AveragePlaced         float64                   `json:"average_placed"`          // Average wards placed per game
-	PlacementEfficiency   float64                   `json:"placement_efficiency"`    // How efficiently this ward type is used
-	SurvivalRate          float64                   `json:"survival_rate"`           // % that survive full duration
-	StrategicUsage        float64                   `json:"strategic_usage"`         // % placed in strategic locations
-	TimingQuality         float64                   `json:"timing_quality"`          // Quality of timing for this ward type
-	ImpactScore           float64                   `json:"impact_score"`            // Overall impact score for this ward type
-	
+	WardType            string  `json:"ward_type"`            // "YELLOW", "CONTROL", "BLUE_TRINKET"
+	AveragePlaced       float64 `json:"average_placed"`       // Average wards placed per game
+	PlacementEfficiency float64 `json:"placement_efficiency"` // How efficiently this ward type is used
+	SurvivalRate        float64 `json:"survival_rate"`        // % that survive full duration
+	StrategicUsage      float64 `json:"strategic_usage"`      // % placed in strategic locations
+	TimingQuality       float64 `json:"timing_quality"`       // Quality of timing for this ward type
+	ImpactScore         float64 `json:"impact_score"`         // Overall impact score for this ward type
+
 	// Usage Patterns
-	EarlyGameUsage        float64                   `json:"early_game_usage"`        // % used in early game
-	MidGameUsage          float64                   `json:"mid_game_usage"`          // % used in mid game
-	LateGameUsage         float64                   `json:"late_game_usage"`         // % used in late game
-	
+	EarlyGameUsage float64 `json:"early_game_usage"` // % used in early game
+	MidGameUsage   float64 `json:"mid_game_usage"`   // % used in mid game
+	LateGameUsage  float64 `json:"late_game_usage"`  // % used in late game
+
 	// Optimization Potential
-	OptimizationPotential float64                   `json:"optimization_potential"`  // % improvement possible
-	RecommendedUsage      string                    `json:"recommended_usage"`       // Usage recommendation
+	OptimizationPotential float64 `json:"optimization_potential"` // % improvement possible
+	RecommendedUsage      string  `json:"recommended_usage"`      // Usage recommendation
 }
 
 // WardClearingData represents ward clearing analysis
 type WardClearingData struct {
-	TotalWardsCleared     int                       `json:"total_wards_cleared"`     // Total enemy wards cleared
-	ClearingEfficiency    float64                   `json:"clearing_efficiency"`     // Wards cleared per opportunity
-	StrategicClearing     float64                   `json:"strategic_clearing"`      // % cleared from strategic areas
-	TimingQuality         float64                   `json:"timing_quality"`          // Quality of clearing timing
-	SafetyScore           float64                   `json:"safety_score"`            // How safely clearing is performed
-	
+	TotalWardsCleared  int     `json:"total_wards_cleared"` // Total enemy wards cleared
+	ClearingEfficiency float64 `json:"clearing_efficiency"` // Wards cleared per opportunity
+	StrategicClearing  float64 `json:"strategic_clearing"`  // % cleared from strategic areas
+	TimingQuality      float64 `json:"timing_quality"`      // Quality of clearing timing
+	SafetyScore        float64 `json:"safety_score"`        // How safely clearing is performed
+
 	// Clearing Patterns
-	ProactiveClearing     float64                   `json:"proactive_clearing"`      // % clearing done proactively
-	ReactiveClearing      float64                   `json:"reactive_clearing"`       // % clearing done reactively
-	OpportunisticClearing float64                   `json:"opportunistic_clearing"`  // % clearing done opportunistically
-	
+	ProactiveClearing     float64 `json:"proactive_clearing"`     // % clearing done proactively
+	ReactiveClearing      float64 `json:"reactive_clearing"`      // % clearing done reactively
+	OpportunisticClearing float64 `json:"opportunistic_clearing"` // % clearing done opportunistically
+
 	// Zone-Specific Clearing
-	RiverClearing         float64                   `json:"river_clearing"`          // % of river wards cleared
-	JungleClearing        float64                   `json:"jungle_clearing"`         // % of jungle wards cleared
-	ObjectiveClearing     float64                   `json:"objective_clearing"`      // % of objective wards cleared
+	RiverClearing     float64 `json:"river_clearing"`     // % of river wards cleared
+	JungleClearing    float64 `json:"jungle_clearing"`    // % of jungle wards cleared
+	ObjectiveClearing float64 `json:"objective_clearing"` // % of objective wards cleared
 }
 
 // WardPhaseData represents ward performance by game phase
 type WardPhaseData struct {
-	Phase                 string                    `json:"phase"`                   // "early", "mid", "late"
-	WardsPlaced           float64                   `json:"wards_placed"`            // Average wards placed in this phase
-	WardsKilled           float64                   `json:"wards_killed"`            // Average wards killed in this phase
-	PlacementQuality      float64                   `json:"placement_quality"`       // Quality of placements 0-100
-	StrategicFocus        float64                   `json:"strategic_focus"`         // % of strategic placements
-	MapCoverage           float64                   `json:"map_coverage"`            // % of map covered by vision
-	EfficiencyRating      string                    `json:"efficiency_rating"`       // "excellent", "good", "average", "poor"
+	Phase            string  `json:"phase"`             // "early", "mid", "late"
+	WardsPlaced      float64 `json:"wards_placed"`      // Average wards placed in this phase
+	WardsKilled      float64 `json:"wards_killed"`      // Average wards killed in this phase
+	PlacementQuality float64 `json:"placement_quality"` // Quality of placements 0-100
+	StrategicFocus   float64 `json:"strategic_focus"`   // % of strategic placements
+	MapCoverage      float64 `json:"map_coverage"`      // % of map covered by vision
+	EfficiencyRating string  `json:"efficiency_rating"` // "excellent", "good", "average", "poor"
 }
 
 // ZoneControlData represents control analysis for specific zones
 type ZoneControlData struct {
-	ZoneName              string                    `json:"zone_name"`
-	ControlPercentage     float64                   `json:"control_percentage"`      // % of time zone is under player's vision
-	ContestLevel          string                    `json:"contest_level"`           // "high", "medium", "low" - how contested
-	StrategicValue        float64                   `json:"strategic_value"`         // Strategic importance 0-100
-	WardsPlaced           int                       `json:"wards_placed"`            // Total wards placed in zone
-	WardsCleared          int                       `json:"wards_cleared"`           // Total enemy wards cleared from zone
-	ControlEfficiency     float64                   `json:"control_efficiency"`      // How efficiently zone is controlled
-	RecommendedFocus      string                    `json:"recommended_focus"`       // Recommendation for this zone
+	ZoneName          string  `json:"zone_name"`
+	ControlPercentage float64 `json:"control_percentage"` // % of time zone is under player's vision
+	ContestLevel      string  `json:"contest_level"`      // "high", "medium", "low" - how contested
+	StrategicValue    float64 `json:"strategic_value"`    // Strategic importance 0-100
+	WardsPlaced       int     `json:"wards_placed"`       // Total wards placed in zone
+	WardsCleared      int     `json:"wards_cleared"`      // Total enemy wards cleared from zone
+	ControlEfficiency float64 `json:"control_efficiency"` // How efficiently zone is controlled
+	RecommendedFocus  string  `json:"recommended_focus"`  // Recommendation for this zone
 }
 
 // RiverControlData represents specific river control analysis
 type RiverControlData struct {
-	OverallRiverControl   float64                   `json:"overall_river_control"`   // % of river under control
-	TopRiverControl       float64                   `json:"top_river_control"`       // % of top river controlled
-	BottomRiverControl    float64                   `json:"bottom_river_control"`    // % of bottom river controlled
-	ScuttleCrabControl    float64                   `json:"scuttle_crab_control"`    // % of scuttle crab areas controlled
-	RiverBrushControl     float64                   `json:"river_brush_control"`     // % of river brushes controlled
-	CrossingPoints        float64                   `json:"crossing_points"`         // % of river crossing points covered
-	RiverScore            float64                   `json:"river_score"`             // Overall river control score 0-100
+	OverallRiverControl float64 `json:"overall_river_control"` // % of river under control
+	TopRiverControl     float64 `json:"top_river_control"`     // % of top river controlled
+	BottomRiverControl  float64 `json:"bottom_river_control"`  // % of bottom river controlled
+	ScuttleCrabControl  float64 `json:"scuttle_crab_control"`  // % of scuttle crab areas controlled
+	RiverBrushControl   float64 `json:"river_brush_control"`   // % of river brushes controlled
+	CrossingPoints      float64 `json:"crossing_points"`       // % of river crossing points covered
+	RiverScore          float64 `json:"river_score"`           // Overall river control score 0-100
 }
 
 // JungleControlData represents jungle vision control analysis
 type JungleControlData struct {
-	OwnJungleControl      float64                   `json:"own_jungle_control"`      // % of own jungle under vision
-	EnemyJungleControl    float64                   `json:"enemy_jungle_control"`    // % of enemy jungle under vision
-	BuffControl           float64                   `json:"buff_control"`            // % of buff camps under vision
-	CampTimerTracking     float64                   `json:"camp_timer_tracking"`     // % of jungle camps tracked
-	InvasionDetection     float64                   `json:"invasion_detection"`      // % of invasions detected early
-	CounterJungling       float64                   `json:"counter_jungling"`        // Counter-jungling vision setup
-	JungleScore           float64                   `json:"jungle_score"`            // Overall jungle control score 0-100
+	OwnJungleControl   float64 `json:"own_jungle_control"`   // % of own jungle under vision
+	EnemyJungleControl float64 `json:"enemy_jungle_control"` // % of enemy jungle under vision
+	BuffControl        float64 `json:"buff_control"`         // % of buff camps under vision
+	CampTimerTracking  float64 `json:"camp_timer_tracking"`  // % of jungle camps tracked
+	InvasionDetection  float64 `json:"invasion_detection"`   // % of invasions detected early
+	CounterJungling    float64 `json:"counter_jungling"`     // Counter-jungling vision setup
+	JungleScore        float64 `json:"jungle_score"`         // Overall jungle control score 0-100
 }
 
 // ObjectiveSetupData represents objective setup analysis
 type ObjectiveSetupData struct {
-	DragonSetupScore      float64                   `json:"dragon_setup_score"`      // Dragon vision setup quality 0-100
-	BaronSetupScore       float64                   `json:"baron_setup_score"`       // Baron vision setup quality 0-100
-	HeraldSetupScore      float64                   `json:"herald_setup_score"`      // Herald vision setup quality 0-100
-	ElderSetupScore       float64                   `json:"elder_setup_score"`       // Elder dragon setup quality 0-100
-	
+	DragonSetupScore float64 `json:"dragon_setup_score"` // Dragon vision setup quality 0-100
+	BaronSetupScore  float64 `json:"baron_setup_score"`  // Baron vision setup quality 0-100
+	HeraldSetupScore float64 `json:"herald_setup_score"` // Herald vision setup quality 0-100
+	ElderSetupScore  float64 `json:"elder_setup_score"`  // Elder dragon setup quality 0-100
+
 	// Timing Analysis
-	PreObjectiveSetup     float64                   `json:"pre_objective_setup"`     // % objectives with pre-setup
-	SetupTiming           float64                   `json:"setup_timing"`            // Average setup time before objectives
-	SetupEfficiency       float64                   `json:"setup_efficiency"`        // Setup efficiency score 0-100
-	
+	PreObjectiveSetup float64 `json:"pre_objective_setup"` // % objectives with pre-setup
+	SetupTiming       float64 `json:"setup_timing"`        // Average setup time before objectives
+	SetupEfficiency   float64 `json:"setup_efficiency"`    // Setup efficiency score 0-100
+
 	// Coverage Analysis
-	ApproachCoverage      float64                   `json:"approach_coverage"`       // % of objective approaches covered
-	EscapeCoverage        float64                   `json:"escape_coverage"`         // % of escape routes covered
-	FlankCoverage         float64                   `json:"flank_coverage"`          // % of flank routes covered
+	ApproachCoverage float64 `json:"approach_coverage"` // % of objective approaches covered
+	EscapeCoverage   float64 `json:"escape_coverage"`   // % of escape routes covered
+	FlankCoverage    float64 `json:"flank_coverage"`    // % of flank routes covered
 }
 
 // SafetyData represents safety provided by vision
 type SafetyData struct {
-	GankPrevention        float64                   `json:"gank_prevention"`         // % of potential ganks detected
-	InvasionDetection     float64                   `json:"invasion_detection"`      // % of invasions detected
-	RotationTracking      float64                   `json:"rotation_tracking"`       // % of enemy rotations tracked
-	SafeFarmingProvided   float64                   `json:"safe_farming_provided"`   // % increase in safe farming time
-	SafetyScore           float64                   `json:"safety_score"`            // Overall safety score 0-100
-	
+	GankPrevention      float64 `json:"gank_prevention"`       // % of potential ganks detected
+	InvasionDetection   float64 `json:"invasion_detection"`    // % of invasions detected
+	RotationTracking    float64 `json:"rotation_tracking"`     // % of enemy rotations tracked
+	SafeFarmingProvided float64 `json:"safe_farming_provided"` // % increase in safe farming time
+	SafetyScore         float64 `json:"safety_score"`          // Overall safety score 0-100
+
 	// Risk Mitigation
-	HighRiskDetection     float64                   `json:"high_risk_detection"`     // % of high-risk situations detected
-	MediumRiskDetection   float64                   `json:"medium_risk_detection"`   // % of medium-risk situations detected
-	RiskMitigationScore   float64                   `json:"risk_mitigation_score"`   // Overall risk mitigation 0-100
+	HighRiskDetection   float64 `json:"high_risk_detection"`   // % of high-risk situations detected
+	MediumRiskDetection float64 `json:"medium_risk_detection"` // % of medium-risk situations detected
+	RiskMitigationScore float64 `json:"risk_mitigation_score"` // Overall risk mitigation 0-100
 }
 
 // WardBenchmark represents ward performance benchmarks
 type WardBenchmark struct {
-	Category              string                    `json:"category"`
-	AverageWardsPlaced    float64                   `json:"average_wards_placed"`
-	AverageWardsKilled    float64                   `json:"average_wards_killed"`
-	AverageMapControl     float64                   `json:"average_map_control"`
-	Top10Percent          float64                   `json:"top_10_percent"`
-	Top25Percent          float64                   `json:"top_25_percent"`
-	Median                float64                   `json:"median"`
-	PlayerPercentile      float64                   `json:"player_percentile"`
+	Category           string  `json:"category"`
+	AverageWardsPlaced float64 `json:"average_wards_placed"`
+	AverageWardsKilled float64 `json:"average_wards_killed"`
+	AverageMapControl  float64 `json:"average_map_control"`
+	Top10Percent       float64 `json:"top_10_percent"`
+	Top25Percent       float64 `json:"top_25_percent"`
+	Median             float64 `json:"median"`
+	PlayerPercentile   float64 `json:"player_percentile"`
 }
 
 // WardTrendPoint represents ward performance over time
 type WardTrendPoint struct {
-	Date                  time.Time                 `json:"date"`
-	WardsPlaced           float64                   `json:"wards_placed"`
-	WardsKilled           float64                   `json:"wards_killed"`
-	MapControlScore       float64                   `json:"map_control_score"`
-	WardEfficiency        float64                   `json:"ward_efficiency"`
-	MovingAverage         float64                   `json:"moving_average"`
+	Date            time.Time `json:"date"`
+	WardsPlaced     float64   `json:"wards_placed"`
+	WardsKilled     float64   `json:"wards_killed"`
+	MapControlScore float64   `json:"map_control_score"`
+	WardEfficiency  float64   `json:"ward_efficiency"`
+	MovingAverage   float64   `json:"moving_average"`
 }
 
 // PlacementOptimizationData represents placement optimization suggestions
 type PlacementOptimizationData struct {
-	OptimalSpots          []OptimalSpotData         `json:"optimal_spots"`
-	TimingImprovements    []TimingImprovementData   `json:"timing_improvements"`
-	TypeOptimizations     []TypeOptimizationData    `json:"type_optimizations"`
-	
+	OptimalSpots       []OptimalSpotData       `json:"optimal_spots"`
+	TimingImprovements []TimingImprovementData `json:"timing_improvements"`
+	TypeOptimizations  []TypeOptimizationData  `json:"type_optimizations"`
+
 	// Expected Impact
-	ExpectedControlGain   float64                   `json:"expected_control_gain"`    // Expected map control increase %
-	ExpectedSafetyGain    float64                   `json:"expected_safety_gain"`     // Expected safety increase %
-	ImplementationTips    []string                  `json:"implementation_tips"`
+	ExpectedControlGain float64  `json:"expected_control_gain"` // Expected map control increase %
+	ExpectedSafetyGain  float64  `json:"expected_safety_gain"`  // Expected safety increase %
+	ImplementationTips  []string `json:"implementation_tips"`
 }
 
 // ClearingOptimizationData represents clearing optimization suggestions
@@ -298,89 +298,89 @@ type ClearingOptimizationData struct {
 	PriorityTargets       []PriorityTargetData      `json:"priority_targets"`
 	ClearingOpportunities []ClearingOpportunityData `json:"clearing_opportunities"`
 	SafetyClearingTips    []string                  `json:"safety_clearing_tips"`
-	
+
 	// Expected Impact
-	ExpectedDenialGain    float64                   `json:"expected_denial_gain"`     // Expected vision denial increase %
-	ExpectedSafetyGain    float64                   `json:"expected_safety_gain"`     // Expected clearing safety increase %
+	ExpectedDenialGain float64 `json:"expected_denial_gain"` // Expected vision denial increase %
+	ExpectedSafetyGain float64 `json:"expected_safety_gain"` // Expected clearing safety increase %
 }
 
 // Supporting data structures
 type ZonePlacementData struct {
-	Zone                  string                    `json:"zone"`
-	PlacementCount        int                       `json:"placement_count"`
-	PlacementPercentage   float64                   `json:"placement_percentage"`
-	Effectiveness         float64                   `json:"effectiveness"`
+	Zone                string  `json:"zone"`
+	PlacementCount      int     `json:"placement_count"`
+	PlacementPercentage float64 `json:"placement_percentage"`
+	Effectiveness       float64 `json:"effectiveness"`
 }
 
 type OptimalSpotData struct {
-	Zone                  string                    `json:"zone"`
-	Coordinates           [2]int                    `json:"coordinates"`
-	StrategicValue        float64                   `json:"strategic_value"`
-	CurrentUsage          float64                   `json:"current_usage"`
-	RecommendedUsage      float64                   `json:"recommended_usage"`
-	Reason                string                    `json:"reason"`
+	Zone             string  `json:"zone"`
+	Coordinates      [2]int  `json:"coordinates"`
+	StrategicValue   float64 `json:"strategic_value"`
+	CurrentUsage     float64 `json:"current_usage"`
+	RecommendedUsage float64 `json:"recommended_usage"`
+	Reason           string  `json:"reason"`
 }
 
 type TimingImprovementData struct {
-	Situation             string                    `json:"situation"`
-	CurrentTiming         float64                   `json:"current_timing"`
-	OptimalTiming         float64                   `json:"optimal_timing"`
-	ImprovementNeeded     float64                   `json:"improvement_needed"`
-	Tips                  []string                  `json:"tips"`
+	Situation         string   `json:"situation"`
+	CurrentTiming     float64  `json:"current_timing"`
+	OptimalTiming     float64  `json:"optimal_timing"`
+	ImprovementNeeded float64  `json:"improvement_needed"`
+	Tips              []string `json:"tips"`
 }
 
 type TypeOptimizationData struct {
-	Situation             string                    `json:"situation"`
-	CurrentType           string                    `json:"current_type"`
-	RecommendedType       string                    `json:"recommended_type"`
-	EfficiencyGain        float64                   `json:"efficiency_gain"`
-	Reasoning             string                    `json:"reasoning"`
+	Situation       string  `json:"situation"`
+	CurrentType     string  `json:"current_type"`
+	RecommendedType string  `json:"recommended_type"`
+	EfficiencyGain  float64 `json:"efficiency_gain"`
+	Reasoning       string  `json:"reasoning"`
 }
 
 type PriorityTargetData struct {
-	Zone                  string                    `json:"zone"`
-	Priority              string                    `json:"priority"`      // "high", "medium", "low"
-	StrategicValue        float64                   `json:"strategic_value"`
-	ClearingFrequency     float64                   `json:"clearing_frequency"`
-	RecommendedFocus      string                    `json:"recommended_focus"`
+	Zone              string  `json:"zone"`
+	Priority          string  `json:"priority"` // "high", "medium", "low"
+	StrategicValue    float64 `json:"strategic_value"`
+	ClearingFrequency float64 `json:"clearing_frequency"`
+	RecommendedFocus  string  `json:"recommended_focus"`
 }
 
 type ClearingOpportunityData struct {
-	Situation             string                    `json:"situation"`
-	OpportunityType       string                    `json:"opportunity_type"`
-	SafetyLevel           string                    `json:"safety_level"`
-	ExpectedReward        float64                   `json:"expected_reward"`
-	Tips                  []string                  `json:"tips"`
+	Situation       string   `json:"situation"`
+	OpportunityType string   `json:"opportunity_type"`
+	SafetyLevel     string   `json:"safety_level"`
+	ExpectedReward  float64  `json:"expected_reward"`
+	Tips            []string `json:"tips"`
 }
 
 // WardRecommendation represents actionable ward advice
 type WardRecommendation struct {
-	Priority              string                    `json:"priority"`       // "high", "medium", "low"
-	Category              string                    `json:"category"`       // "placement", "clearing", "timing", "positioning"
-	Title                 string                    `json:"title"`
-	Description           string                    `json:"description"`
-	Impact                string                    `json:"impact"`
-	GamePhase             []string                  `json:"game_phase"`
-	ExpectedImprovement   float64                   `json:"expected_improvement"` // Expected score improvement
-	ImplementationDifficulty string                 `json:"implementation_difficulty"` // "easy", "medium", "hard"
+	Priority                 string   `json:"priority"` // "high", "medium", "low"
+	Category                 string   `json:"category"` // "placement", "clearing", "timing", "positioning"
+	Title                    string   `json:"title"`
+	Description              string   `json:"description"`
+	Impact                   string   `json:"impact"`
+	GamePhase                []string `json:"game_phase"`
+	ExpectedImprovement      float64  `json:"expected_improvement"`      // Expected score improvement
+	ImplementationDifficulty string   `json:"implementation_difficulty"` // "easy", "medium", "hard"
 }
 
 // MatchWardData represents ward performance in a specific match
 type MatchWardData struct {
-	MatchID               string                    `json:"match_id"`
-	Champion              string                    `json:"champion"`
-	Position              string                    `json:"position"`
-	WardsPlaced           int                       `json:"wards_placed"`
-	WardsKilled           int                       `json:"wards_killed"`
-	ControlWardsPlaced    int                       `json:"control_wards_placed"`
-	MapControlScore       float64                   `json:"map_control_score"`
-	WardEfficiency        float64                   `json:"ward_efficiency"`
-	StrategicScore        float64                   `json:"strategic_score"`
-	GameDuration          int                       `json:"game_duration"`
-	Result                string                    `json:"result"`
-	Date                  time.Time                 `json:"date"`
-	VisionAdvantage       float64                   `json:"vision_advantage"`
-	ObjectiveControl      float64                   `json:"objective_control"`
+	MatchID            string    `json:"match_id"`
+	Champion           string    `json:"champion"`
+	Position           string    `json:"position"`
+	WardsPlaced        int       `json:"wards_placed"`
+	WardsKilled        int       `json:"wards_killed"`
+	ControlWardsPlaced int       `json:"control_wards_placed"`
+	MapControlScore    float64   `json:"map_control_score"`
+	WardEfficiency     float64   `json:"ward_efficiency"`
+	StrategicScore     float64   `json:"strategic_score"`
+	GameDuration       int       `json:"game_duration"`
+	Result             string    `json:"result"`
+	Date               time.Time `json:"date"`
+	VisionAdvantage    float64   `json:"vision_advantage"`
+	ObjectiveControl   float64   `json:"objective_control"`
 }
 
 // NewWardAnalyticsService creates a new ward analytics service
@@ -474,7 +474,7 @@ func (was *WardAnalyticsService) calculateWardBasics(analysis *WardAnalysis, mat
 	for _, match := range matches {
 		totalWardsPlaced += float64(match.WardsPlaced)
 		totalWardsKilled += float64(match.WardsKilled)
-		
+
 		// Estimate survival time (simplified)
 		avgWardDuration := float64(match.GameDuration) / math.Max(1, float64(match.WardsPlaced)) * 0.6
 		totalSurvivalTime += avgWardDuration * float64(match.WardsPlaced)
@@ -483,11 +483,11 @@ func (was *WardAnalyticsService) calculateWardBasics(analysis *WardAnalysis, mat
 
 	analysis.AverageWardsPlaced = totalWardsPlaced / float64(len(matches))
 	analysis.AverageWardsKilled = totalWardsKilled / float64(len(matches))
-	
+
 	if analysis.AverageWardsPlaced > 0 {
 		analysis.WardEfficiency = analysis.AverageWardsKilled / analysis.AverageWardsPlaced
 	}
-	
+
 	if totalMaxSurvivalTime > 0 {
 		analysis.WardSurvivalRate = (totalSurvivalTime / totalMaxSurvivalTime) * 100
 	}
@@ -497,7 +497,7 @@ func (was *WardAnalyticsService) calculateWardBasics(analysis *WardAnalysis, mat
 func (was *WardAnalyticsService) analyzeMapControl(analysis *WardAnalysis, matches []models.MatchData) {
 	// Calculate map control score based on vision coverage and strategic control
 	baseScore := 50.0
-	
+
 	// Factor 1: Ward placement rate
 	if analysis.AverageWardsPlaced > 15 {
 		baseScore += 15
@@ -506,7 +506,7 @@ func (was *WardAnalyticsService) analyzeMapControl(analysis *WardAnalysis, match
 	} else if analysis.AverageWardsPlaced < 5 {
 		baseScore -= 15
 	}
-	
+
 	// Factor 2: Ward clearing rate
 	if analysis.AverageWardsKilled > 8 {
 		baseScore += 15
@@ -515,21 +515,21 @@ func (was *WardAnalyticsService) analyzeMapControl(analysis *WardAnalysis, match
 	} else if analysis.AverageWardsKilled < 2 {
 		baseScore -= 10
 	}
-	
+
 	// Factor 3: Ward efficiency
 	if analysis.WardEfficiency > 0.6 {
 		baseScore += 10
 	} else if analysis.WardEfficiency < 0.3 {
 		baseScore -= 10
 	}
-	
+
 	// Factor 4: Survival rate
 	if analysis.WardSurvivalRate > 70 {
 		baseScore += 10
 	} else if analysis.WardSurvivalRate < 40 {
 		baseScore -= 5
 	}
-	
+
 	analysis.MapControlScore = math.Max(0, math.Min(100, baseScore))
 	analysis.TerritoryControlled = baseScore * 0.8 // Estimate territory controlled
 }
@@ -538,29 +538,29 @@ func (was *WardAnalyticsService) analyzeMapControl(analysis *WardAnalysis, match
 func (was *WardAnalyticsService) analyzePlacementPatterns(analysis *WardAnalysis, matches []models.MatchData) {
 	// Simplified placement pattern analysis
 	analysis.PlacementPatterns = WardPlacementPatterns{
-		AggregateScore:      75.0, // How well wards work together
-		DiversityScore:      80.0, // Diversity of placement locations
-		PredictabilityScore: 60.0, // How predictable placements are
-		AdaptabilityScore:   70.0, // Adaptation to game state
+		AggregateScore:      75.0,                           // How well wards work together
+		DiversityScore:      80.0,                           // Diversity of placement locations
+		PredictabilityScore: 60.0,                           // How predictable placements are
+		AdaptabilityScore:   70.0,                           // Adaptation to game state
 		OptimalityScore:     analysis.MapControlScore * 0.8, // Optimality of placements
-		
+
 		FavoriteZones: []ZonePlacementData{
 			{Zone: "River Brushes", PlacementCount: 45, PlacementPercentage: 25.0, Effectiveness: 85.0},
 			{Zone: "Jungle Entrances", PlacementCount: 35, PlacementPercentage: 19.0, Effectiveness: 80.0},
 			{Zone: "Dragon Area", PlacementCount: 30, PlacementPercentage: 16.0, Effectiveness: 90.0},
 		},
-		
+
 		AvoidedZones: []ZonePlacementData{
 			{Zone: "Deep Enemy Jungle", PlacementCount: 5, PlacementPercentage: 3.0, Effectiveness: 40.0},
 			{Zone: "Lane Brushes", PlacementCount: 8, PlacementPercentage: 4.0, Effectiveness: 45.0},
 		},
-		
+
 		UnderUtilizedZones: []ZonePlacementData{
 			{Zone: "Baron Pit", PlacementCount: 12, PlacementPercentage: 7.0, Effectiveness: 95.0},
 			{Zone: "Scuttle Crab", PlacementCount: 15, PlacementPercentage: 8.0, Effectiveness: 75.0},
 		},
 	}
-	
+
 	// Calculate optimal placements
 	totalPlacements := int(analysis.AverageWardsPlaced * float64(len(matches)))
 	analysis.OptimalPlacements = OptimalPlacementData{
@@ -568,19 +568,19 @@ func (was *WardAnalyticsService) analyzePlacementPatterns(analysis *WardAnalysis
 		SuboptimalPlacements: int(float64(totalPlacements) * 0.25),
 		WastedPlacements:     int(float64(totalPlacements) * 0.10),
 		OptimalityRate:       65.0,
-		
+
 		TimingOptimization:   15.0, // % improvement possible through timing
 		LocationOptimization: 20.0, // % improvement possible through location
 		TypeOptimization:     10.0, // % improvement possible through ward type
 	}
-	
+
 	// Calculate placement timing
 	analysis.PlacementTiming = PlacementTimingData{
 		PreObjectiveWarding: 70.0, // % wards placed before objectives
 		ReactiveWarding:     40.0, // % wards placed reactively
 		ProactiveWarding:    60.0, // % wards placed proactively
 		EmergencyWarding:    15.0, // % wards placed in emergency
-		
+
 		ExcellentTiming: int(float64(totalPlacements) * 0.30),
 		GoodTiming:      int(float64(totalPlacements) * 0.45),
 		PoorTiming:      int(float64(totalPlacements) * 0.25),
@@ -601,11 +601,11 @@ func (was *WardAnalyticsService) analyzeWardTypes(analysis *WardAnalysis, matche
 		ImpactScore:           72.0,
 		EarlyGameUsage:        40.0,
 		MidGameUsage:          45.0,
-		LateGameUsage:        15.0,
+		LateGameUsage:         15.0,
 		OptimizationPotential: 15.0,
-		RecommendedUsage:     "Focus on river control and jungle entrances",
+		RecommendedUsage:      "Focus on river control and jungle entrances",
 	}
-	
+
 	// Control Wards Analysis
 	analysis.ControlWardsAnalysis = WardTypeAnalysis{
 		WardType:              "CONTROL",
@@ -617,11 +617,11 @@ func (was *WardAnalyticsService) analyzeWardTypes(analysis *WardAnalysis, matche
 		ImpactScore:           88.0,
 		EarlyGameUsage:        20.0,
 		MidGameUsage:          50.0,
-		LateGameUsage:        30.0,
+		LateGameUsage:         30.0,
 		OptimizationPotential: 10.0,
-		RecommendedUsage:     "Prioritize objective control and deep vision denial",
+		RecommendedUsage:      "Prioritize objective control and deep vision denial",
 	}
-	
+
 	// Blue Ward Analysis
 	analysis.BlueWardAnalysis = WardTypeAnalysis{
 		WardType:              "BLUE_TRINKET",
@@ -633,32 +633,32 @@ func (was *WardAnalyticsService) analyzeWardTypes(analysis *WardAnalysis, matche
 		ImpactScore:           75.0,
 		EarlyGameUsage:        5.0,
 		MidGameUsage:          35.0,
-		LateGameUsage:        60.0,
+		LateGameUsage:         60.0,
 		OptimizationPotential: 25.0,
-		RecommendedUsage:     "Use for safe objective scouting and baron/elder setups",
+		RecommendedUsage:      "Use for safe objective scouting and baron/elder setups",
 	}
 }
 
 // analyzeClearingPatterns analyzes ward clearing patterns
 func (was *WardAnalyticsService) analyzeClearingPatterns(analysis *WardAnalysis, matches []models.MatchData) {
 	totalWardsCleared := analysis.AverageWardsKilled * float64(len(matches))
-	
+
 	analysis.WardClearingPatterns = WardClearingData{
-		TotalWardsCleared:     int(totalWardsCleared),
-		ClearingEfficiency:    analysis.WardEfficiency * 100,
-		StrategicClearing:     75.0, // % cleared from strategic areas
-		TimingQuality:         70.0,
-		SafetyScore:           65.0,
-		
+		TotalWardsCleared:  int(totalWardsCleared),
+		ClearingEfficiency: analysis.WardEfficiency * 100,
+		StrategicClearing:  75.0, // % cleared from strategic areas
+		TimingQuality:      70.0,
+		SafetyScore:        65.0,
+
 		ProactiveClearing:     40.0,
 		ReactiveClearing:      45.0,
 		OpportunisticClearing: 15.0,
-		
-		RiverClearing:         80.0,
-		JungleClearing:        60.0,
-		ObjectiveClearing:     90.0,
+
+		RiverClearing:     80.0,
+		JungleClearing:    60.0,
+		ObjectiveClearing: 90.0,
 	}
-	
+
 	// Calculate counter warding score
 	baseCounterScore := 50.0
 	if analysis.WardEfficiency > 0.5 {
@@ -668,7 +668,7 @@ func (was *WardAnalyticsService) analyzeClearingPatterns(analysis *WardAnalysis,
 	} else if analysis.WardEfficiency < 0.2 {
 		baseCounterScore -= 20
 	}
-	
+
 	analysis.CounterWardingScore = math.Max(0, math.Min(100, baseCounterScore))
 }
 
@@ -683,7 +683,7 @@ func (was *WardAnalyticsService) analyzeWardPhases(analysis *WardAnalysis, match
 		MapCoverage:      40.0,
 		EfficiencyRating: was.rateEfficiency(70.0),
 	}
-	
+
 	analysis.MidGameWards = WardPhaseData{
 		Phase:            "mid",
 		WardsPlaced:      analysis.AverageWardsPlaced * 0.45,
@@ -693,7 +693,7 @@ func (was *WardAnalyticsService) analyzeWardPhases(analysis *WardAnalysis, match
 		MapCoverage:      70.0,
 		EfficiencyRating: was.rateEfficiency(80.0),
 	}
-	
+
 	analysis.LateGameWards = WardPhaseData{
 		Phase:            "late",
 		WardsPlaced:      analysis.AverageWardsPlaced * 0.20,
@@ -739,7 +739,7 @@ func (was *WardAnalyticsService) analyzeZoneControl(analysis *WardAnalysis, matc
 			RecommendedFocus:  "Excellent river control - maintain current approach",
 		},
 	}
-	
+
 	// River control analysis
 	analysis.RiverControl = RiverControlData{
 		OverallRiverControl: 85.0,
@@ -750,11 +750,11 @@ func (was *WardAnalyticsService) analyzeZoneControl(analysis *WardAnalysis, matc
 		CrossingPoints:      70.0,
 		RiverScore:          85.0,
 	}
-	
+
 	// Jungle control analysis
 	analysis.JungleControl = JungleControlData{
-		OwnJungleControl:    70.0,
-		EnemyJungleControl:  35.0,
+		OwnJungleControl:   70.0,
+		EnemyJungleControl: 35.0,
 		BuffControl:        85.0,
 		CampTimerTracking:  60.0,
 		InvasionDetection:  75.0,
@@ -774,24 +774,24 @@ func (was *WardAnalyticsService) analyzeWardImpact(analysis *WardAnalysis, match
 		LaneBrushesCoverage:   50.0,
 		OverallStrategicScore: 75.0,
 	}
-	
+
 	// Vision denial score
 	analysis.VisionDeniedScore = analysis.CounterWardingScore * 0.8
-	
+
 	// Objective setup analysis
 	analysis.ObjectiveSetup = ObjectiveSetupData{
-		DragonSetupScore:    80.0,
-		BaronSetupScore:     65.0,
-		HeraldSetupScore:    70.0,
-		ElderSetupScore:     75.0,
-		PreObjectiveSetup:   70.0,
-		SetupTiming:         45.0, // seconds before objective
-		SetupEfficiency:     75.0,
-		ApproachCoverage:    80.0,
-		EscapeCoverage:      60.0,
-		FlankCoverage:       70.0,
+		DragonSetupScore:  80.0,
+		BaronSetupScore:   65.0,
+		HeraldSetupScore:  70.0,
+		ElderSetupScore:   75.0,
+		PreObjectiveSetup: 70.0,
+		SetupTiming:       45.0, // seconds before objective
+		SetupEfficiency:   75.0,
+		ApproachCoverage:  80.0,
+		EscapeCoverage:    60.0,
+		FlankCoverage:     70.0,
 	}
-	
+
 	// Safety provided analysis
 	analysis.SafetyProvided = SafetyData{
 		GankPrevention:      75.0,
@@ -803,14 +803,14 @@ func (was *WardAnalyticsService) analyzeWardImpact(analysis *WardAnalysis, match
 		MediumRiskDetection: 65.0,
 		RiskMitigationScore: 72.0,
 	}
-	
+
 	// Calculate overall ward impact score
 	baseImpact := 50.0
 	baseImpact += (analysis.MapControlScore - 50) * 0.3
 	baseImpact += (analysis.StrategicCoverage.OverallStrategicScore - 50) * 0.3
 	baseImpact += (analysis.SafetyProvided.SafetyScore - 50) * 0.2
 	baseImpact += (analysis.CounterWardingScore - 50) * 0.2
-	
+
 	analysis.WardImpactScore = math.Max(0, math.Min(100, baseImpact))
 }
 
@@ -891,23 +891,23 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 	analysis.PlacementOptimization = PlacementOptimizationData{
 		OptimalSpots: []OptimalSpotData{
 			{
-				Zone:            "Dragon Pit Entrance",
-				Coordinates:     [2]int{10000, 4400},
-				StrategicValue:  95.0,
-				CurrentUsage:    60.0,
+				Zone:             "Dragon Pit Entrance",
+				Coordinates:      [2]int{10000, 4400},
+				StrategicValue:   95.0,
+				CurrentUsage:     60.0,
 				RecommendedUsage: 85.0,
-				Reason:          "Critical for dragon control and team fight positioning",
+				Reason:           "Critical for dragon control and team fight positioning",
 			},
 			{
-				Zone:            "Baron Pit Bush",
-				Coordinates:     [2]int{5000, 10400},
-				StrategicValue:  98.0,
-				CurrentUsage:    40.0,
+				Zone:             "Baron Pit Bush",
+				Coordinates:      [2]int{5000, 10400},
+				StrategicValue:   98.0,
+				CurrentUsage:     40.0,
 				RecommendedUsage: 90.0,
-				Reason:          "Essential for baron control and late game vision",
+				Reason:           "Essential for baron control and late game vision",
 			},
 		},
-		
+
 		TimingImprovements: []TimingImprovementData{
 			{
 				Situation:         "Pre-Dragon Spawn",
@@ -917,7 +917,7 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 				Tips:              []string{"Ward 45 seconds before dragon spawns", "Clear enemy vision first", "Coordinate with team"},
 			},
 		},
-		
+
 		TypeOptimizations: []TypeOptimizationData{
 			{
 				Situation:       "Baron Area Control",
@@ -927,7 +927,7 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 				Reasoning:       "Control wards provide permanent vision and deny enemy wards in this critical area",
 			},
 		},
-		
+
 		ExpectedControlGain: 15.0,
 		ExpectedSafetyGain:  20.0,
 		ImplementationTips: []string{
@@ -936,7 +936,7 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 			"Coordinate ward placement with team rotations",
 		},
 	}
-	
+
 	// Clearing optimization
 	analysis.ClearingOptimization = ClearingOptimizationData{
 		PriorityTargets: []PriorityTargetData{
@@ -955,7 +955,7 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 				RecommendedFocus:  "Good current focus, maintain consistency",
 			},
 		},
-		
+
 		ClearingOpportunities: []ClearingOpportunityData{
 			{
 				Situation:       "Post Team Fight Victory",
@@ -965,13 +965,13 @@ func (was *WardAnalyticsService) generateOptimizationSuggestions(analysis *WardA
 				Tips:            []string{"Clear all visible wards", "Push for deeper vision", "Coordinate with team"},
 			},
 		},
-		
+
 		SafetyClearingTips: []string{
 			"Always clear with team support in dangerous areas",
 			"Use sweepers before entering unwarded areas",
 			"Prioritize escape routes when clearing deep wards",
 		},
-		
+
 		ExpectedDenialGain: 20.0,
 		ExpectedSafetyGain: 15.0,
 	}
@@ -1102,28 +1102,28 @@ func (was *WardAnalyticsService) generateWardTrendData(analysis *WardAnalysis, m
 func (was *WardAnalyticsService) calculateMatchMapControl(match models.MatchData) float64 {
 	// Estimate map control score for a single match
 	baseScore := 50.0
-	
+
 	// Factor in wards placed
 	if match.WardsPlaced > 15 {
 		baseScore += 20
 	} else if match.WardsPlaced > 10 {
 		baseScore += 10
 	}
-	
+
 	// Factor in wards killed
 	if match.WardsKilled > 8 {
 		baseScore += 15
 	} else if match.WardsKilled > 5 {
 		baseScore += 8
 	}
-	
+
 	// Factor in vision score
 	if match.VisionScore > 40 {
 		baseScore += 15
 	} else if match.VisionScore > 25 {
 		baseScore += 10
 	}
-	
+
 	return math.Max(0, math.Min(100, baseScore))
 }
 
@@ -1131,10 +1131,10 @@ func (was *WardAnalyticsService) calculateLinearRegression(values []float64) (sl
 	if len(values) < 2 {
 		return 0, 0
 	}
-	
+
 	n := float64(len(values))
 	sumX, sumY, sumXY, sumXX := 0.0, 0.0, 0.0, 0.0
-	
+
 	for i, y := range values {
 		x := float64(i)
 		sumX += x
@@ -1142,29 +1142,29 @@ func (was *WardAnalyticsService) calculateLinearRegression(values []float64) (sl
 		sumXY += x * y
 		sumXX += x * x
 	}
-	
+
 	denominator := n*sumXX - sumX*sumX
 	if denominator == 0 {
 		return 0, 0
 	}
-	
+
 	slope = (n*sumXY - sumX*sumY) / denominator
-	
+
 	// Calculate R-squared
 	meanY := sumY / n
 	ssTotal, ssRes := 0.0, 0.0
-	
+
 	for i, y := range values {
 		predicted := slope*float64(i) + (sumY-slope*sumX)/n
 		ssTotal += (y - meanY) * (y - meanY)
 		ssRes += (y - predicted) * (y - predicted)
 	}
-	
+
 	confidence = 1 - (ssRes / ssTotal)
 	if confidence < 0 {
 		confidence = 0
 	}
-	
+
 	return slope, confidence
 }
 

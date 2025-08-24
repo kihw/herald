@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/herald/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // AnalyticsHandler handles analytics-related requests
@@ -29,8 +29,8 @@ type KDAAnalysisRequest struct {
 // CSAnalysisRequest represents request for CS analysis
 type CSAnalysisRequest struct {
 	TimeRange string `form:"time_range" json:"time_range" binding:"required"`
-	Position  string `form:"position" json:"position"`  // Optional position filter
-	Champion  string `form:"champion" json:"champion"`  // Optional champion filter
+	Position  string `form:"position" json:"position"` // Optional position filter
+	Champion  string `form:"champion" json:"champion"` // Optional champion filter
 }
 
 // PerformanceComparisonRequest represents request for performance comparison
@@ -282,7 +282,7 @@ func (ah *AnalyticsHandler) GetPlayerStats(c *gin.Context) {
 func (ah *AnalyticsHandler) GetChampionStats(c *gin.Context) {
 	playerID := c.Param("player_id")
 	championIDStr := c.Param("champion_id")
-	
+
 	if playerID == "" || championIDStr == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -339,7 +339,7 @@ func (ah *AnalyticsHandler) GetChampionStats(c *gin.Context) {
 func (ah *AnalyticsHandler) GetPerformanceTrends(c *gin.Context) {
 	playerID := c.Param("player_id")
 	metric := c.Query("metric")
-	
+
 	if playerID == "" || metric == "" {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -356,7 +356,7 @@ func (ah *AnalyticsHandler) GetPerformanceTrends(c *gin.Context) {
 		"damage":  true,
 		"winrate": true,
 	}
-	
+
 	if !validMetrics[metric] {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -371,7 +371,7 @@ func (ah *AnalyticsHandler) GetPerformanceTrends(c *gin.Context) {
 		"weekly":  true,
 		"monthly": true,
 	}
-	
+
 	if !validPeriods[period] {
 		c.JSON(http.StatusBadRequest, ErrorResponse{
 			Error:   "validation_error",
@@ -499,7 +499,7 @@ func (ah *AnalyticsHandler) RegisterRoutes(router *gin.RouterGroup) {
 		analytics.GET("/:player_id/stats", ah.GetPlayerStats)
 		analytics.GET("/:player_id/trends", ah.GetPerformanceTrends)
 		analytics.GET("/:player_id/champion/:champion_id", ah.GetChampionStats)
-		
+
 		// Global analytics
 		analytics.GET("/benchmarks", ah.GetBenchmarks)
 	}

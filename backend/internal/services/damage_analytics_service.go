@@ -7,7 +7,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald/internal/models"
+	"github.com/herald-lol/herald/backend/internal/models"
 )
 
 // DamageAnalyticsService handles damage and team contribution analysis
@@ -18,193 +18,193 @@ type DamageAnalyticsService struct {
 
 // DamageAnalysis represents comprehensive damage analysis
 type DamageAnalysis struct {
-	PlayerID          string                    `json:"player_id"`
-	Champion          string                    `json:"champion,omitempty"`
-	Position          string                    `json:"position,omitempty"`
-	TimeRange         string                    `json:"time_range"`
-	
+	PlayerID  string `json:"player_id"`
+	Champion  string `json:"champion,omitempty"`
+	Position  string `json:"position,omitempty"`
+	TimeRange string `json:"time_range"`
+
 	// Core Damage Metrics
-	TotalDamageDealt     float64               `json:"total_damage_dealt"`
-	AverageDamagePerGame float64               `json:"average_damage_per_game"`
-	DamagePerMinute      float64               `json:"damage_per_minute"`
-	DamageShare          float64               `json:"damage_share_percent"`
-	
+	TotalDamageDealt     float64 `json:"total_damage_dealt"`
+	AverageDamagePerGame float64 `json:"average_damage_per_game"`
+	DamagePerMinute      float64 `json:"damage_per_minute"`
+	DamageShare          float64 `json:"damage_share_percent"`
+
 	// Damage Type Breakdown
-	PhysicalDamageShare  float64               `json:"physical_damage_share"`
-	MagicDamageShare     float64               `json:"magic_damage_share"`
-	TrueDamageShare      float64               `json:"true_damage_share"`
-	
+	PhysicalDamageShare float64 `json:"physical_damage_share"`
+	MagicDamageShare    float64 `json:"magic_damage_share"`
+	TrueDamageShare     float64 `json:"true_damage_share"`
+
 	// Damage Efficiency
-	DamagePerGold        float64               `json:"damage_per_gold"`
-	DamagePerItem        float64               `json:"damage_per_item"`
-	DamageToChampions    float64               `json:"damage_to_champions_percent"`
-	
+	DamagePerGold     float64 `json:"damage_per_gold"`
+	DamagePerItem     float64 `json:"damage_per_item"`
+	DamageToChampions float64 `json:"damage_to_champions_percent"`
+
 	// Team Contribution Analysis
-	TeamContribution     TeamContributionData  `json:"team_contribution"`
-	
+	TeamContribution TeamContributionData `json:"team_contribution"`
+
 	// Comparative Analysis
-	RoleBenchmark        DamageBenchmark       `json:"role_benchmark"`
-	RankBenchmark        DamageBenchmark       `json:"rank_benchmark"`
-	ChampionBenchmark    DamageBenchmark       `json:"champion_benchmark"`
-	
+	RoleBenchmark     DamageBenchmark `json:"role_benchmark"`
+	RankBenchmark     DamageBenchmark `json:"rank_benchmark"`
+	ChampionBenchmark DamageBenchmark `json:"champion_benchmark"`
+
 	// Performance Analysis
-	DamageConsistency    float64               `json:"damage_consistency"` // Lower std dev is better
-	DamageReliability    string                `json:"damage_reliability"` // "consistent", "variable", "inconsistent"
-	CarryPotential       float64               `json:"carry_potential"`    // 0-100 score
-	
+	DamageConsistency float64 `json:"damage_consistency"` // Lower std dev is better
+	DamageReliability string  `json:"damage_reliability"` // "consistent", "variable", "inconsistent"
+	CarryPotential    float64 `json:"carry_potential"`    // 0-100 score
+
 	// Game Phase Analysis
-	EarlyGameDamage      GamePhaseDamage       `json:"early_game_damage"`
-	MidGameDamage        GamePhaseDamage       `json:"mid_game_damage"`
-	LateGameDamage       GamePhaseDamage       `json:"late_game_damage"`
-	
+	EarlyGameDamage GamePhaseDamage `json:"early_game_damage"`
+	MidGameDamage   GamePhaseDamage `json:"mid_game_damage"`
+	LateGameDamage  GamePhaseDamage `json:"late_game_damage"`
+
 	// Situational Analysis
-	WinningGamesDamage   DamageSnapshot        `json:"winning_games_damage"`
-	LosingGamesDamage    DamageSnapshot        `json:"losing_games_damage"`
-	CloseGamesDamage     DamageSnapshot        `json:"close_games_damage"`
-	
+	WinningGamesDamage DamageSnapshot `json:"winning_games_damage"`
+	LosingGamesDamage  DamageSnapshot `json:"losing_games_damage"`
+	CloseGamesDamage   DamageSnapshot `json:"close_games_damage"`
+
 	// Trend Analysis
-	TrendDirection       string                `json:"trend_direction"`
-	TrendSlope           float64               `json:"trend_slope"`
-	TrendConfidence      float64               `json:"trend_confidence"`
-	
+	TrendDirection  string  `json:"trend_direction"`
+	TrendSlope      float64 `json:"trend_slope"`
+	TrendConfidence float64 `json:"trend_confidence"`
+
 	// Insights and Recommendations
-	StrengthAreas        []string              `json:"strength_areas"`
-	ImprovementAreas     []string              `json:"improvement_areas"`
+	StrengthAreas         []string               `json:"strength_areas"`
+	ImprovementAreas      []string               `json:"improvement_areas"`
 	DamageRecommendations []DamageRecommendation `json:"recommendations"`
-	
+
 	// Historical Data
-	TrendData            []DamageTrendPoint    `json:"trend_data"`
-	RecentMatches        []MatchDamageData     `json:"recent_matches"`
+	TrendData     []DamageTrendPoint `json:"trend_data"`
+	RecentMatches []MatchDamageData  `json:"recent_matches"`
 }
 
 // TeamContributionData represents player's contribution to team success
 type TeamContributionData struct {
 	// Damage Contribution
-	TeamDamageShare         float64   `json:"team_damage_share"`
-	DamageCarryRate         float64   `json:"damage_carry_rate"`      // % of games where top damage
-	DamageContributionScore float64   `json:"damage_contribution_score"` // 0-100
-	
+	TeamDamageShare         float64 `json:"team_damage_share"`
+	DamageCarryRate         float64 `json:"damage_carry_rate"`         // % of games where top damage
+	DamageContributionScore float64 `json:"damage_contribution_score"` // 0-100
+
 	// Kill Participation
-	KillParticipation       float64   `json:"kill_participation"`
-	FirstBloodInvolvement   float64   `json:"first_blood_involvement"`
-	TeamfightPresence       float64   `json:"teamfight_presence"`
-	
+	KillParticipation     float64 `json:"kill_participation"`
+	FirstBloodInvolvement float64 `json:"first_blood_involvement"`
+	TeamfightPresence     float64 `json:"teamfight_presence"`
+
 	// Objective Control
-	DragonDamageShare       float64   `json:"dragon_damage_share"`
-	BaronDamageShare        float64   `json:"baron_damage_share"`
-	TowerDamageShare        float64   `json:"tower_damage_share"`
-	
+	DragonDamageShare float64 `json:"dragon_damage_share"`
+	BaronDamageShare  float64 `json:"baron_damage_share"`
+	TowerDamageShare  float64 `json:"tower_damage_share"`
+
 	// Support Metrics (for all roles)
-	DamageAmplification     float64   `json:"damage_amplification"`  // Damage enabled for others
-	DamageReduction         float64   `json:"damage_reduction"`      // Damage prevented/healed
-	
+	DamageAmplification float64 `json:"damage_amplification"` // Damage enabled for others
+	DamageReduction     float64 `json:"damage_reduction"`     // Damage prevented/healed
+
 	// Team Impact Score
-	OverallTeamImpact       float64   `json:"overall_team_impact"`   // 0-100 combined score
-	TeamImpactRanking       string    `json:"team_impact_ranking"`   // "excellent", "good", "average", "poor"
+	OverallTeamImpact float64 `json:"overall_team_impact"` // 0-100 combined score
+	TeamImpactRanking string  `json:"team_impact_ranking"` // "excellent", "good", "average", "poor"
 }
 
 // GamePhaseDamage represents damage metrics for a specific game phase
 type GamePhaseDamage struct {
-	Phase                   string    `json:"phase"` // "early", "mid", "late"
-	AverageDamage           float64   `json:"average_damage"`
-	DamageShare             float64   `json:"damage_share"`
-	DamagePerMinute         float64   `json:"damage_per_minute"`
-	ConsistencyRating       string    `json:"consistency_rating"`
-	RelativePerformance     float64   `json:"relative_performance"` // vs role average
+	Phase               string  `json:"phase"` // "early", "mid", "late"
+	AverageDamage       float64 `json:"average_damage"`
+	DamageShare         float64 `json:"damage_share"`
+	DamagePerMinute     float64 `json:"damage_per_minute"`
+	ConsistencyRating   string  `json:"consistency_rating"`
+	RelativePerformance float64 `json:"relative_performance"` // vs role average
 }
 
 // DamageSnapshot represents damage performance in specific game contexts
 type DamageSnapshot struct {
-	Context                 string    `json:"context"` // "winning", "losing", "close"
-	GameCount              int       `json:"game_count"`
-	AverageDamage          float64   `json:"average_damage"`
-	DamageShare            float64   `json:"damage_share"`
-	PerformanceRating      string    `json:"performance_rating"`
-	ImpactDifference       float64   `json:"impact_difference"` // vs overall average
+	Context           string  `json:"context"` // "winning", "losing", "close"
+	GameCount         int     `json:"game_count"`
+	AverageDamage     float64 `json:"average_damage"`
+	DamageShare       float64 `json:"damage_share"`
+	PerformanceRating string  `json:"performance_rating"`
+	ImpactDifference  float64 `json:"impact_difference"` // vs overall average
 }
 
 // DamageBenchmark represents damage performance benchmarks
 type DamageBenchmark struct {
-	Category               string    `json:"category"` // "role", "rank", "champion"
-	Filter                 string    `json:"filter"`   // "ADC", "GOLD", "Jinx"
-	AverageDamageShare     float64   `json:"average_damage_share"`
-	MedianDamageShare      float64   `json:"median_damage_share"`
-	Top10PercentDamage     float64   `json:"top_10_percent_damage"`
-	Top25PercentDamage     float64   `json:"top_25_percent_damage"`
-	PlayerPercentile       float64   `json:"player_percentile"`
-	ComparisonRating       string    `json:"comparison_rating"` // "excellent", "above_average", "average", "below_average", "poor"
+	Category           string  `json:"category"` // "role", "rank", "champion"
+	Filter             string  `json:"filter"`   // "ADC", "GOLD", "Jinx"
+	AverageDamageShare float64 `json:"average_damage_share"`
+	MedianDamageShare  float64 `json:"median_damage_share"`
+	Top10PercentDamage float64 `json:"top_10_percent_damage"`
+	Top25PercentDamage float64 `json:"top_25_percent_damage"`
+	PlayerPercentile   float64 `json:"player_percentile"`
+	ComparisonRating   string  `json:"comparison_rating"` // "excellent", "above_average", "average", "below_average", "poor"
 }
 
 // DamageRecommendation represents actionable damage improvement advice
 type DamageRecommendation struct {
-	Priority               string    `json:"priority"` // "high", "medium", "low"
-	Category               string    `json:"category"` // "itemization", "positioning", "target_selection", "timing"
-	Title                  string    `json:"title"`
-	Description            string    `json:"description"`
-	ExpectedImprovement    string    `json:"expected_improvement"`
-	GamePhase              []string  `json:"game_phase"`
-	ItemSuggestions        []string  `json:"item_suggestions,omitempty"`
-	PositioningTips        []string  `json:"positioning_tips,omitempty"`
+	Priority            string   `json:"priority"` // "high", "medium", "low"
+	Category            string   `json:"category"` // "itemization", "positioning", "target_selection", "timing"
+	Title               string   `json:"title"`
+	Description         string   `json:"description"`
+	ExpectedImprovement string   `json:"expected_improvement"`
+	GamePhase           []string `json:"game_phase"`
+	ItemSuggestions     []string `json:"item_suggestions,omitempty"`
+	PositioningTips     []string `json:"positioning_tips,omitempty"`
 }
 
 // DamageTrendPoint represents damage performance over time
 type DamageTrendPoint struct {
-	Date                   time.Time `json:"date"`
-	DamageShare            float64   `json:"damage_share"`
-	DamagePerMinute        float64   `json:"damage_per_minute"`
-	TeamContribution       float64   `json:"team_contribution"`
-	MovingAverage          float64   `json:"moving_average"`
-	CarryPotential         float64   `json:"carry_potential"`
+	Date             time.Time `json:"date"`
+	DamageShare      float64   `json:"damage_share"`
+	DamagePerMinute  float64   `json:"damage_per_minute"`
+	TeamContribution float64   `json:"team_contribution"`
+	MovingAverage    float64   `json:"moving_average"`
+	CarryPotential   float64   `json:"carry_potential"`
 }
 
 // MatchDamageData represents damage data from a specific match
 type MatchDamageData struct {
-	MatchID                string    `json:"match_id"`
-	Champion               string    `json:"champion"`
-	Position               string    `json:"position"`
-	TotalDamage            int       `json:"total_damage"`
-	DamageToChampions      int       `json:"damage_to_champions"`
-	DamageShare            float64   `json:"damage_share"`
-	DamagePerMinute        float64   `json:"damage_per_minute"`
-	PhysicalDamage         int       `json:"physical_damage"`
-	MagicDamage            int       `json:"magic_damage"`
-	TrueDamage             int       `json:"true_damage"`
-	GameDuration           int       `json:"game_duration"`
-	Result                 string    `json:"result"`
-	Date                   time.Time `json:"date"`
-	TeamContribution       float64   `json:"team_contribution_score"`
-	ItemBuild              []int     `json:"item_build"`
+	MatchID           string    `json:"match_id"`
+	Champion          string    `json:"champion"`
+	Position          string    `json:"position"`
+	TotalDamage       int       `json:"total_damage"`
+	DamageToChampions int       `json:"damage_to_champions"`
+	DamageShare       float64   `json:"damage_share"`
+	DamagePerMinute   float64   `json:"damage_per_minute"`
+	PhysicalDamage    int       `json:"physical_damage"`
+	MagicDamage       int       `json:"magic_damage"`
+	TrueDamage        int       `json:"true_damage"`
+	GameDuration      int       `json:"game_duration"`
+	Result            string    `json:"result"`
+	Date              time.Time `json:"date"`
+	TeamContribution  float64   `json:"team_contribution_score"`
+	ItemBuild         []int     `json:"item_build"`
 }
 
 // DamageProfile represents a player's damage dealing profile
 type DamageProfile struct {
-	PlayerID               string                 `json:"player_id"`
-	ProfileType            string                 `json:"profile_type"` // "burst", "sustained", "mixed", "utility"
-	DamagePattern          DamagePattern          `json:"damage_pattern"`
-	OptimalConditions      []string               `json:"optimal_conditions"`
-	WeakConditions         []string               `json:"weak_conditions"`
-	RecommendedItems       []ItemRecommendation   `json:"recommended_items"`
-	PlaystyleAdvice        []string               `json:"playstyle_advice"`
+	PlayerID          string               `json:"player_id"`
+	ProfileType       string               `json:"profile_type"` // "burst", "sustained", "mixed", "utility"
+	DamagePattern     DamagePattern        `json:"damage_pattern"`
+	OptimalConditions []string             `json:"optimal_conditions"`
+	WeakConditions    []string             `json:"weak_conditions"`
+	RecommendedItems  []ItemRecommendation `json:"recommended_items"`
+	PlaystyleAdvice   []string             `json:"playstyle_advice"`
 }
 
 // DamagePattern represents how a player typically deals damage
 type DamagePattern struct {
-	BurstPotential         float64   `json:"burst_potential"`      // 0-100
-	SustainedDamage        float64   `json:"sustained_damage"`     // 0-100
-	EarlyGameImpact        float64   `json:"early_game_impact"`    // 0-100
-	LateGameScaling        float64   `json:"late_game_scaling"`    // 0-100
-	TeamfightEffectiveness float64   `json:"teamfight_effectiveness"` // 0-100
-	SkirmishPotential      float64   `json:"skirmish_potential"`   // 0-100
+	BurstPotential         float64 `json:"burst_potential"`         // 0-100
+	SustainedDamage        float64 `json:"sustained_damage"`        // 0-100
+	EarlyGameImpact        float64 `json:"early_game_impact"`       // 0-100
+	LateGameScaling        float64 `json:"late_game_scaling"`       // 0-100
+	TeamfightEffectiveness float64 `json:"teamfight_effectiveness"` // 0-100
+	SkirmishPotential      float64 `json:"skirmish_potential"`      // 0-100
 }
 
 // ItemRecommendation represents recommended items for damage optimization
 type ItemRecommendation struct {
-	ItemID                 int       `json:"item_id"`
-	ItemName               string    `json:"item_name"`
-	ReasonCode             string    `json:"reason_code"` // "damage_increase", "survivability", "utility"
-	ExpectedImpact         string    `json:"expected_impact"`
-	GamePhase              string    `json:"game_phase"` // "early", "mid", "late", "situational"
-	Priority               int       `json:"priority"` // 1-5
+	ItemID         int    `json:"item_id"`
+	ItemName       string `json:"item_name"`
+	ReasonCode     string `json:"reason_code"` // "damage_increase", "survivability", "utility"
+	ExpectedImpact string `json:"expected_impact"`
+	GamePhase      string `json:"game_phase"` // "early", "mid", "late", "situational"
+	Priority       int    `json:"priority"`   // 1-5
 }
 
 // NewDamageAnalyticsService creates a new damage analytics service
@@ -314,7 +314,7 @@ func (das *DamageAnalyticsService) GetTeamContribution(ctx context.Context, play
 
 	contribution := &TeamContributionData{}
 	das.calculateTeamContributionDetails(contribution, matches)
-	
+
 	return contribution, nil
 }
 
@@ -338,7 +338,7 @@ func (das *DamageAnalyticsService) calculateDamageBasics(analysis *DamageAnalysi
 	for _, match := range matches {
 		damage := float64(match.TotalDamageToChampions)
 		gameTime := float64(match.GameDuration) / 60.0 // Convert to minutes
-		
+
 		totalDamage += damage
 		totalTime += gameTime
 		damageShares = append(damageShares, match.DamageShare)
@@ -375,7 +375,7 @@ func (das *DamageAnalyticsService) calculateDamageBasics(analysis *DamageAnalysi
 	stdDev := das.calculateStandardDeviation(damageValues)
 	if analysis.AverageDamagePerGame > 0 {
 		analysis.DamageConsistency = 100 - ((stdDev / analysis.AverageDamagePerGame) * 100)
-		
+
 		// Classify reliability
 		coefficientOfVariation := stdDev / analysis.AverageDamagePerGame
 		if coefficientOfVariation < 0.2 {
@@ -440,7 +440,7 @@ func (das *DamageAnalyticsService) calculateTeamContribution(analysis *DamageAna
 	}
 
 	contribution := &TeamContributionData{}
-	
+
 	// Calculate damage share metrics
 	damageShares := make([]float64, 0, len(matches))
 	killParticipations := make([]float64, 0, len(matches))
@@ -449,7 +449,7 @@ func (das *DamageAnalyticsService) calculateTeamContribution(analysis *DamageAna
 	for _, match := range matches {
 		damageShares = append(damageShares, match.DamageShare)
 		killParticipations = append(killParticipations, match.TeamfightParticipation)
-		
+
 		// Consider it a "carry" game if damage share > 35% or top damage dealer
 		if match.DamageShare > 35.0 {
 			carryGames++
@@ -462,9 +462,9 @@ func (das *DamageAnalyticsService) calculateTeamContribution(analysis *DamageAna
 
 	// Calculate overall contribution score (0-100)
 	scoreComponents := []float64{
-		math.Min(contribution.TeamDamageShare * 2, 50),  // Max 50 points from damage share
-		math.Min(contribution.KillParticipation, 30),     // Max 30 points from kill participation
-		math.Min(contribution.DamageCarryRate * 0.2, 20), // Max 20 points from carry rate
+		math.Min(contribution.TeamDamageShare*2, 50),   // Max 50 points from damage share
+		math.Min(contribution.KillParticipation, 30),   // Max 30 points from kill participation
+		math.Min(contribution.DamageCarryRate*0.2, 20), // Max 20 points from carry rate
 	}
 
 	contribution.DamageContributionScore = das.calculateSum(scoreComponents)
@@ -493,16 +493,16 @@ func (das *DamageAnalyticsService) calculateCarryMetrics(analysis *DamageAnalysi
 	carryScore := 0.0
 
 	// Factor 1: Average damage share (0-40 points)
-	damageShareScore := math.Min(analysis.DamageShare * 1.2, 40)
+	damageShareScore := math.Min(analysis.DamageShare*1.2, 40)
 	carryScore += damageShareScore
 
 	// Factor 2: Consistency (0-25 points)
-	consistencyScore := math.Min(analysis.DamageConsistency * 0.25, 25)
+	consistencyScore := math.Min(analysis.DamageConsistency*0.25, 25)
 	carryScore += consistencyScore
 
 	// Factor 3: Damage per minute relative to role (0-35 points)
 	// This would typically compare to role benchmarks
-	dpmScore := math.Min((analysis.DamagePerMinute / 1000) * 35, 35)
+	dpmScore := math.Min((analysis.DamagePerMinute/1000)*35, 35)
 	carryScore += dpmScore
 
 	analysis.CarryPotential = math.Min(carryScore, 100)
@@ -540,27 +540,27 @@ func (das *DamageAnalyticsService) analyzeSituationalDamage(analysis *DamageAnal
 	// Calculate situational snapshots
 	analysis.WinningGamesDamage = DamageSnapshot{
 		Context:           "winning",
-		GameCount:        len(winningGames),
-		AverageDamage:    das.calculateMean(winningGames),
-		DamageShare:      das.calculateMean(winningShares),
+		GameCount:         len(winningGames),
+		AverageDamage:     das.calculateMean(winningGames),
+		DamageShare:       das.calculateMean(winningShares),
 		PerformanceRating: das.ratePerformance(das.calculateMean(winningGames), analysis.AverageDamagePerGame),
 		ImpactDifference:  das.calculateMean(winningGames) - analysis.AverageDamagePerGame,
 	}
 
 	analysis.LosingGamesDamage = DamageSnapshot{
 		Context:           "losing",
-		GameCount:        len(losingGames),
-		AverageDamage:    das.calculateMean(losingGames),
-		DamageShare:      das.calculateMean(losingShares),
+		GameCount:         len(losingGames),
+		AverageDamage:     das.calculateMean(losingGames),
+		DamageShare:       das.calculateMean(losingShares),
 		PerformanceRating: das.ratePerformance(das.calculateMean(losingGames), analysis.AverageDamagePerGame),
 		ImpactDifference:  das.calculateMean(losingGames) - analysis.AverageDamagePerGame,
 	}
 
 	analysis.CloseGamesDamage = DamageSnapshot{
 		Context:           "close",
-		GameCount:        len(closeGames),
-		AverageDamage:    das.calculateMean(closeGames),
-		DamageShare:      das.calculateMean(closeShares),
+		GameCount:         len(closeGames),
+		AverageDamage:     das.calculateMean(closeGames),
+		DamageShare:       das.calculateMean(closeShares),
 		PerformanceRating: das.ratePerformance(das.calculateMean(closeGames), analysis.AverageDamagePerGame),
 		ImpactDifference:  das.calculateMean(closeGames) - analysis.AverageDamagePerGame,
 	}
@@ -573,12 +573,12 @@ func (das *DamageAnalyticsService) generateDamageRecommendations(analysis *Damag
 	if analysis.DamageShare < 20 {
 		recommendations = append(recommendations, DamageRecommendation{
 			Priority:            "high",
-			Category:           "positioning",
-			Title:              "Increase Damage Output",
-			Description:        fmt.Sprintf("Your damage share (%.1f%%) is below role expectations. Focus on safer positioning to deal more consistent damage.", analysis.DamageShare),
+			Category:            "positioning",
+			Title:               "Increase Damage Output",
+			Description:         fmt.Sprintf("Your damage share (%.1f%%) is below role expectations. Focus on safer positioning to deal more consistent damage.", analysis.DamageShare),
 			ExpectedImprovement: "5-10% increase in damage share can improve win rate by 15-20%",
-			GamePhase:          []string{"mid", "late"},
-			PositioningTips:    []string{"Stay behind frontline", "Use max range for abilities", "Position for teamfight objectives"},
+			GamePhase:           []string{"mid", "late"},
+			PositioningTips:     []string{"Stay behind frontline", "Use max range for abilities", "Position for teamfight objectives"},
 		})
 	}
 
@@ -586,11 +586,11 @@ func (das *DamageAnalyticsService) generateDamageRecommendations(analysis *Damag
 	if analysis.DamageReliability == "inconsistent" {
 		recommendations = append(recommendations, DamageRecommendation{
 			Priority:            "medium",
-			Category:           "consistency",
-			Title:              "Improve Damage Consistency",
-			Description:        "Your damage output varies significantly between games. Work on consistent farming and positioning.",
+			Category:            "consistency",
+			Title:               "Improve Damage Consistency",
+			Description:         "Your damage output varies significantly between games. Work on consistent farming and positioning.",
 			ExpectedImprovement: "Better consistency leads to more predictable team performance",
-			GamePhase:          []string{"early", "mid", "late"},
+			GamePhase:           []string{"early", "mid", "late"},
 		})
 	}
 
@@ -598,12 +598,12 @@ func (das *DamageAnalyticsService) generateDamageRecommendations(analysis *Damag
 	if analysis.CarryPotential < 50 {
 		recommendations = append(recommendations, DamageRecommendation{
 			Priority:            "high",
-			Category:           "itemization",
-			Title:              "Optimize Item Builds for Damage",
-			Description:        fmt.Sprintf("Your carry potential (%.1f) suggests room for itemization improvement.", analysis.CarryPotential),
+			Category:            "itemization",
+			Title:               "Optimize Item Builds for Damage",
+			Description:         fmt.Sprintf("Your carry potential (%.1f) suggests room for itemization improvement.", analysis.CarryPotential),
 			ExpectedImprovement: "Optimized builds can increase damage output by 20-30%",
-			GamePhase:          []string{"mid", "late"},
-			ItemSuggestions:    []string{"Focus on core damage items first", "Consider situational damage items", "Avoid excessive defensive items early"},
+			GamePhase:           []string{"mid", "late"},
+			ItemSuggestions:     []string{"Focus on core damage items first", "Consider situational damage items", "Avoid excessive defensive items early"},
 		})
 	}
 
@@ -611,11 +611,11 @@ func (das *DamageAnalyticsService) generateDamageRecommendations(analysis *Damag
 	if analysis.LateGameDamage.RelativePerformance < 0.8 {
 		recommendations = append(recommendations, DamageRecommendation{
 			Priority:            "medium",
-			Category:           "scaling",
-			Title:              "Improve Late Game Scaling",
-			Description:        "Your late game damage falls off compared to your overall performance. Focus on scaling builds and positioning.",
+			Category:            "scaling",
+			Title:               "Improve Late Game Scaling",
+			Description:         "Your late game damage falls off compared to your overall performance. Focus on scaling builds and positioning.",
 			ExpectedImprovement: "Better scaling increases late game carry potential",
-			GamePhase:          []string{"late"},
+			GamePhase:           []string{"late"},
 		})
 	}
 
@@ -805,11 +805,11 @@ func (das *DamageAnalyticsService) calculateLinearRegression(values []float64) (
 	if len(values) < 2 {
 		return 0, 0
 	}
-	
+
 	// Linear regression calculation
 	n := float64(len(values))
 	sumX, sumY, sumXY, sumXX := 0.0, 0.0, 0.0, 0.0
-	
+
 	for i, y := range values {
 		x := float64(i)
 		sumX += x
@@ -817,29 +817,29 @@ func (das *DamageAnalyticsService) calculateLinearRegression(values []float64) (
 		sumXY += x * y
 		sumXX += x * x
 	}
-	
+
 	denominator := n*sumXX - sumX*sumX
 	if denominator == 0 {
 		return 0, 0
 	}
-	
+
 	slope = (n*sumXY - sumX*sumY) / denominator
-	
+
 	// Calculate R-squared
 	meanY := sumY / n
 	ssTotal, ssRes := 0.0, 0.0
-	
+
 	for i, y := range values {
 		predicted := slope*float64(i) + (sumY-slope*sumX)/n
 		ssTotal += (y - meanY) * (y - meanY)
 		ssRes += (y - predicted) * (y - predicted)
 	}
-	
+
 	confidence = 1 - (ssRes / ssTotal)
 	if confidence < 0 {
 		confidence = 0
 	}
-	
+
 	return slope, confidence
 }
 

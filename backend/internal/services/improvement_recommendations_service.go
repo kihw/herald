@@ -27,69 +27,69 @@ func NewImprovementRecommendationsService(db *gorm.DB, analyticsService *Analyti
 
 // ImprovementRecommendation represents a personalized improvement suggestion
 type ImprovementRecommendation struct {
-	ID                string                      `json:"id" gorm:"primaryKey"`
-	SummonerID        string                      `json:"summoner_id" gorm:"index"`
-	Category          string                      `json:"category"`          // mechanical, macro, mental, champion_specific, etc.
-	Priority          string                      `json:"priority"`          // critical, high, medium, low
-	Title             string                      `json:"title"`
-	Description       string                      `json:"description"`
-	ImpactScore       float64                     `json:"impact_score"`       // 0-100
-	DifficultyLevel   string                      `json:"difficulty_level"`   // easy, medium, hard, expert
-	TimeToSeeResults  int                         `json:"time_to_see_results"` // days
-	EstimatedROI      float64                     `json:"estimated_roi"`      // expected improvement %
-	
+	ID               string  `json:"id" gorm:"primaryKey"`
+	SummonerID       string  `json:"summoner_id" gorm:"index"`
+	Category         string  `json:"category"` // mechanical, macro, mental, champion_specific, etc.
+	Priority         string  `json:"priority"` // critical, high, medium, low
+	Title            string  `json:"title"`
+	Description      string  `json:"description"`
+	ImpactScore      float64 `json:"impact_score"`        // 0-100
+	DifficultyLevel  string  `json:"difficulty_level"`    // easy, medium, hard, expert
+	TimeToSeeResults int     `json:"time_to_see_results"` // days
+	EstimatedROI     float64 `json:"estimated_roi"`       // expected improvement %
+
 	// Detailed Action Plan
-	ActionPlan        ImprovementActionPlan       `json:"action_plan" gorm:"embedded"`
-	
+	ActionPlan ImprovementActionPlan `json:"action_plan" gorm:"embedded"`
+
 	// Progress Tracking
-	ProgressTracking  ProgressTrackingData        `json:"progress_tracking" gorm:"embedded"`
-	
+	ProgressTracking ProgressTrackingData `json:"progress_tracking" gorm:"embedded"`
+
 	// Context and Reasoning
-	RecommendationContext RecommendationContext   `json:"recommendation_context" gorm:"embedded"`
-	
+	RecommendationContext RecommendationContext `json:"recommendation_context" gorm:"embedded"`
+
 	// Metadata
-	CreatedAt         time.Time                   `json:"created_at"`
-	UpdatedAt         time.Time                   `json:"updated_at"`
-	ValidUntil        time.Time                   `json:"valid_until"`
-	Status            string                      `json:"status"` // active, completed, dismissed, expired
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ValidUntil time.Time `json:"valid_until"`
+	Status     string    `json:"status"` // active, completed, dismissed, expired
 }
 
 // ImprovementActionPlan contains the detailed steps to implement the recommendation
 type ImprovementActionPlan struct {
-	PrimaryObjective    string                    `json:"primary_objective"`
-	SecondaryObjectives []string                  `json:"secondary_objectives" gorm:"type:text"`
-	ActionSteps         []ActionStep              `json:"action_steps" gorm:"type:text"`
-	PracticeExercises   []PracticeExercise        `json:"practice_exercises" gorm:"type:text"`
-	Resources           []LearningResource        `json:"resources" gorm:"type:text"`
-	Milestones          []ImprovementMilestone    `json:"milestones" gorm:"type:text"`
-	SuccessMetrics      []string                  `json:"success_metrics" gorm:"type:text"`
+	PrimaryObjective    string                 `json:"primary_objective"`
+	SecondaryObjectives []string               `json:"secondary_objectives" gorm:"type:text"`
+	ActionSteps         []ActionStep           `json:"action_steps" gorm:"type:text"`
+	PracticeExercises   []PracticeExercise     `json:"practice_exercises" gorm:"type:text"`
+	Resources           []LearningResource     `json:"resources" gorm:"type:text"`
+	Milestones          []ImprovementMilestone `json:"milestones" gorm:"type:text"`
+	SuccessMetrics      []string               `json:"success_metrics" gorm:"type:text"`
 }
 
 // ActionStep represents a specific step in the improvement plan
 type ActionStep struct {
-	StepNumber    int    `json:"step_number"`
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	Duration      string `json:"duration"`      // e.g., "15 minutes daily"
-	Frequency     string `json:"frequency"`     // e.g., "daily", "3x per week"
+	StepNumber    int      `json:"step_number"`
+	Title         string   `json:"title"`
+	Description   string   `json:"description"`
+	Duration      string   `json:"duration"`  // e.g., "15 minutes daily"
+	Frequency     string   `json:"frequency"` // e.g., "daily", "3x per week"
 	Prerequisites []string `json:"prerequisites"`
-	Tools         []string `json:"tools"`       // practice tool, replay analysis, etc.
+	Tools         []string `json:"tools"` // practice tool, replay analysis, etc.
 }
 
 // PracticeExercise represents a specific practice routine
 type PracticeExercise struct {
-	Name          string   `json:"name"`
-	Description   string   `json:"description"`
-	Duration      int      `json:"duration"`      // minutes
-	Difficulty    string   `json:"difficulty"`
-	Focus         []string `json:"focus"`         // what skills this targets
-	Instructions  []string `json:"instructions"`
-	Variations    []string `json:"variations"`    // different ways to practice
+	Name         string   `json:"name"`
+	Description  string   `json:"description"`
+	Duration     int      `json:"duration"` // minutes
+	Difficulty   string   `json:"difficulty"`
+	Focus        []string `json:"focus"` // what skills this targets
+	Instructions []string `json:"instructions"`
+	Variations   []string `json:"variations"` // different ways to practice
 }
 
 // LearningResource represents educational content
 type LearningResource struct {
-	Type        string `json:"type"`         // video, guide, tool, coach
+	Type        string `json:"type"` // video, guide, tool, coach
 	Title       string `json:"title"`
 	URL         string `json:"url,omitempty"`
 	Description string `json:"description"`
@@ -109,34 +109,34 @@ type ImprovementMilestone struct {
 
 // ProgressTrackingData tracks the user's progress on recommendations
 type ProgressTrackingData struct {
-	OverallProgress     float64                  `json:"overall_progress"`      // 0-100
-	CompletedSteps      []int                    `json:"completed_steps" gorm:"type:text"`
-	CurrentMilestone    int                      `json:"current_milestone"`
-	MilestoneProgress   []MilestoneProgress      `json:"milestone_progress" gorm:"type:text"`
-	WeeklyProgress      []WeeklyProgressData     `json:"weekly_progress" gorm:"type:text"`
-	PerformanceImpact   PerformanceImpactData    `json:"performance_impact" gorm:"embedded"`
-	LastProgressUpdate  time.Time                `json:"last_progress_update"`
+	OverallProgress    float64               `json:"overall_progress"` // 0-100
+	CompletedSteps     []int                 `json:"completed_steps" gorm:"type:text"`
+	CurrentMilestone   int                   `json:"current_milestone"`
+	MilestoneProgress  []MilestoneProgress   `json:"milestone_progress" gorm:"type:text"`
+	WeeklyProgress     []WeeklyProgressData  `json:"weekly_progress" gorm:"type:text"`
+	PerformanceImpact  PerformanceImpactData `json:"performance_impact" gorm:"embedded"`
+	LastProgressUpdate time.Time             `json:"last_progress_update"`
 }
 
 // MilestoneProgress tracks progress on individual milestones
 type MilestoneProgress struct {
-	MilestoneNumber int       `json:"milestone_number"`
-	Progress        float64   `json:"progress"`     // 0-100
-	StartedAt       time.Time `json:"started_at"`
-	CompletedAt     *time.Time `json:"completed_at,omitempty"`
+	MilestoneNumber int                `json:"milestone_number"`
+	Progress        float64            `json:"progress"` // 0-100
+	StartedAt       time.Time          `json:"started_at"`
+	CompletedAt     *time.Time         `json:"completed_at,omitempty"`
 	CurrentMetrics  map[string]float64 `json:"current_metrics"`
 	TargetMetrics   map[string]float64 `json:"target_metrics"`
 }
 
 // WeeklyProgressData tracks weekly improvement metrics
 type WeeklyProgressData struct {
-	Week                int                    `json:"week"`
-	StartDate           time.Time              `json:"start_date"`
-	PracticeTimeMinutes int                    `json:"practice_time_minutes"`
-	GamesPlayed         int                    `json:"games_played"`
-	SkillImprovement    map[string]float64     `json:"skill_improvement"` // skill -> improvement delta
-	RankProgress        float64                `json:"rank_progress"`     // LP change
-	ConsistencyScore    float64                `json:"consistency_score"` // 0-100
+	Week                int                `json:"week"`
+	StartDate           time.Time          `json:"start_date"`
+	PracticeTimeMinutes int                `json:"practice_time_minutes"`
+	GamesPlayed         int                `json:"games_played"`
+	SkillImprovement    map[string]float64 `json:"skill_improvement"` // skill -> improvement delta
+	RankProgress        float64            `json:"rank_progress"`     // LP change
+	ConsistencyScore    float64            `json:"consistency_score"` // 0-100
 }
 
 // PerformanceImpactData measures the actual impact of following recommendations
@@ -144,19 +144,19 @@ type PerformanceImpactData struct {
 	BaselineMetrics    map[string]float64 `json:"baseline_metrics"`
 	CurrentMetrics     map[string]float64 `json:"current_metrics"`
 	ImprovementDeltas  map[string]float64 `json:"improvement_deltas"`
-	ROIActual          float64            `json:"roi_actual"`         // actual improvement %
-	ROIPredicted       float64            `json:"roi_predicted"`      // predicted improvement %
+	ROIActual          float64            `json:"roi_actual"`          // actual improvement %
+	ROIPredicted       float64            `json:"roi_predicted"`       // predicted improvement %
 	ConfidenceInterval float64            `json:"confidence_interval"` // prediction accuracy
 }
 
 // RecommendationContext provides context for why this recommendation was made
 type RecommendationContext struct {
-	TriggeringFactors   []string                 `json:"triggering_factors"`   // what led to this recommendation
-	DataSources         []string                 `json:"data_sources"`         // recent games, long-term trends, etc.
-	AnalysisDepth       string                   `json:"analysis_depth"`       // surface, moderate, deep
-	ConfidenceScore     float64                  `json:"confidence_score"`     // 0-100
-	AlternativeOptions  []AlternativeRecommendation `json:"alternative_options" gorm:"type:text"`
-	PersonalizationFactors PersonalizationData   `json:"personalization_factors" gorm:"embedded"`
+	TriggeringFactors      []string                    `json:"triggering_factors"` // what led to this recommendation
+	DataSources            []string                    `json:"data_sources"`       // recent games, long-term trends, etc.
+	AnalysisDepth          string                      `json:"analysis_depth"`     // surface, moderate, deep
+	ConfidenceScore        float64                     `json:"confidence_score"`   // 0-100
+	AlternativeOptions     []AlternativeRecommendation `json:"alternative_options" gorm:"type:text"`
+	PersonalizationFactors PersonalizationData         `json:"personalization_factors" gorm:"embedded"`
 }
 
 // AlternativeRecommendation represents other options the user could consider
@@ -170,27 +170,27 @@ type AlternativeRecommendation struct {
 
 // PersonalizationData contains factors used to personalize the recommendation
 type PersonalizationData struct {
-	PlayStyle           string             `json:"play_style"`
-	LearningStyle       string             `json:"learning_style"`     // visual, hands-on, analytical
-	TimeCommitment      string             `json:"time_commitment"`    // casual, moderate, intensive
-	CurrentRank         string             `json:"current_rank"`
-	MainRole            string             `json:"main_role"`
-	ChampionPool        []string           `json:"champion_pool" gorm:"type:text"`
-	WeakestAreas        []string           `json:"weakest_areas" gorm:"type:text"`
-	StrengthAreas       []string           `json:"strength_areas" gorm:"type:text"`
-	RecentPerformance   RecentPerfSummary  `json:"recent_performance" gorm:"embedded"`
-	Goals               []string           `json:"goals" gorm:"type:text"`
-	Preferences         UserPreferences    `json:"preferences" gorm:"embedded"`
+	PlayStyle         string            `json:"play_style"`
+	LearningStyle     string            `json:"learning_style"`  // visual, hands-on, analytical
+	TimeCommitment    string            `json:"time_commitment"` // casual, moderate, intensive
+	CurrentRank       string            `json:"current_rank"`
+	MainRole          string            `json:"main_role"`
+	ChampionPool      []string          `json:"champion_pool" gorm:"type:text"`
+	WeakestAreas      []string          `json:"weakest_areas" gorm:"type:text"`
+	StrengthAreas     []string          `json:"strength_areas" gorm:"type:text"`
+	RecentPerformance RecentPerfSummary `json:"recent_performance" gorm:"embedded"`
+	Goals             []string          `json:"goals" gorm:"type:text"`
+	Preferences       UserPreferences   `json:"preferences" gorm:"embedded"`
 }
 
 // RecentPerfSummary summarizes recent performance trends
 type RecentPerfSummary struct {
-	Games              int     `json:"games"`
-	WinRate            float64 `json:"win_rate"`
-	AverageKDA         float64 `json:"average_kda"`
-	ConsistencyRating  float64 `json:"consistency_rating"`
-	ImprovementTrend   string  `json:"improvement_trend"` // improving, stable, declining
-	ProblemAreas       []string `json:"problem_areas" gorm:"type:text"`
+	Games             int      `json:"games"`
+	WinRate           float64  `json:"win_rate"`
+	AverageKDA        float64  `json:"average_kda"`
+	ConsistencyRating float64  `json:"consistency_rating"`
+	ImprovementTrend  string   `json:"improvement_trend"` // improving, stable, declining
+	ProblemAreas      []string `json:"problem_areas" gorm:"type:text"`
 }
 
 // UserPreferences contains user-specific preferences for recommendations
@@ -198,7 +198,7 @@ type UserPreferences struct {
 	PreferredDifficulty string   `json:"preferred_difficulty"`
 	FocusAreas          []string `json:"focus_areas" gorm:"type:text"`
 	AvoidanceAreas      []string `json:"avoidance_areas" gorm:"type:text"`
-	PracticeStyle       string   `json:"practice_style"`    // structured, flexible, mixed
+	PracticeStyle       string   `json:"practice_style"`     // structured, flexible, mixed
 	FeedbackFrequency   string   `json:"feedback_frequency"` // daily, weekly, monthly
 }
 
@@ -239,93 +239,93 @@ type RecommendationOptions struct {
 
 // PlayerAnalysisResult contains comprehensive player analysis
 type PlayerAnalysisResult struct {
-	SummonerID           string                 `json:"summoner_id"`
-	AnalysisDate         time.Time              `json:"analysis_date"`
-	OverallRating        float64                `json:"overall_rating"`     // 0-100
-	SkillBreakdown       map[string]float64     `json:"skill_breakdown"`    // skill -> rating
-	ImprovementPotential map[string]float64     `json:"improvement_potential"` // skill -> potential gain
-	CriticalWeaknesses   []CriticalWeakness     `json:"critical_weaknesses"`
+	SummonerID             string                  `json:"summoner_id"`
+	AnalysisDate           time.Time               `json:"analysis_date"`
+	OverallRating          float64                 `json:"overall_rating"`        // 0-100
+	SkillBreakdown         map[string]float64      `json:"skill_breakdown"`       // skill -> rating
+	ImprovementPotential   map[string]float64      `json:"improvement_potential"` // skill -> potential gain
+	CriticalWeaknesses     []CriticalWeakness      `json:"critical_weaknesses"`
 	UnderutilizedStrengths []UnderutilizedStrength `json:"underutilized_strengths"`
-	PersonalizationData  PersonalizationData    `json:"personalization_data"`
-	RecentTrends         RecentTrendAnalysis    `json:"recent_trends"`
-	CompetitiveBenchmark CompetitiveBenchmark   `json:"competitive_benchmark"`
+	PersonalizationData    PersonalizationData     `json:"personalization_data"`
+	RecentTrends           RecentTrendAnalysis     `json:"recent_trends"`
+	CompetitiveBenchmark   CompetitiveBenchmark    `json:"competitive_benchmark"`
 }
 
 // CriticalWeakness represents a major area needing improvement
 type CriticalWeakness struct {
-	Area            string  `json:"area"`
-	Severity        string  `json:"severity"`        // critical, high, medium, low
-	ImpactOnWinRate float64 `json:"impact_on_winrate"` // estimated WR improvement if fixed
-	Frequency       float64 `json:"frequency"`       // how often this issue occurs
+	Area            string   `json:"area"`
+	Severity        string   `json:"severity"`          // critical, high, medium, low
+	ImpactOnWinRate float64  `json:"impact_on_winrate"` // estimated WR improvement if fixed
+	Frequency       float64  `json:"frequency"`         // how often this issue occurs
 	RootCauses      []string `json:"root_causes"`
-	QuickWins       []string `json:"quick_wins"`     // easy improvements
+	QuickWins       []string `json:"quick_wins"` // easy improvements
 }
 
 // UnderutilizedStrength represents strengths that could be leveraged more
 type UnderutilizedStrength struct {
 	Strength         string   `json:"strength"`
-	CurrentUsage     float64  `json:"current_usage"`     // 0-100
-	OptimalUsage     float64  `json:"optimal_usage"`     // 0-100
+	CurrentUsage     float64  `json:"current_usage"` // 0-100
+	OptimalUsage     float64  `json:"optimal_usage"` // 0-100
 	LeverageStrategy []string `json:"leverage_strategy"`
-	PotentialGain    float64  `json:"potential_gain"`    // estimated improvement
+	PotentialGain    float64  `json:"potential_gain"` // estimated improvement
 }
 
 // RecentTrendAnalysis analyzes recent performance trends
 type RecentTrendAnalysis struct {
-	TrendPeriodDays    int                    `json:"trend_period_days"`
-	OverallTrend       string                 `json:"overall_trend"` // improving, stable, declining
-	SkillTrends        map[string]string      `json:"skill_trends"`  // skill -> trend
-	ConsistencyTrend   string                 `json:"consistency_trend"`
-	PerformanceVolatility float64             `json:"performance_volatility"`
-	RecentBreakthroughs []RecentBreakthrough `json:"recent_breakthroughs"`
-	RecentStruggles     []RecentStruggle     `json:"recent_struggles"`
+	TrendPeriodDays       int                  `json:"trend_period_days"`
+	OverallTrend          string               `json:"overall_trend"` // improving, stable, declining
+	SkillTrends           map[string]string    `json:"skill_trends"`  // skill -> trend
+	ConsistencyTrend      string               `json:"consistency_trend"`
+	PerformanceVolatility float64              `json:"performance_volatility"`
+	RecentBreakthroughs   []RecentBreakthrough `json:"recent_breakthroughs"`
+	RecentStruggles       []RecentStruggle     `json:"recent_struggles"`
 }
 
 // RecentBreakthrough represents recent positive developments
 type RecentBreakthrough struct {
-	Area        string    `json:"area"`
-	Description string    `json:"description"`
-	Impact      float64   `json:"impact"`
-	Date        time.Time `json:"date"`
-	Sustainability string `json:"sustainability"` // high, medium, low
+	Area           string    `json:"area"`
+	Description    string    `json:"description"`
+	Impact         float64   `json:"impact"`
+	Date           time.Time `json:"date"`
+	Sustainability string    `json:"sustainability"` // high, medium, low
 }
 
 // RecentStruggle represents recent performance issues
 type RecentStruggle struct {
-	Area        string    `json:"area"`
-	Description string    `json:"description"`
-	Frequency   float64   `json:"frequency"`   // how often it happens
-	Severity    string    `json:"severity"`
-	Pattern     string    `json:"pattern"`     // situational, consistent, random
-	Trend       string    `json:"trend"`       // worsening, stable, improving
+	Area        string  `json:"area"`
+	Description string  `json:"description"`
+	Frequency   float64 `json:"frequency"` // how often it happens
+	Severity    string  `json:"severity"`
+	Pattern     string  `json:"pattern"` // situational, consistent, random
+	Trend       string  `json:"trend"`   // worsening, stable, improving
 }
 
 // CompetitiveBenchmark compares player to others at similar skill level
 type CompetitiveBenchmark struct {
-	RankTier                string             `json:"rank_tier"`
-	RegionalPercentile      float64            `json:"regional_percentile"`
-	SkillPercentiles        map[string]float64 `json:"skill_percentiles"`    // skill -> percentile
-	StrongerThanPeers       []string           `json:"stronger_than_peers"`
-	WeakerThanPeers         []string           `json:"weaker_than_peers"`
-	CompetitiveAdvantages   []string           `json:"competitive_advantages"`
-	CompetitiveDisadvantages []string          `json:"competitive_disadvantages"`
+	RankTier                 string             `json:"rank_tier"`
+	RegionalPercentile       float64            `json:"regional_percentile"`
+	SkillPercentiles         map[string]float64 `json:"skill_percentiles"` // skill -> percentile
+	StrongerThanPeers        []string           `json:"stronger_than_peers"`
+	WeakerThanPeers          []string           `json:"weaker_than_peers"`
+	CompetitiveAdvantages    []string           `json:"competitive_advantages"`
+	CompetitiveDisadvantages []string           `json:"competitive_disadvantages"`
 }
 
 // analyzePlayerPerformance conducts comprehensive player analysis
 func (s *ImprovementRecommendationsService) analyzePlayerPerformance(summonerID string) (*PlayerAnalysisResult, error) {
 	// This would integrate with all other analytics services
 	// For now, return mock analysis data
-	
+
 	analysis := &PlayerAnalysisResult{
-		SummonerID:   summonerID,
-		AnalysisDate: time.Now(),
+		SummonerID:    summonerID,
+		AnalysisDate:  time.Now(),
 		OverallRating: 72.5,
 		SkillBreakdown: map[string]float64{
 			"mechanical_skill":  68.0,
 			"game_knowledge":    75.0,
 			"map_awareness":     65.0,
 			"team_fighting":     78.0,
-			"laning":           70.0,
+			"laning":            70.0,
 			"objective_control": 73.0,
 			"vision_control":    60.0,
 			"positioning":       72.0,
@@ -338,7 +338,7 @@ func (s *ImprovementRecommendationsService) analyzePlayerPerformance(summonerID 
 			"mechanical_skill":  15.0,
 			"positioning":       12.0,
 			"mental_resilience": 12.0,
-			"laning":           10.0,
+			"laning":            10.0,
 			"objective_control": 8.0,
 			"decision_making":   7.0,
 			"game_knowledge":    5.0,
@@ -372,14 +372,14 @@ func (s *ImprovementRecommendationsService) analyzePlayerPerformance(summonerID 
 			},
 		},
 		PersonalizationData: PersonalizationData{
-			PlayStyle:         "teamfight_oriented",
-			LearningStyle:     "hands_on",
-			TimeCommitment:    "moderate",
-			CurrentRank:       "Gold II",
-			MainRole:          "ADC",
-			ChampionPool:      []string{"Jinx", "Kai'Sa", "Ezreal"},
-			WeakestAreas:      []string{"vision_control", "map_awareness", "positioning"},
-			StrengthAreas:     []string{"team_fighting", "decision_making", "game_knowledge"},
+			PlayStyle:      "teamfight_oriented",
+			LearningStyle:  "hands_on",
+			TimeCommitment: "moderate",
+			CurrentRank:    "Gold II",
+			MainRole:       "ADC",
+			ChampionPool:   []string{"Jinx", "Kai'Sa", "Ezreal"},
+			WeakestAreas:   []string{"vision_control", "map_awareness", "positioning"},
+			StrengthAreas:  []string{"team_fighting", "decision_making", "game_knowledge"},
 			RecentPerformance: RecentPerfSummary{
 				Games:             20,
 				WinRate:           58.0,
@@ -397,8 +397,8 @@ func (s *ImprovementRecommendationsService) analyzePlayerPerformance(summonerID 
 			},
 		},
 		RecentTrends: RecentTrendAnalysis{
-			TrendPeriodDays:    14,
-			OverallTrend:       "improving",
+			TrendPeriodDays: 14,
+			OverallTrend:    "improving",
 			SkillTrends: map[string]string{
 				"vision_control": "improving",
 				"team_fighting":  "stable",
@@ -411,14 +411,14 @@ func (s *ImprovementRecommendationsService) analyzePlayerPerformance(summonerID 
 			RankTier:           "Gold II",
 			RegionalPercentile: 68.5,
 			SkillPercentiles: map[string]float64{
-				"team_fighting":     82.0, // above average
-				"decision_making":   75.0,
-				"game_knowledge":    73.0,
-				"vision_control":    45.0, // below average
-				"map_awareness":     52.0,
+				"team_fighting":   82.0, // above average
+				"decision_making": 75.0,
+				"game_knowledge":  73.0,
+				"vision_control":  45.0, // below average
+				"map_awareness":   52.0,
 			},
-			StrongerThanPeers:    []string{"team_fighting", "decision_making"},
-			WeakerThanPeers:      []string{"vision_control", "map_awareness"},
+			StrongerThanPeers: []string{"team_fighting", "decision_making"},
+			WeakerThanPeers:   []string{"vision_control", "map_awareness"},
 		},
 	}
 
@@ -490,10 +490,10 @@ func (s *ImprovementRecommendationsService) createWeaknessRecommendation(analysi
 
 	// Set recommendation context
 	rec.RecommendationContext = RecommendationContext{
-		TriggeringFactors: weakness.RootCauses,
-		DataSources:       []string{"recent_matches", "skill_analysis", "competitive_benchmark"},
-		AnalysisDepth:     "deep",
-		ConfidenceScore:   85.0,
+		TriggeringFactors:      weakness.RootCauses,
+		DataSources:            []string{"recent_matches", "skill_analysis", "competitive_benchmark"},
+		AnalysisDepth:          "deep",
+		ConfidenceScore:        85.0,
 		PersonalizationFactors: analysis.PersonalizationData,
 	}
 
@@ -577,7 +577,7 @@ func (s *ImprovementRecommendationsService) calculateDifficultyLevel(area string
 	if personalData.PreferredDifficulty == "easy" {
 		return "easy"
 	}
-	
+
 	// Some areas are inherently more difficult
 	hardAreas := []string{"decision_making", "macro_play", "shot_calling"}
 	for _, hardArea := range hardAreas {
@@ -585,24 +585,24 @@ func (s *ImprovementRecommendationsService) calculateDifficultyLevel(area string
 			return "hard"
 		}
 	}
-	
+
 	return "medium"
 }
 
 func (s *ImprovementRecommendationsService) estimateTimeToResults(area string, severity string) int {
 	baseTime := map[string]int{
-		"vision_control":    7,  // quick wins possible
-		"map_awareness":     14, // habit formation
-		"positioning":       21, // muscle memory
-		"mechanical_skill":  28, // practice intensive
-		"decision_making":   35, // experience needed
+		"vision_control":   7,  // quick wins possible
+		"map_awareness":    14, // habit formation
+		"positioning":      21, // muscle memory
+		"mechanical_skill": 28, // practice intensive
+		"decision_making":  35, // experience needed
 	}
-	
+
 	days := baseTime[area]
 	if days == 0 {
 		days = 14 // default
 	}
-	
+
 	// Adjust based on severity
 	switch severity {
 	case "critical":
@@ -610,14 +610,14 @@ func (s *ImprovementRecommendationsService) estimateTimeToResults(area string, s
 	case "high":
 		days = int(float64(days) * 1.2)
 	}
-	
+
 	return days
 }
 
 func (s *ImprovementRecommendationsService) createActionPlan(area string, personalData PersonalizationData) ImprovementActionPlan {
 	// This would create detailed, personalized action plans based on the weakness area
 	// For brevity, returning a template plan
-	
+
 	plan := ImprovementActionPlan{
 		PrimaryObjective: fmt.Sprintf("Significantly improve %s performance", area),
 		ActionSteps: []ActionStep{
@@ -660,7 +660,7 @@ func (s *ImprovementRecommendationsService) createActionPlan(area string, person
 func (s *ImprovementRecommendationsService) createTrendBasedRecommendations(analysis *PlayerAnalysisResult) []*ImprovementRecommendation {
 	// Create recommendations based on recent trends
 	var recommendations []*ImprovementRecommendation
-	
+
 	// Example: if positioning is declining, create a recommendation to address it
 	if analysis.RecentTrends.SkillTrends["positioning"] == "declining" {
 		rec := &ImprovementRecommendation{
@@ -679,14 +679,14 @@ func (s *ImprovementRecommendationsService) createTrendBasedRecommendations(anal
 		}
 		recommendations = append(recommendations, rec)
 	}
-	
+
 	return recommendations
 }
 
 func (s *ImprovementRecommendationsService) createGeneralImprovementRecommendations(analysis *PlayerAnalysisResult) []*ImprovementRecommendation {
 	// Create general recommendations based on rank and role
 	var recommendations []*ImprovementRecommendation
-	
+
 	// Add mental resilience recommendation for all players
 	rec := &ImprovementRecommendation{
 		ID:               fmt.Sprintf("general_%s_mental", analysis.SummonerID),
@@ -702,9 +702,9 @@ func (s *ImprovementRecommendationsService) createGeneralImprovementRecommendati
 		CreatedAt:        time.Now(),
 		Status:           "active",
 	}
-	
+
 	recommendations = append(recommendations, rec)
-	
+
 	return recommendations
 }
 
@@ -716,18 +716,18 @@ func (s *ImprovementRecommendationsService) rankRecommendations(recommendations 
 		if priorityOrder[recommendations[i].Priority] != priorityOrder[recommendations[j].Priority] {
 			return priorityOrder[recommendations[i].Priority] > priorityOrder[recommendations[j].Priority]
 		}
-		
+
 		// Secondary sort by impact score
 		return recommendations[i].ImpactScore > recommendations[j].ImpactScore
 	})
-	
+
 	return recommendations
 }
 
 // applyUserPreferences filters and adjusts recommendations based on user preferences
 func (s *ImprovementRecommendationsService) applyUserPreferences(recommendations []*ImprovementRecommendation, personalData PersonalizationData) []*ImprovementRecommendation {
 	var filtered []*ImprovementRecommendation
-	
+
 	for _, rec := range recommendations {
 		// Check if recommendation matches user's focus areas
 		if len(personalData.Preferences.FocusAreas) > 0 {
@@ -742,7 +742,7 @@ func (s *ImprovementRecommendationsService) applyUserPreferences(recommendations
 				continue
 			}
 		}
-		
+
 		// Check if recommendation is in avoidance areas
 		avoid := false
 		for _, avoidArea := range personalData.Preferences.AvoidanceAreas {
@@ -754,7 +754,7 @@ func (s *ImprovementRecommendationsService) applyUserPreferences(recommendations
 		if avoid {
 			continue
 		}
-		
+
 		// Check difficulty preference
 		if personalData.Preferences.PreferredDifficulty != "" && rec.DifficultyLevel != personalData.Preferences.PreferredDifficulty {
 			// Allow recommendations one level up or down from preferred difficulty
@@ -765,10 +765,10 @@ func (s *ImprovementRecommendationsService) applyUserPreferences(recommendations
 				continue
 			}
 		}
-		
+
 		filtered = append(filtered, rec)
 	}
-	
+
 	return filtered
 }
 
@@ -778,7 +778,7 @@ func (s *ImprovementRecommendationsService) GetRecommendationProgress(recommenda
 	if err := s.db.Where("id = ?", recommendationID).First(&rec).Error; err != nil {
 		return nil, fmt.Errorf("recommendation not found: %w", err)
 	}
-	
+
 	return &rec.ProgressTracking, nil
 }
 
@@ -794,11 +794,11 @@ func (s *ImprovementRecommendationsService) UpdateRecommendationProgress(recomme
 // GetActiveRecommendations gets all active recommendations for a summoner
 func (s *ImprovementRecommendationsService) GetActiveRecommendations(summonerID string) ([]*ImprovementRecommendation, error) {
 	var recommendations []*ImprovementRecommendation
-	err := s.db.Where("summoner_id = ? AND status = ? AND valid_until > ?", 
+	err := s.db.Where("summoner_id = ? AND status = ? AND valid_until > ?",
 		summonerID, "active", time.Now()).
 		Order("priority DESC, impact_score DESC").
 		Find(&recommendations).Error
-	
+
 	return recommendations, err
 }
 

@@ -13,18 +13,18 @@ func DefaultSummonerServiceConfig() *SummonerServiceConfig {
 		DefaultAnalysisDepth: 20,
 		CacheAnalyticsTTL:    30 * time.Minute,
 		CacheSummonerTTL:     15 * time.Minute,
-		
+
 		// Performance settings
-		AnalysisTimeout:       2 * time.Minute,  // <5s target but allow buffer for complex analysis
+		AnalysisTimeout:       2 * time.Minute, // <5s target but allow buffer for complex analysis
 		MaxConcurrentAnalysis: 10,
 		EnableProgressTrack:   true,
-		
+
 		// Feature flags
 		EnableLiveGameAnalysis: true,
-		EnablePredictions:     true,
-		EnableComparisons:     true,
-		EnableCoaching:        true,
-		
+		EnablePredictions:      true,
+		EnableComparisons:      true,
+		EnableCoaching:         true,
+
 		// Queue preferences (prioritized by importance)
 		PrioritizedQueues: []int{
 			420, // Ranked Solo/Duo (highest priority)
@@ -33,16 +33,16 @@ func DefaultSummonerServiceConfig() *SummonerServiceConfig {
 			400, // Normal Draft Pick
 			450, // ARAM
 		},
-		
+
 		// Queue weights for analysis
 		QueueWeights: map[int]float64{
-			420: 1.0,  // Ranked Solo/Duo - full weight
-			440: 0.8,  // Ranked Flex - high weight
-			430: 0.4,  // Normal Blind - medium weight
-			400: 0.5,  // Normal Draft - medium weight
-			450: 0.3,  // ARAM - lower weight
+			420: 1.0, // Ranked Solo/Duo - full weight
+			440: 0.8, // Ranked Flex - high weight
+			430: 0.4, // Normal Blind - medium weight
+			400: 0.5, // Normal Draft - medium weight
+			450: 0.3, // ARAM - lower weight
 		},
-		
+
 		// Analysis limits by subscription tier
 		TierAnalysisLimits: map[string]int{
 			"free":       10,  // 10 matches for free users
@@ -57,15 +57,15 @@ func DefaultSummonerServiceConfig() *SummonerServiceConfig {
 func GetAnalysisProfileConfig() map[string]*AnalysisProfileConfig {
 	return map[string]*AnalysisProfileConfig{
 		"basic": {
-			Name:                "Basic Analysis",
-			MatchLimit:          10,
-			IncludeLiveGame:     false,
-			IncludePredictions:  false,
-			IncludeComparisons:  false,
-			IncludeCoaching:     false,
-			ProcessingPriority:  1,
-			CacheDuration:       60 * time.Minute,
-			EstimatedTime:       "5-10 seconds",
+			Name:               "Basic Analysis",
+			MatchLimit:         10,
+			IncludeLiveGame:    false,
+			IncludePredictions: false,
+			IncludeComparisons: false,
+			IncludeCoaching:    false,
+			ProcessingPriority: 1,
+			CacheDuration:      60 * time.Minute,
+			EstimatedTime:      "5-10 seconds",
 			Features: []string{
 				"Core metrics calculation",
 				"Basic champion statistics",
@@ -73,15 +73,15 @@ func GetAnalysisProfileConfig() map[string]*AnalysisProfileConfig {
 			},
 		},
 		"standard": {
-			Name:                "Standard Analysis",
-			MatchLimit:          25,
-			IncludeLiveGame:     true,
-			IncludePredictions:  false,
-			IncludeComparisons:  true,
-			IncludeCoaching:     false,
-			ProcessingPriority:  2,
-			CacheDuration:       30 * time.Minute,
-			EstimatedTime:       "10-20 seconds",
+			Name:               "Standard Analysis",
+			MatchLimit:         25,
+			IncludeLiveGame:    true,
+			IncludePredictions: false,
+			IncludeComparisons: true,
+			IncludeCoaching:    false,
+			ProcessingPriority: 2,
+			CacheDuration:      30 * time.Minute,
+			EstimatedTime:      "10-20 seconds",
 			Features: []string{
 				"Detailed metrics analysis",
 				"Role performance breakdown",
@@ -91,15 +91,15 @@ func GetAnalysisProfileConfig() map[string]*AnalysisProfileConfig {
 			},
 		},
 		"detailed": {
-			Name:                "Detailed Analysis", 
-			MatchLimit:          50,
-			IncludeLiveGame:     true,
-			IncludePredictions:  true,
-			IncludeComparisons:  true,
-			IncludeCoaching:     true,
-			ProcessingPriority:  3,
-			CacheDuration:       15 * time.Minute,
-			EstimatedTime:       "20-45 seconds",
+			Name:               "Detailed Analysis",
+			MatchLimit:         50,
+			IncludeLiveGame:    true,
+			IncludePredictions: true,
+			IncludeComparisons: true,
+			IncludeCoaching:    true,
+			ProcessingPriority: 3,
+			CacheDuration:      15 * time.Minute,
+			EstimatedTime:      "20-45 seconds",
 			Features: []string{
 				"Comprehensive performance analysis",
 				"AI-powered insights and coaching",
@@ -110,15 +110,15 @@ func GetAnalysisProfileConfig() map[string]*AnalysisProfileConfig {
 			},
 		},
 		"professional": {
-			Name:                "Professional Analysis",
-			MatchLimit:          100,
-			IncludeLiveGame:     true,
-			IncludePredictions:  true,
-			IncludeComparisons:  true,
-			IncludeCoaching:     true,
-			ProcessingPriority:  5,
-			CacheDuration:       10 * time.Minute,
-			EstimatedTime:       "45-90 seconds",
+			Name:               "Professional Analysis",
+			MatchLimit:         100,
+			IncludeLiveGame:    true,
+			IncludePredictions: true,
+			IncludeComparisons: true,
+			IncludeCoaching:    true,
+			ProcessingPriority: 5,
+			CacheDuration:      10 * time.Minute,
+			EstimatedTime:      "45-90 seconds",
 			Features: []string{
 				"Complete professional-grade analysis",
 				"Advanced AI coaching and insights",
@@ -134,28 +134,28 @@ func GetAnalysisProfileConfig() map[string]*AnalysisProfileConfig {
 
 // AnalysisProfileConfig contains configuration for analysis profiles
 type AnalysisProfileConfig struct {
-	Name                string        `json:"name"`
-	MatchLimit          int           `json:"match_limit"`
-	IncludeLiveGame     bool          `json:"include_live_game"`
-	IncludePredictions  bool          `json:"include_predictions"`
-	IncludeComparisons  bool          `json:"include_comparisons"`
-	IncludeCoaching     bool          `json:"include_coaching"`
-	ProcessingPriority  int           `json:"processing_priority"`
-	CacheDuration       time.Duration `json:"cache_duration"`
-	EstimatedTime       string        `json:"estimated_time"`
-	Features            []string      `json:"features"`
+	Name               string        `json:"name"`
+	MatchLimit         int           `json:"match_limit"`
+	IncludeLiveGame    bool          `json:"include_live_game"`
+	IncludePredictions bool          `json:"include_predictions"`
+	IncludeComparisons bool          `json:"include_comparisons"`
+	IncludeCoaching    bool          `json:"include_coaching"`
+	ProcessingPriority int           `json:"processing_priority"`
+	CacheDuration      time.Duration `json:"cache_duration"`
+	EstimatedTime      string        `json:"estimated_time"`
+	Features           []string      `json:"features"`
 }
 
 // GetSubscriptionTierFeatures returns available features by subscription tier
 func GetSubscriptionTierFeatures() map[string]*TierFeatures {
 	return map[string]*TierFeatures{
 		"free": {
-			Tier:                "Free",
-			MaxAnalysisPerDay:   5,
-			MaxMatchesAnalyzed:  10,
-			AnalysisProfiles:    []string{"basic"},
+			Tier:               "Free",
+			MaxAnalysisPerDay:  5,
+			MaxMatchesAnalyzed: 10,
+			AnalysisProfiles:   []string{"basic"},
 			Features: TierFeatureFlags{
-				LiveGameAnalysis:    false,
+				LiveGameAnalysis:   false,
 				AIInsights:         false,
 				PredictiveAnalysis: false,
 				Comparisons:        false,
@@ -171,12 +171,12 @@ func GetSubscriptionTierFeatures() map[string]*TierFeatures {
 			},
 		},
 		"premium": {
-			Tier:                "Premium",
-			MaxAnalysisPerDay:   25,
-			MaxMatchesAnalyzed:  25,
-			AnalysisProfiles:    []string{"basic", "standard"},
+			Tier:               "Premium",
+			MaxAnalysisPerDay:  25,
+			MaxMatchesAnalyzed: 25,
+			AnalysisProfiles:   []string{"basic", "standard"},
 			Features: TierFeatureFlags{
-				LiveGameAnalysis:    true,
+				LiveGameAnalysis:   true,
 				AIInsights:         true,
 				PredictiveAnalysis: false,
 				Comparisons:        true,
@@ -192,12 +192,12 @@ func GetSubscriptionTierFeatures() map[string]*TierFeatures {
 			},
 		},
 		"pro": {
-			Tier:                "Pro",
-			MaxAnalysisPerDay:   100,
-			MaxMatchesAnalyzed:  50,
-			AnalysisProfiles:    []string{"basic", "standard", "detailed"},
+			Tier:               "Pro",
+			MaxAnalysisPerDay:  100,
+			MaxMatchesAnalyzed: 50,
+			AnalysisProfiles:   []string{"basic", "standard", "detailed"},
 			Features: TierFeatureFlags{
-				LiveGameAnalysis:    true,
+				LiveGameAnalysis:   true,
 				AIInsights:         true,
 				PredictiveAnalysis: true,
 				Comparisons:        true,
@@ -213,12 +213,12 @@ func GetSubscriptionTierFeatures() map[string]*TierFeatures {
 			},
 		},
 		"enterprise": {
-			Tier:                "Enterprise",
-			MaxAnalysisPerDay:   -1, // Unlimited
-			MaxMatchesAnalyzed:  100,
-			AnalysisProfiles:    []string{"basic", "standard", "detailed", "professional"},
+			Tier:               "Enterprise",
+			MaxAnalysisPerDay:  -1, // Unlimited
+			MaxMatchesAnalyzed: 100,
+			AnalysisProfiles:   []string{"basic", "standard", "detailed", "professional"},
 			Features: TierFeatureFlags{
-				LiveGameAnalysis:    true,
+				LiveGameAnalysis:   true,
 				AIInsights:         true,
 				PredictiveAnalysis: true,
 				Comparisons:        true,
@@ -238,17 +238,17 @@ func GetSubscriptionTierFeatures() map[string]*TierFeatures {
 
 // TierFeatures contains features available for each subscription tier
 type TierFeatures struct {
-	Tier                string             `json:"tier"`
-	MaxAnalysisPerDay   int                `json:"max_analysis_per_day"`   // -1 for unlimited
-	MaxMatchesAnalyzed  int                `json:"max_matches_analyzed"`
-	AnalysisProfiles    []string           `json:"analysis_profiles"`
-	Features            TierFeatureFlags   `json:"features"`
-	RateLimit           *TierRateLimit     `json:"rate_limit"`
+	Tier               string           `json:"tier"`
+	MaxAnalysisPerDay  int              `json:"max_analysis_per_day"` // -1 for unlimited
+	MaxMatchesAnalyzed int              `json:"max_matches_analyzed"`
+	AnalysisProfiles   []string         `json:"analysis_profiles"`
+	Features           TierFeatureFlags `json:"features"`
+	RateLimit          *TierRateLimit   `json:"rate_limit"`
 }
 
 // TierFeatureFlags contains feature flags for subscription tiers
 type TierFeatureFlags struct {
-	LiveGameAnalysis    bool `json:"live_game_analysis"`
+	LiveGameAnalysis   bool `json:"live_game_analysis"`
 	AIInsights         bool `json:"ai_insights"`
 	PredictiveAnalysis bool `json:"predictive_analysis"`
 	Comparisons        bool `json:"comparisons"`
@@ -372,7 +372,7 @@ func GetPerformanceTargets() *PerformanceTargets {
 		},
 		ConcurrentUserTarget: 1000,
 		ThroughputTarget: map[string]int{
-			"requests_per_second":  100,
+			"requests_per_second": 100,
 			"analysis_per_minute": 300,
 		},
 		AvailabilityTarget: 0.999, // 99.9%
@@ -394,16 +394,16 @@ type PerformanceTargets struct {
 // GetMonitoringConfig returns monitoring configuration
 func GetMonitoringConfig() *MonitoringConfig {
 	return &MonitoringConfig{
-		MetricsEnabled:     true,
-		TracingEnabled:     true,
-		LoggingLevel:      "info",
+		MetricsEnabled:      true,
+		TracingEnabled:      true,
+		LoggingLevel:        "info",
 		HealthCheckInterval: 30 * time.Second,
 		AlertThresholds: &AlertThresholds{
-			HighLatency:       5 * time.Second,
-			HighErrorRate:     0.05, // 5%
-			LowCacheHitRate:   0.50, // 50%
-			HighMemoryUsage:   0.85, // 85%
-			HighCPUUsage:      0.80, // 80%
+			HighLatency:     5 * time.Second,
+			HighErrorRate:   0.05, // 5%
+			LowCacheHitRate: 0.50, // 50%
+			HighMemoryUsage: 0.85, // 85%
+			HighCPUUsage:    0.80, // 80%
 		},
 		MetricsRetention: 7 * 24 * time.Hour, // 7 days
 	}
@@ -413,7 +413,7 @@ func GetMonitoringConfig() *MonitoringConfig {
 type MonitoringConfig struct {
 	MetricsEnabled      bool             `json:"metrics_enabled"`
 	TracingEnabled      bool             `json:"tracing_enabled"`
-	LoggingLevel       string           `json:"logging_level"`
+	LoggingLevel        string           `json:"logging_level"`
 	HealthCheckInterval time.Duration    `json:"health_check_interval"`
 	AlertThresholds     *AlertThresholds `json:"alert_thresholds"`
 	MetricsRetention    time.Duration    `json:"metrics_retention"`
@@ -421,11 +421,11 @@ type MonitoringConfig struct {
 
 // AlertThresholds contains alerting thresholds
 type AlertThresholds struct {
-	HighLatency       time.Duration `json:"high_latency"`
-	HighErrorRate     float64       `json:"high_error_rate"`
-	LowCacheHitRate   float64       `json:"low_cache_hit_rate"`
-	HighMemoryUsage   float64       `json:"high_memory_usage"`
-	HighCPUUsage      float64       `json:"high_cpu_usage"`
+	HighLatency     time.Duration `json:"high_latency"`
+	HighErrorRate   float64       `json:"high_error_rate"`
+	LowCacheHitRate float64       `json:"low_cache_hit_rate"`
+	HighMemoryUsage float64       `json:"high_memory_usage"`
+	HighCPUUsage    float64       `json:"high_cpu_usage"`
 }
 
 // GetFeatureFlags returns current feature flags
@@ -437,10 +437,10 @@ func GetFeatureFlags() *FeatureFlags {
 		EnableRealTimeUpdates:   true,
 		EnableComparisons:       true,
 		EnablePredictions:       true,
-		EnableCoaching:         true,
-		EnableTeamAnalysis:     true,
-		EnableMetaAnalysis:     true,
-		EnableAutoRefresh:      true,
+		EnableCoaching:          true,
+		EnableTeamAnalysis:      true,
+		EnableMetaAnalysis:      true,
+		EnableAutoRefresh:       true,
 	}
 }
 
@@ -452,8 +452,8 @@ type FeatureFlags struct {
 	EnableRealTimeUpdates   bool `json:"enable_real_time_updates"`
 	EnableComparisons       bool `json:"enable_comparisons"`
 	EnablePredictions       bool `json:"enable_predictions"`
-	EnableCoaching         bool `json:"enable_coaching"`
-	EnableTeamAnalysis     bool `json:"enable_team_analysis"`
-	EnableMetaAnalysis     bool `json:"enable_meta_analysis"`
-	EnableAutoRefresh      bool `json:"enable_auto_refresh"`
+	EnableCoaching          bool `json:"enable_coaching"`
+	EnableTeamAnalysis      bool `json:"enable_team_analysis"`
+	EnableMetaAnalysis      bool `json:"enable_meta_analysis"`
+	EnableAutoRefresh       bool `json:"enable_auto_refresh"`
 }

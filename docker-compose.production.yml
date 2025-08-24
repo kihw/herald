@@ -1,0 +1,224 @@
+# Herald.lol Gaming Analytics Platform - Production Docker Compose
+# VPS deployment configuration for gaming analytics services
+
+version: '3.8'
+
+networks:
+  herald-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  nginx_logs:
+    driver: local
+
+services:
+  # PostgreSQL Database for Gaming Data
+  herald-postgres:
+    image: postgres:15-alpine
+    container_name: herald-postgres-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: herald_gaming
+      POSTGRES_USER: herald_admin
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:5432:5432"
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c work_mem=4MB
+      -c random_page_cost=1.1
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U herald_admin -d herald_gaming"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cluster for Gaming Sessions
+  herald-redis:
+    image: redis:7-alpine
+    container_name: herald-redis-prod
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Herald Gaming API Server
+  herald-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: herald-api-prod
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - DB_HOST=herald-postgres
+      - DB_PORT=5432
+      - DB_USER=herald_admin
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=herald_gaming
+      - REDIS_HOST=herald-redis
+      - REDIS_PORT=6379
+      - RIOT_API_KEY=${RIOT_API_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=8080
+      - GIN_MODE=release
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      herald-postgres:
+        condition: service_healthy
+      herald-redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Herald gRPC Server
+  herald-grpc:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: herald-grpc-prod
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=production
+      - DB_HOST=herald-postgres
+      - DB_PORT=5432
+      - DB_USER=herald_admin
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=herald_gaming
+      - REDIS_HOST=herald-redis
+      - REDIS_PORT=6379
+      - RIOT_API_KEY=${RIOT_API_KEY}
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:50051:50051"
+    depends_on:
+      herald-postgres:
+        condition: service_healthy
+      herald-redis:
+        condition: service_healthy
+    command: ["/app/grpc-server", "-host", "0.0.0.0", "-port", "50051"]
+
+  # Herald Frontend Application
+  herald-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: herald-frontend-prod
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - VITE_API_URL=https://api.herald.lol
+      - VITE_WS_URL=wss://ws.herald.lol
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:3000:5173"
+
+  # Nginx Reverse Proxy
+  herald-nginx:
+    image: nginx:alpine
+    container_name: herald-nginx-prod
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx.production.conf:/etc/nginx/nginx.conf:ro
+      - nginx_logs:/var/log/nginx
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    networks:
+      - herald-network
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - herald-api
+      - herald-frontend
+
+  # Prometheus Monitoring
+  herald-prometheus:
+    image: prom/prometheus:latest
+    container_name: herald-prometheus-prod
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.dev.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+
+  # Grafana Dashboard
+  herald-grafana:
+    image: grafana/grafana:latest
+    container_name: herald-grafana-prod
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=herald_admin
+      - GF_SERVER_ROOT_URL=https://monitoring.herald.lol
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:3001:3000"
+    depends_on:
+      - herald-prometheus
+
+  # Node Exporter for System Metrics
+  herald-node-exporter:
+    image: prom/node-exporter:latest
+    container_name: herald-node-exporter-prod
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - herald-network
+    ports:
+      - "127.0.0.1:9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'

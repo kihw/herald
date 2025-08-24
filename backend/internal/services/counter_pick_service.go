@@ -8,8 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/herald-lol/herald/backend/internal/models"
 	"gorm.io/gorm"
-	"github.com/herald-lol/backend/internal/models"
 )
 
 type CounterPickService struct {
@@ -28,53 +28,53 @@ func NewCounterPickService(db *gorm.DB, analyticsService *AnalyticsService, meta
 
 // Core Data Structures
 type CounterPickAnalysis struct {
-	ID                string                    `json:"id"`
-	TargetChampion    string                    `json:"targetChampion"`
-	TargetRole        string                    `json:"targetRole"`
-	CounterPicks      []CounterPickSuggestion   `json:"counterPicks"`
-	LaneCounters      []LaneCounterData         `json:"laneCounters"`
-	TeamFightCounters []TeamFightCounterData    `json:"teamFightCounters"`
-	ItemCounters      []ItemCounterData         `json:"itemCounters"`
-	PlayStyleCounters []PlayStyleCounterData    `json:"playStyleCounters"`
-	MetaContext       CounterMetaContext        `json:"metaContext"`
-	Confidence        float64                   `json:"confidence"`
-	CreatedAt         time.Time                 `json:"createdAt"`
+	ID                string                  `json:"id"`
+	TargetChampion    string                  `json:"targetChampion"`
+	TargetRole        string                  `json:"targetRole"`
+	CounterPicks      []CounterPickSuggestion `json:"counterPicks"`
+	LaneCounters      []LaneCounterData       `json:"laneCounters"`
+	TeamFightCounters []TeamFightCounterData  `json:"teamFightCounters"`
+	ItemCounters      []ItemCounterData       `json:"itemCounters"`
+	PlayStyleCounters []PlayStyleCounterData  `json:"playStyleCounters"`
+	MetaContext       CounterMetaContext      `json:"metaContext"`
+	Confidence        float64                 `json:"confidence"`
+	CreatedAt         time.Time               `json:"createdAt"`
 }
 
 type CounterPickSuggestion struct {
-	Champion           string                 `json:"champion"`
-	CounterStrength    float64               `json:"counterStrength"` // 0-100
-	WinRateAdvantage   float64               `json:"winRateAdvantage"`
-	LaneAdvantage      float64               `json:"laneAdvantage"`
-	TeamFightAdvantage float64               `json:"teamFightAdvantage"`
-	ScalingAdvantage   float64               `json:"scalingAdvantage"`
-	CounterReasons     []string              `json:"counterReasons"`
-	PlayingTips        []string              `json:"playingTips"`
-	ItemRecommendations []string             `json:"itemRecommendations"`
-	PowerSpikes        []PowerSpikeData      `json:"powerSpikes"`
-	Weaknesses         []CounterWeakness     `json:"weaknesses"`
-	MatchupDifficulty  string                `json:"matchupDifficulty"` // easy, moderate, hard
-	MetaFit            float64               `json:"metaFit"`
-	PlayerComfort      float64               `json:"playerComfort"` // if player data available
-	BanPriority        float64               `json:"banPriority"` // how often this gets banned
-	Flexibility        float64               `json:"flexibility"` // can be played in multiple roles
-	SafetyRating       float64               `json:"safetyRating"` // how safe the pick is
+	Champion            string            `json:"champion"`
+	CounterStrength     float64           `json:"counterStrength"` // 0-100
+	WinRateAdvantage    float64           `json:"winRateAdvantage"`
+	LaneAdvantage       float64           `json:"laneAdvantage"`
+	TeamFightAdvantage  float64           `json:"teamFightAdvantage"`
+	ScalingAdvantage    float64           `json:"scalingAdvantage"`
+	CounterReasons      []string          `json:"counterReasons"`
+	PlayingTips         []string          `json:"playingTips"`
+	ItemRecommendations []string          `json:"itemRecommendations"`
+	PowerSpikes         []PowerSpikeData  `json:"powerSpikes"`
+	Weaknesses          []CounterWeakness `json:"weaknesses"`
+	MatchupDifficulty   string            `json:"matchupDifficulty"` // easy, moderate, hard
+	MetaFit             float64           `json:"metaFit"`
+	PlayerComfort       float64           `json:"playerComfort"` // if player data available
+	BanPriority         float64           `json:"banPriority"`   // how often this gets banned
+	Flexibility         float64           `json:"flexibility"`   // can be played in multiple roles
+	SafetyRating        float64           `json:"safetyRating"`  // how safe the pick is
 }
 
 type LaneCounterData struct {
-	Phase            string    `json:"phase"` // early, mid, late
-	Advantage        float64   `json:"advantage"` // -100 to 100
-	KeyFactors       []string  `json:"keyFactors"`
-	PlayingTips      []string  `json:"playingTips"`
-	WardingTips      []string  `json:"wardingTips"`
-	TradingPatterns  []string  `json:"tradingPatterns"`
-	AllInPotential   float64   `json:"allInPotential"`
-	RoamingPotential float64   `json:"roamingPotential"`
+	Phase             string   `json:"phase"`     // early, mid, late
+	Advantage         float64  `json:"advantage"` // -100 to 100
+	KeyFactors        []string `json:"keyFactors"`
+	PlayingTips       []string `json:"playingTips"`
+	WardingTips       []string `json:"wardingTips"`
+	TradingPatterns   []string `json:"tradingPatterns"`
+	AllInPotential    float64  `json:"allInPotential"`
+	RoamingPotential  float64  `json:"roamingPotential"`
 	ScalingComparison string   `json:"scalingComparison"`
 }
 
 type TeamFightCounterData struct {
-	CounterType      string   `json:"counterType"` // engage, disengage, peel, burst, etc.
+	CounterType      string   `json:"counterType"`   // engage, disengage, peel, burst, etc.
 	Effectiveness    float64  `json:"effectiveness"` // 0-100
 	Positioning      []string `json:"positioning"`
 	ComboCounters    []string `json:"comboCounters"`
@@ -83,11 +83,11 @@ type TeamFightCounterData struct {
 }
 
 type ItemCounterData struct {
-	ItemName         string  `json:"itemName"`
-	CounterType      string  `json:"counterType"` // defensive, offensive, utility
-	Effectiveness    float64 `json:"effectiveness"` // 0-100
-	BuildPriority    int     `json:"buildPriority"` // 1-6
-	SituationalUse   string  `json:"situationalUse"`
+	ItemName          string  `json:"itemName"`
+	CounterType       string  `json:"counterType"`   // defensive, offensive, utility
+	Effectiveness     float64 `json:"effectiveness"` // 0-100
+	BuildPriority     int     `json:"buildPriority"` // 1-6
+	SituationalUse    string  `json:"situationalUse"`
 	CostEffectiveness float64 `json:"costEffectiveness"`
 }
 
@@ -100,18 +100,11 @@ type PlayStyleCounterData struct {
 	RiskLevel       string   `json:"riskLevel"` // low, medium, high
 }
 
-type PowerSpikeData struct {
-	Timing      string  `json:"timing"` // level or item milestone
-	Strength    float64 `json:"strength"` // 0-100
-	Duration    string  `json:"duration"`
-	CounterPlay []string `json:"counterPlay"`
-}
-
 type CounterWeakness struct {
-	Weakness    string   `json:"weakness"`
-	Severity    string   `json:"severity"` // minor, moderate, major
-	ExploitHow  []string `json:"exploitHow"`
-	Timing      string   `json:"timing"`
+	Weakness   string   `json:"weakness"`
+	Severity   string   `json:"severity"` // minor, moderate, major
+	ExploitHow []string `json:"exploitHow"`
+	Timing     string   `json:"timing"`
 }
 
 type CounterMetaContext struct {
@@ -124,22 +117,22 @@ type CounterMetaContext struct {
 }
 
 type MultiTargetCounterAnalysis struct {
-	ID             string                         `json:"id"`
-	TargetChampions []TargetChampionData          `json:"targetChampions"`
-	UniversalCounters []UniversalCounterSuggestion `json:"universalCounters"`
-	SpecificCounters []SpecificCounterSuggestion  `json:"specificCounters"`
-	TeamCounters    []TeamCounterStrategy         `json:"teamCounters"`
-	BanRecommendations []BanRecommendation        `json:"banRecommendations"`
-	OverallStrategy CounterStrategy               `json:"overallStrategy"`
-	Confidence      float64                       `json:"confidence"`
-	CreatedAt       time.Time                     `json:"createdAt"`
+	ID                 string                       `json:"id"`
+	TargetChampions    []TargetChampionData         `json:"targetChampions"`
+	UniversalCounters  []UniversalCounterSuggestion `json:"universalCounters"`
+	SpecificCounters   []SpecificCounterSuggestion  `json:"specificCounters"`
+	TeamCounters       []TeamCounterStrategy        `json:"teamCounters"`
+	BanRecommendations []BanRecommendation          `json:"banRecommendations"`
+	OverallStrategy    CounterStrategy              `json:"overallStrategy"`
+	Confidence         float64                      `json:"confidence"`
+	CreatedAt          time.Time                    `json:"createdAt"`
 }
 
 type TargetChampionData struct {
-	Champion    string  `json:"champion"`
-	Role        string  `json:"role"`
-	ThreatLevel string  `json:"threatLevel"` // low, medium, high, critical
-	Priority    float64 `json:"priority"` // 0-100
+	Champion    string   `json:"champion"`
+	Role        string   `json:"role"`
+	ThreatLevel string   `json:"threatLevel"` // low, medium, high, critical
+	Priority    float64  `json:"priority"`    // 0-100
 	Reasons     []string `json:"reasons"`
 }
 
@@ -152,36 +145,36 @@ type UniversalCounterSuggestion struct {
 }
 
 type SpecificCounterSuggestion struct {
-	Champion        string   `json:"champion"`
-	PrimaryTarget   string   `json:"primaryTarget"`
+	Champion         string   `json:"champion"`
+	PrimaryTarget    string   `json:"primaryTarget"`
 	SecondaryTargets []string `json:"secondaryTargets"`
-	CounterStrength float64  `json:"counterStrength"`
-	Specialization  string   `json:"specialization"`
+	CounterStrength  float64  `json:"counterStrength"`
+	Specialization   string   `json:"specialization"`
 }
 
 type TeamCounterStrategy struct {
-	Strategy        string   `json:"strategy"`
+	Strategy          string   `json:"strategy"`
 	RequiredChampions []string `json:"requiredChampions"`
-	Effectiveness   float64  `json:"effectiveness"`
-	Complexity      string   `json:"complexity"` // simple, moderate, complex
-	Description     string   `json:"description"`
-	Execution       []string `json:"execution"`
+	Effectiveness     float64  `json:"effectiveness"`
+	Complexity        string   `json:"complexity"` // simple, moderate, complex
+	Description       string   `json:"description"`
+	Execution         []string `json:"execution"`
 }
 
 type BanRecommendation struct {
-	Champion     string  `json:"champion"`
-	Priority     float64 `json:"priority"` // 0-100
-	Reasoning    string  `json:"reasoning"`
-	Impact       string  `json:"impact"`
+	Champion     string   `json:"champion"`
+	Priority     float64  `json:"priority"` // 0-100
+	Reasoning    string   `json:"reasoning"`
+	Impact       string   `json:"impact"`
 	Alternatives []string `json:"alternatives"`
 }
 
 type CounterStrategy struct {
-	Primary     string   `json:"primary"`
-	Secondary   string   `json:"secondary"`
-	Approach    string   `json:"approach"`
+	Primary       string   `json:"primary"`
+	Secondary     string   `json:"secondary"`
+	Approach      string   `json:"approach"`
 	KeyPrinciples []string `json:"keyPrinciples"`
-	Timeline    []string `json:"timeline"`
+	Timeline      []string `json:"timeline"`
 }
 
 // Main Analysis Methods
@@ -236,11 +229,11 @@ func (s *CounterPickService) AnalyzeCounterPicks(ctx context.Context, targetCham
 
 	// Set meta context
 	analysis.MetaContext = CounterMetaContext{
-		Patch:           metaData.Patch,
-		TargetPickRate:  metaData.PickRate,
-		TargetBanRate:   metaData.BanRate,
-		MetaTrend:       metaData.Trend,
-		ProPlayUsage:    metaData.ProPlayUsage,
+		Patch:          metaData.Patch,
+		TargetPickRate: metaData.PickRate,
+		TargetBanRate:  metaData.BanRate,
+		MetaTrend:      metaData.Trend,
+		ProPlayUsage:   metaData.ProPlayUsage,
 	}
 
 	// Calculate confidence
@@ -303,7 +296,7 @@ func (s *CounterPickService) AnalyzeMultiTargetCounters(ctx context.Context, tar
 func (s *CounterPickService) calculateCounterPicks(targetChampion, targetRole, gameMode string, playerChampionPool []string) ([]CounterPickSuggestion, error) {
 	// Champion counter data with win rates and effectiveness
 	counterData := s.getChampionCounterData(targetChampion, targetRole)
-	
+
 	var suggestions []CounterPickSuggestion
 	for champion, data := range counterData {
 		// Skip if not in player pool (if specified)
@@ -312,22 +305,22 @@ func (s *CounterPickService) calculateCounterPicks(targetChampion, targetRole, g
 		}
 
 		suggestion := CounterPickSuggestion{
-			Champion:           champion,
-			CounterStrength:    data.OverallStrength,
-			WinRateAdvantage:   data.WinRateAdvantage,
-			LaneAdvantage:      data.LaneAdvantage,
-			TeamFightAdvantage: data.TeamFightAdvantage,
-			ScalingAdvantage:   data.ScalingAdvantage,
-			CounterReasons:     data.CounterReasons,
-			PlayingTips:        data.PlayingTips,
+			Champion:            champion,
+			CounterStrength:     data.OverallStrength,
+			WinRateAdvantage:    data.WinRateAdvantage,
+			LaneAdvantage:       data.LaneAdvantage,
+			TeamFightAdvantage:  data.TeamFightAdvantage,
+			ScalingAdvantage:    data.ScalingAdvantage,
+			CounterReasons:      data.CounterReasons,
+			PlayingTips:         data.PlayingTips,
 			ItemRecommendations: data.ItemRecommendations,
-			PowerSpikes:        data.PowerSpikes,
-			Weaknesses:         data.Weaknesses,
-			MatchupDifficulty:  data.MatchupDifficulty,
-			MetaFit:            s.getChampionMetaFit(champion, targetRole, gameMode),
-			BanPriority:        s.getChampionBanRate(champion, gameMode),
-			Flexibility:        s.getChampionFlexibility(champion),
-			SafetyRating:       s.getChampionSafetyRating(champion, targetRole),
+			PowerSpikes:         data.PowerSpikes,
+			Weaknesses:          data.Weaknesses,
+			MatchupDifficulty:   data.MatchupDifficulty,
+			MetaFit:             s.getChampionMetaFit(champion, targetRole, gameMode),
+			BanPriority:         s.getChampionBanRate(champion, gameMode),
+			Flexibility:         s.getChampionFlexibility(champion),
+			SafetyRating:        s.getChampionSafetyRating(champion, targetRole),
 		}
 
 		suggestions = append(suggestions, suggestion)
@@ -405,48 +398,48 @@ func (s *CounterPickService) getItemCounters(targetChampion, gameMode string) ([
 
 	// Get champion's damage profile and threats
 	championData := s.getChampionAnalysisData(targetChampion)
-	
+
 	// Defensive items
 	if championData.APDamage > 60 {
 		itemCounters = append(itemCounters, ItemCounterData{
-			ItemName:         "Magic Resistance Items",
-			CounterType:      "defensive",
-			Effectiveness:    85,
-			BuildPriority:    2,
-			SituationalUse:   "Build early if laning against heavy AP",
+			ItemName:          "Magic Resistance Items",
+			CounterType:       "defensive",
+			Effectiveness:     85,
+			BuildPriority:     2,
+			SituationalUse:    "Build early if laning against heavy AP",
 			CostEffectiveness: 90,
 		})
 	}
 
 	if championData.ADDamage > 60 {
 		itemCounters = append(itemCounters, ItemCounterData{
-			ItemName:         "Armor Items",
-			CounterType:      "defensive",
-			Effectiveness:    85,
-			BuildPriority:    2,
-			SituationalUse:   "Build early against AD threats",
+			ItemName:          "Armor Items",
+			CounterType:       "defensive",
+			Effectiveness:     85,
+			BuildPriority:     2,
+			SituationalUse:    "Build early against AD threats",
 			CostEffectiveness: 90,
 		})
 	}
 
 	if championData.CCAmount > 70 {
 		itemCounters = append(itemCounters, ItemCounterData{
-			ItemName:         "Tenacity Items",
-			CounterType:      "utility",
-			Effectiveness:    75,
-			BuildPriority:    3,
-			SituationalUse:   "Essential against heavy CC comps",
+			ItemName:          "Tenacity Items",
+			CounterType:       "utility",
+			Effectiveness:     75,
+			BuildPriority:     3,
+			SituationalUse:    "Essential against heavy CC comps",
 			CostEffectiveness: 80,
 		})
 	}
 
 	if championData.BurstPotential > 80 {
 		itemCounters = append(itemCounters, ItemCounterData{
-			ItemName:         "Shield/Health Items",
-			CounterType:      "defensive",
-			Effectiveness:    70,
-			BuildPriority:    2,
-			SituationalUse:   "Survive burst combos",
+			ItemName:          "Shield/Health Items",
+			CounterType:       "defensive",
+			Effectiveness:     70,
+			BuildPriority:     2,
+			SituationalUse:    "Survive burst combos",
 			CostEffectiveness: 85,
 		})
 	}
@@ -459,7 +452,7 @@ func (s *CounterPickService) analyzePlayStyleCounters(targetChampion, gameMode s
 	var playStyleCounters []PlayStyleCounterData
 
 	championData := s.getChampionAnalysisData(targetChampion)
-	
+
 	for _, playStyle := range championData.PlayStyles {
 		counter := PlayStyleCounterData{
 			TargetPlayStyle: playStyle.Style,
@@ -482,7 +475,7 @@ func (s *CounterPickService) findUniversalCounters(targetChampions []TargetChamp
 	// Analyze each target champion
 	for _, target := range targetChampions {
 		counters := s.getChampionCounterData(target.Champion, target.Role)
-		
+
 		for champion, data := range counters {
 			if len(playerChampionPool) > 0 && !contains(playerChampionPool, champion) {
 				continue
@@ -540,16 +533,16 @@ func (s *CounterPickService) findSpecificCounters(targetChampions []TargetChampi
 
 	for _, target := range targetChampions {
 		counters := s.getChampionCounterData(target.Champion, target.Role)
-		
+
 		// Find the strongest counter for this specific target
 		var bestCounter string
 		var bestStrength float64
-		
+
 		for champion, data := range counters {
 			if len(playerChampionPool) > 0 && !contains(playerChampionPool, champion) {
 				continue
 			}
-			
+
 			if data.OverallStrength > bestStrength {
 				bestCounter = champion
 				bestStrength = data.OverallStrength
@@ -598,7 +591,7 @@ func (s *CounterPickService) getChampionMetaData(champion, role, gameMode string
 func (s *CounterPickService) getChampionCounterData(targetChampion, targetRole string) map[string]*CounterData {
 	// Mock counter data - in real implementation, this would be calculated from match data
 	counterData := make(map[string]*CounterData)
-	
+
 	// Example counter data for different champions
 	switch targetChampion {
 	case "Yasuo":
@@ -668,15 +661,15 @@ func (s *CounterPickService) getChampionCounterData(targetChampion, targetRole s
 		for _, champion := range generalCounters {
 			if _, exists := counterData[champion]; !exists {
 				counterData[champion] = &CounterData{
-					OverallStrength:    60.0 + float64(len(counterData)),
-					WinRateAdvantage:   3.0 + float64(len(counterData)*0.5),
-					LaneAdvantage:      55.0,
-					TeamFightAdvantage: 65.0,
-					ScalingAdvantage:   60.0,
-					CounterReasons:     []string{"General tankiness and CC", "Good team fighting presence"},
-					PlayingTips:        []string{"Play safe and scale", "Look for team fight opportunities"},
+					OverallStrength:     60.0 + float64(len(counterData)),
+					WinRateAdvantage:    3.0 + float64(len(counterData)*0.5),
+					LaneAdvantage:       55.0,
+					TeamFightAdvantage:  65.0,
+					ScalingAdvantage:    60.0,
+					CounterReasons:      []string{"General tankiness and CC", "Good team fighting presence"},
+					PlayingTips:         []string{"Play safe and scale", "Look for team fight opportunities"},
 					ItemRecommendations: []string{"Tank items", "Utility items"},
-					MatchupDifficulty:  "moderate",
+					MatchupDifficulty:   "moderate",
 				}
 			}
 		}
@@ -694,12 +687,12 @@ func (s *CounterPickService) storeCounterPickAnalysis(analysis *CounterPickAnaly
 
 	// Store in database
 	counterAnalysis := &models.CounterPickAnalysis{
-		ID:              analysis.ID,
-		TargetChampion:  analysis.TargetChampion,
-		TargetRole:      analysis.TargetRole,
-		AnalysisData:    string(analysisJSON),
-		Confidence:      analysis.Confidence,
-		CreatedAt:       analysis.CreatedAt,
+		ID:             analysis.ID,
+		TargetChampion: analysis.TargetChampion,
+		TargetRole:     analysis.TargetRole,
+		AnalysisData:   string(analysisJSON),
+		Confidence:     analysis.Confidence,
+		CreatedAt:      analysis.CreatedAt,
 	}
 
 	return s.db.Create(counterAnalysis).Error
@@ -740,17 +733,17 @@ type ChampionMetaData struct {
 }
 
 type CounterData struct {
-	OverallStrength      float64             `json:"overallStrength"`
-	WinRateAdvantage     float64             `json:"winRateAdvantage"`
-	LaneAdvantage        float64             `json:"laneAdvantage"`
-	TeamFightAdvantage   float64             `json:"teamFightAdvantage"`
-	ScalingAdvantage     float64             `json:"scalingAdvantage"`
-	CounterReasons       []string            `json:"counterReasons"`
-	PlayingTips          []string            `json:"playingTips"`
-	ItemRecommendations  []string            `json:"itemRecommendations"`
-	PowerSpikes          []PowerSpikeData    `json:"powerSpikes"`
-	Weaknesses           []CounterWeakness   `json:"weaknesses"`
-	MatchupDifficulty    string             `json:"matchupDifficulty"`
+	OverallStrength     float64           `json:"overallStrength"`
+	WinRateAdvantage    float64           `json:"winRateAdvantage"`
+	LaneAdvantage       float64           `json:"laneAdvantage"`
+	TeamFightAdvantage  float64           `json:"teamFightAdvantage"`
+	ScalingAdvantage    float64           `json:"scalingAdvantage"`
+	CounterReasons      []string          `json:"counterReasons"`
+	PlayingTips         []string          `json:"playingTips"`
+	ItemRecommendations []string          `json:"itemRecommendations"`
+	PowerSpikes         []PowerSpikeData  `json:"powerSpikes"`
+	Weaknesses          []CounterWeakness `json:"weaknesses"`
+	MatchupDifficulty   string            `json:"matchupDifficulty"`
 }
 
 func contains(slice []string, item string) bool {
@@ -802,7 +795,7 @@ func (s *CounterPickService) getLanePhaseData(champion, role, phase string) *Lan
 
 func (s *CounterPickService) getTeamFightCounterData(champion, counterType string) *TeamFightData {
 	return &TeamFightData{
-		Effectiveness:     75.0,
+		Effectiveness:    75.0,
 		Positioning:      []string{"Stay behind frontline", "Focus backline"},
 		ComboCounters:    []string{"Interrupt with CC", "Zone with abilities"},
 		TeamCoordination: []string{"Follow up on engage", "Protect carries"},
@@ -812,9 +805,9 @@ func (s *CounterPickService) getTeamFightCounterData(champion, counterType strin
 
 func (s *CounterPickService) getChampionAnalysisData(champion string) *ChampionAnalysisData {
 	return &ChampionAnalysisData{
-		APDamage:      70.0,
-		ADDamage:      30.0,
-		CCAmount:      60.0,
+		APDamage:       70.0,
+		ADDamage:       30.0,
+		CCAmount:       60.0,
 		BurstPotential: 85.0,
 		PlayStyles: []PlayStyleData{
 			{
@@ -842,19 +835,19 @@ type LanePhaseData struct {
 }
 
 type TeamFightData struct {
-	Effectiveness     float64  `json:"effectiveness"`
-	Positioning       []string `json:"positioning"`
-	ComboCounters     []string `json:"comboCounters"`
-	TeamCoordination  []string `json:"teamCoordination"`
-	ObjectiveControl  []string `json:"objectiveControl"`
+	Effectiveness    float64  `json:"effectiveness"`
+	Positioning      []string `json:"positioning"`
+	ComboCounters    []string `json:"comboCounters"`
+	TeamCoordination []string `json:"teamCoordination"`
+	ObjectiveControl []string `json:"objectiveControl"`
 }
 
 type ChampionAnalysisData struct {
-	APDamage      float64         `json:"apDamage"`
-	ADDamage      float64         `json:"adDamage"`
-	CCAmount      float64         `json:"ccAmount"`
-	BurstPotential float64        `json:"burstPotential"`
-	PlayStyles    []PlayStyleData `json:"playStyles"`
+	APDamage       float64         `json:"apDamage"`
+	ADDamage       float64         `json:"adDamage"`
+	CCAmount       float64         `json:"ccAmount"`
+	BurstPotential float64         `json:"burstPotential"`
+	PlayStyles     []PlayStyleData `json:"playStyles"`
 }
 
 type PlayStyleData struct {

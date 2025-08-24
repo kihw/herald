@@ -1,0 +1,92 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: herald-gaming-analytics-ingress
+  namespace: herald-production
+  labels:
+    app: herald-gaming-analytics
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    nginx.ingress.kubernetes.io/client-max-body-size: "10m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit-rps: "100"
+    nginx.ingress.kubernetes.io/rate-limit-connections: "50"
+    
+    # Gaming-specific optimizations
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    nginx.ingress.kubernetes.io/use-gzip: "true"
+    nginx.ingress.kubernetes.io/gzip-types: "application/json,application/javascript,text/css,text/plain"
+    
+    # CORS for gaming frontend
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization,X-Gaming-Session"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://herald.lol,https://app.herald.lol,https://gaming.herald.lol"
+spec:
+  tls:
+  - hosts:
+    - api.herald.lol
+    - analytics.herald.lol
+    secretName: herald-tls
+  rules:
+  - host: api.herald.lol
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: herald-gaming-analytics
+            port:
+              number: 80
+      - path: /analytics
+        pathType: Prefix
+        backend:
+          service:
+            name: herald-gaming-analytics
+            port:
+              number: 80
+      - path: /gaming
+        pathType: Prefix
+        backend:
+          service:
+            name: herald-gaming-analytics
+            port:
+              number: 80
+  - host: analytics.herald.lol
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: herald-gaming-analytics
+            port:
+              number: 80
+---
+# TCP ingress for gRPC traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: herald-grpc-lb
+  namespace: herald-production
+  labels:
+    app: herald-gaming-analytics
+    service-type: grpc
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+spec:
+  type: LoadBalancer
+  selector:
+    app: herald-gaming-analytics
+  ports:
+  - name: grpc
+    port: 50051
+    targetPort: 50051
+    protocol: TCP

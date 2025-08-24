@@ -101,67 +101,67 @@ func GetPerformanceThresholds() map[string]*PerformanceThresholds {
 			RankThresholds: map[string]*RankThresholds{
 				"IRON": {
 					ExcellentKDA:      2.0,
-					GoodKDA:          1.5,
+					GoodKDA:           1.5,
 					ExcellentCSPerMin: 5.0,
-					GoodCSPerMin:     4.0,
+					GoodCSPerMin:      4.0,
 					ExcellentVision:   15.0,
-					GoodVision:       10.0,
+					GoodVision:        10.0,
 				},
 				"BRONZE": {
 					ExcellentKDA:      2.5,
-					GoodKDA:          1.8,
+					GoodKDA:           1.8,
 					ExcellentCSPerMin: 5.5,
-					GoodCSPerMin:     4.5,
+					GoodCSPerMin:      4.5,
 					ExcellentVision:   18.0,
-					GoodVision:       12.0,
+					GoodVision:        12.0,
 				},
 				"SILVER": {
 					ExcellentKDA:      3.0,
-					GoodKDA:          2.0,
+					GoodKDA:           2.0,
 					ExcellentCSPerMin: 6.0,
-					GoodCSPerMin:     5.0,
+					GoodCSPerMin:      5.0,
 					ExcellentVision:   20.0,
-					GoodVision:       15.0,
+					GoodVision:        15.0,
 				},
 				"GOLD": {
 					ExcellentKDA:      3.5,
-					GoodKDA:          2.3,
+					GoodKDA:           2.3,
 					ExcellentCSPerMin: 6.5,
-					GoodCSPerMin:     5.5,
+					GoodCSPerMin:      5.5,
 					ExcellentVision:   22.0,
-					GoodVision:       17.0,
+					GoodVision:        17.0,
 				},
 				"PLATINUM": {
 					ExcellentKDA:      4.0,
-					GoodKDA:          2.5,
+					GoodKDA:           2.5,
 					ExcellentCSPerMin: 7.0,
-					GoodCSPerMin:     6.0,
+					GoodCSPerMin:      6.0,
 					ExcellentVision:   25.0,
-					GoodVision:       19.0,
+					GoodVision:        19.0,
 				},
 				"EMERALD": {
 					ExcellentKDA:      4.2,
-					GoodKDA:          2.8,
+					GoodKDA:           2.8,
 					ExcellentCSPerMin: 7.3,
-					GoodCSPerMin:     6.3,
+					GoodCSPerMin:      6.3,
 					ExcellentVision:   27.0,
-					GoodVision:       21.0,
+					GoodVision:        21.0,
 				},
 				"DIAMOND": {
 					ExcellentKDA:      4.5,
-					GoodKDA:          3.0,
+					GoodKDA:           3.0,
 					ExcellentCSPerMin: 7.5,
-					GoodCSPerMin:     6.5,
+					GoodCSPerMin:      6.5,
 					ExcellentVision:   30.0,
-					GoodVision:       23.0,
+					GoodVision:        23.0,
 				},
 				"MASTER": {
 					ExcellentKDA:      5.0,
-					GoodKDA:          3.5,
+					GoodKDA:           3.5,
 					ExcellentCSPerMin: 8.0,
-					GoodCSPerMin:     7.0,
+					GoodCSPerMin:      7.0,
 					ExcellentVision:   32.0,
-					GoodVision:       25.0,
+					GoodVision:        25.0,
 				},
 			},
 		},
@@ -170,11 +170,11 @@ func GetPerformanceThresholds() map[string]*PerformanceThresholds {
 			RankThresholds: map[string]*RankThresholds{
 				"DEFAULT": {
 					ExcellentKDA:      3.5,
-					GoodKDA:          2.0,
+					GoodKDA:           2.0,
 					ExcellentCSPerMin: 6.5,
-					GoodCSPerMin:     5.0,
+					GoodCSPerMin:      5.0,
 					ExcellentVision:   20.0,
-					GoodVision:       15.0,
+					GoodVision:        15.0,
 				},
 			},
 		},
@@ -183,11 +183,11 @@ func GetPerformanceThresholds() map[string]*PerformanceThresholds {
 			RankThresholds: map[string]*RankThresholds{
 				"DEFAULT": {
 					ExcellentKDA:      2.5,
-					GoodKDA:          1.5,
+					GoodKDA:           1.5,
 					ExcellentCSPerMin: 4.0, // Lower for ARAM
-					GoodCSPerMin:     3.0,
+					GoodCSPerMin:      3.0,
 					ExcellentVision:   12.0, // Lower for ARAM
-					GoodVision:       8.0,
+					GoodVision:        8.0,
 				},
 			},
 		},
@@ -196,18 +196,18 @@ func GetPerformanceThresholds() map[string]*PerformanceThresholds {
 
 // PerformanceThresholds contains thresholds for different game modes
 type PerformanceThresholds struct {
-	GameMode       string                    `json:"game_mode"`
+	GameMode       string                     `json:"game_mode"`
 	RankThresholds map[string]*RankThresholds `json:"rank_thresholds"`
 }
 
 // RankThresholds contains performance thresholds for specific ranks
 type RankThresholds struct {
 	ExcellentKDA      float64 `json:"excellent_kda"`
-	GoodKDA          float64 `json:"good_kda"`
+	GoodKDA           float64 `json:"good_kda"`
 	ExcellentCSPerMin float64 `json:"excellent_cs_per_min"`
-	GoodCSPerMin     float64 `json:"good_cs_per_min"`
+	GoodCSPerMin      float64 `json:"good_cs_per_min"`
 	ExcellentVision   float64 `json:"excellent_vision"`
-	GoodVision       float64 `json:"good_vision"`
+	GoodVision        float64 `json:"good_vision"`
 }
 
 // GetRoleSpecificThresholds returns role-specific performance expectations
@@ -216,72 +216,72 @@ func GetRoleSpecificThresholds() map[string]*RoleThresholds {
 		"TOP": {
 			Role:                "Top Lane",
 			PrimaryMetrics:      []string{"KDA", "CS/min", "Damage Share", "Solo Kills"},
-			CSMultiplier:        1.0,   // Standard CS expectations
-			VisionMultiplier:    0.7,   // Lower vision expectations
-			DamageMultiplier:    1.1,   // Higher damage expectations
-			ObjectiveWeight:     0.8,   // Standard objective weight
-			SurvivalWeight:      1.0,   // Standard survival importance
-			ExpectedDamageShare: 0.22,  // ~22% team damage
-			ExpectedKillShare:   0.20,  // ~20% team kills
+			CSMultiplier:        1.0,  // Standard CS expectations
+			VisionMultiplier:    0.7,  // Lower vision expectations
+			DamageMultiplier:    1.1,  // Higher damage expectations
+			ObjectiveWeight:     0.8,  // Standard objective weight
+			SurvivalWeight:      1.0,  // Standard survival importance
+			ExpectedDamageShare: 0.22, // ~22% team damage
+			ExpectedKillShare:   0.20, // ~20% team kills
 		},
 		"JUNGLE": {
 			Role:                "Jungle",
 			PrimaryMetrics:      []string{"KDA", "Objective Control", "Vision", "Map Presence"},
-			CSMultiplier:        0.7,   // Lower CS expectations
-			VisionMultiplier:    1.2,   // Higher vision expectations
-			DamageMultiplier:    0.9,   // Lower damage expectations
-			ObjectiveWeight:     1.5,   // Much higher objective weight
-			SurvivalWeight:      0.9,   // Slightly lower survival importance
-			ExpectedDamageShare: 0.18,  // ~18% team damage
-			ExpectedKillShare:   0.22,  // ~22% team kills (ganks)
+			CSMultiplier:        0.7,  // Lower CS expectations
+			VisionMultiplier:    1.2,  // Higher vision expectations
+			DamageMultiplier:    0.9,  // Lower damage expectations
+			ObjectiveWeight:     1.5,  // Much higher objective weight
+			SurvivalWeight:      0.9,  // Slightly lower survival importance
+			ExpectedDamageShare: 0.18, // ~18% team damage
+			ExpectedKillShare:   0.22, // ~22% team kills (ganks)
 		},
 		"MIDDLE": {
 			Role:                "Mid Lane",
 			PrimaryMetrics:      []string{"KDA", "CS/min", "Damage Share", "Roaming"},
-			CSMultiplier:        1.0,   // Standard CS expectations
-			VisionMultiplier:    0.8,   // Moderate vision expectations
-			DamageMultiplier:    1.2,   // Higher damage expectations
-			ObjectiveWeight:     1.0,   // Standard objective weight
-			SurvivalWeight:      1.1,   // Higher survival importance
-			ExpectedDamageShare: 0.28,  // ~28% team damage
-			ExpectedKillShare:   0.25,  // ~25% team kills
+			CSMultiplier:        1.0,  // Standard CS expectations
+			VisionMultiplier:    0.8,  // Moderate vision expectations
+			DamageMultiplier:    1.2,  // Higher damage expectations
+			ObjectiveWeight:     1.0,  // Standard objective weight
+			SurvivalWeight:      1.1,  // Higher survival importance
+			ExpectedDamageShare: 0.28, // ~28% team damage
+			ExpectedKillShare:   0.25, // ~25% team kills
 		},
 		"BOTTOM": {
 			Role:                "Bot Lane",
 			PrimaryMetrics:      []string{"KDA", "CS/min", "Damage Share", "Late Game"},
-			CSMultiplier:        1.1,   // Higher CS expectations
-			VisionMultiplier:    0.6,   // Lower vision expectations
-			DamageMultiplier:    1.3,   // Highest damage expectations
-			ObjectiveWeight:     0.9,   // Slightly lower objective weight
-			SurvivalWeight:      1.2,   // Higher survival importance
-			ExpectedDamageShare: 0.32,  // ~32% team damage
-			ExpectedKillShare:   0.28,  // ~28% team kills
+			CSMultiplier:        1.1,  // Higher CS expectations
+			VisionMultiplier:    0.6,  // Lower vision expectations
+			DamageMultiplier:    1.3,  // Highest damage expectations
+			ObjectiveWeight:     0.9,  // Slightly lower objective weight
+			SurvivalWeight:      1.2,  // Higher survival importance
+			ExpectedDamageShare: 0.32, // ~32% team damage
+			ExpectedKillShare:   0.28, // ~28% team kills
 		},
 		"UTILITY": {
 			Role:                "Support",
 			PrimaryMetrics:      []string{"KDA", "Vision", "Utility", "Team Support"},
-			CSMultiplier:        0.2,   // Very low CS expectations
-			VisionMultiplier:    2.0,   // Much higher vision expectations
-			DamageMultiplier:    0.4,   // Lower damage expectations
-			ObjectiveWeight:     1.3,   // Higher objective weight
-			SurvivalWeight:      0.8,   // Lower survival importance (sacrifice)
-			ExpectedDamageShare: 0.08,  // ~8% team damage
-			ExpectedKillShare:   0.05,  // ~5% team kills (assists focus)
+			CSMultiplier:        0.2,  // Very low CS expectations
+			VisionMultiplier:    2.0,  // Much higher vision expectations
+			DamageMultiplier:    0.4,  // Lower damage expectations
+			ObjectiveWeight:     1.3,  // Higher objective weight
+			SurvivalWeight:      0.8,  // Lower survival importance (sacrifice)
+			ExpectedDamageShare: 0.08, // ~8% team damage
+			ExpectedKillShare:   0.05, // ~5% team kills (assists focus)
 		},
 	}
 }
 
 // RoleThresholds contains role-specific performance expectations
 type RoleThresholds struct {
-	Role                string    `json:"role"`
-	PrimaryMetrics      []string  `json:"primary_metrics"`
-	CSMultiplier        float64   `json:"cs_multiplier"`
-	VisionMultiplier    float64   `json:"vision_multiplier"`
-	DamageMultiplier    float64   `json:"damage_multiplier"`
-	ObjectiveWeight     float64   `json:"objective_weight"`
-	SurvivalWeight      float64   `json:"survival_weight"`
-	ExpectedDamageShare float64   `json:"expected_damage_share"`
-	ExpectedKillShare   float64   `json:"expected_kill_share"`
+	Role                string   `json:"role"`
+	PrimaryMetrics      []string `json:"primary_metrics"`
+	CSMultiplier        float64  `json:"cs_multiplier"`
+	VisionMultiplier    float64  `json:"vision_multiplier"`
+	DamageMultiplier    float64  `json:"damage_multiplier"`
+	ObjectiveWeight     float64  `json:"objective_weight"`
+	SurvivalWeight      float64  `json:"survival_weight"`
+	ExpectedDamageShare float64  `json:"expected_damage_share"`
+	ExpectedKillShare   float64  `json:"expected_kill_share"`
 }
 
 // GetPhaseTimings returns game phase timing configurations
@@ -290,7 +290,7 @@ func GetPhaseTimings() *PhaseTimingConfig {
 		EarlyGame: &PhaseConfig{
 			Name:      "Early Game",
 			StartTime: 0,
-			EndTime:   900,  // 15 minutes
+			EndTime:   900, // 15 minutes
 			KeyEvents: []string{"First Blood", "First Tower", "Lane Phase"},
 			Focus:     []string{"Farming", "Lane Trading", "Early Fights"},
 		},
@@ -333,10 +333,10 @@ func GetPhaseTimings() *PhaseTimingConfig {
 
 // PhaseTimingConfig contains game phase timing configuration
 type PhaseTimingConfig struct {
-	EarlyGame            *PhaseConfig                     `json:"early_game"`
-	MidGame              *PhaseConfig                     `json:"mid_game"`
-	LateGame             *PhaseConfig                     `json:"late_game"`
-	GameLengthCategories map[string]*GameLengthCategory  `json:"game_length_categories"`
+	EarlyGame            *PhaseConfig                   `json:"early_game"`
+	MidGame              *PhaseConfig                   `json:"mid_game"`
+	LateGame             *PhaseConfig                   `json:"late_game"`
+	GameLengthCategories map[string]*GameLengthCategory `json:"game_length_categories"`
 }
 
 // PhaseConfig contains configuration for a game phase
@@ -360,22 +360,22 @@ type GameLengthCategory struct {
 func GetKeyMomentConfiguration() *KeyMomentConfig {
 	return &KeyMomentConfig{
 		ImportanceWeights: map[string]float64{
-			"First Blood":     0.9,
-			"Multi Kill":      0.8,
-			"Objective Kill":  0.8,
-			"Tower Kill":      0.6,
-			"Death":           -0.7,
-			"Shutdown":        0.9,
-			"Ace":             0.95,
-			"Pentakill":       1.0,
+			"First Blood":    0.9,
+			"Multi Kill":     0.8,
+			"Objective Kill": 0.8,
+			"Tower Kill":     0.6,
+			"Death":          -0.7,
+			"Shutdown":       0.9,
+			"Ace":            0.95,
+			"Pentakill":      1.0,
 		},
 		DetectionThresholds: map[string]int{
-			"MultiKillMin":       2,
-			"KillStreakMin":      3,
-			"ShutdownGoldMin":    450,
-			"HighDeathsMin":      5,
-			"LowCSMin":          100, // Total CS threshold for "low farming"
-			"HighVisionMin":      30,
+			"MultiKillMin":    2,
+			"KillStreakMin":   3,
+			"ShutdownGoldMin": 450,
+			"HighDeathsMin":   5,
+			"LowCSMin":        100, // Total CS threshold for "low farming"
+			"HighVisionMin":   30,
 		},
 		MomentCategories: map[string]*MomentCategory{
 			"combat": {
@@ -385,7 +385,7 @@ func GetKeyMomentConfiguration() *KeyMomentConfig {
 				Description: "Moments related to fighting and kills",
 			},
 			"objective": {
-				Name:        "Objective Moments", 
+				Name:        "Objective Moments",
 				Types:       []string{"Dragon", "Baron", "Tower", "Inhibitor"},
 				Weight:      0.9,
 				Description: "Moments related to map objectives",
@@ -408,9 +408,9 @@ func GetKeyMomentConfiguration() *KeyMomentConfig {
 
 // KeyMomentConfig contains key moment detection configuration
 type KeyMomentConfig struct {
-	ImportanceWeights   map[string]float64            `json:"importance_weights"`
-	DetectionThresholds map[string]int                `json:"detection_thresholds"`
-	MomentCategories    map[string]*MomentCategory    `json:"moment_categories"`
+	ImportanceWeights   map[string]float64         `json:"importance_weights"`
+	DetectionThresholds map[string]int             `json:"detection_thresholds"`
+	MomentCategories    map[string]*MomentCategory `json:"moment_categories"`
 }
 
 // MomentCategory categorizes key moments
@@ -427,44 +427,44 @@ func GetCacheConfiguration() *CacheConfiguration {
 		AnalysisCache: &CacheConfig{
 			TTL:                30 * time.Minute,
 			RefreshThreshold:   20 * time.Minute,
-			MaxSize:           1000,
+			MaxSize:            1000,
 			CompressionEnabled: true,
 		},
 		SeriesCache: &CacheConfig{
 			TTL:                60 * time.Minute,
 			RefreshThreshold:   40 * time.Minute,
-			MaxSize:           500,
+			MaxSize:            500,
 			CompressionEnabled: true,
 		},
 		ComparisonCache: &CacheConfig{
 			TTL:                15 * time.Minute,
 			RefreshThreshold:   10 * time.Minute,
-			MaxSize:           200,
+			MaxSize:            200,
 			CompressionEnabled: false, // Comparisons are already compact
 		},
 		KeyGenerationRules: &CacheKeyRules{
-			IncludePlayerID:   true,
-			IncludeMatchID:    true,
+			IncludePlayerID:     true,
+			IncludeMatchID:      true,
 			IncludeAnalysisType: true,
-			IncludeGameVersion: false, // Don't include patch version in key
-			IncludeTimestamp:  false, // Don't include exact timestamp
+			IncludeGameVersion:  false, // Don't include patch version in key
+			IncludeTimestamp:    false, // Don't include exact timestamp
 		},
 	}
 }
 
 // CacheConfiguration contains caching settings
 type CacheConfiguration struct {
-	AnalysisCache      *CacheConfig    `json:"analysis_cache"`
-	SeriesCache        *CacheConfig    `json:"series_cache"`
-	ComparisonCache    *CacheConfig    `json:"comparison_cache"`
-	KeyGenerationRules *CacheKeyRules  `json:"key_generation_rules"`
+	AnalysisCache      *CacheConfig   `json:"analysis_cache"`
+	SeriesCache        *CacheConfig   `json:"series_cache"`
+	ComparisonCache    *CacheConfig   `json:"comparison_cache"`
+	KeyGenerationRules *CacheKeyRules `json:"key_generation_rules"`
 }
 
 // CacheConfig contains individual cache settings
 type CacheConfig struct {
 	TTL                time.Duration `json:"ttl"`
 	RefreshThreshold   time.Duration `json:"refresh_threshold"`
-	MaxSize           int           `json:"max_size"`
+	MaxSize            int           `json:"max_size"`
 	CompressionEnabled bool          `json:"compression_enabled"`
 }
 
@@ -481,12 +481,12 @@ type CacheKeyRules struct {
 func GetAnalysisWeights() *AnalysisWeights {
 	return &AnalysisWeights{
 		PerformanceWeights: &PerformanceWeights{
-			KDA:              0.25,
-			Farming:          0.20,
-			Vision:           0.15,
-			Damage:           0.20,
-			Objectives:       0.10,
-			Survival:         0.10,
+			KDA:        0.25,
+			Farming:    0.20,
+			Vision:     0.15,
+			Damage:     0.20,
+			Objectives: 0.10,
+			Survival:   0.10,
 		},
 		PhaseWeights: &PhaseWeights{
 			EarlyGame: 0.30,
@@ -572,14 +572,14 @@ func GetPerformanceTargets() *PerformanceTargets {
 			"professional": 45 * time.Second,
 		},
 		ThroughputTargets: map[string]int{
-			"analyses_per_minute":    300,
-			"concurrent_analyses":    50,
-			"peak_analyses_per_min":  500,
+			"analyses_per_minute":   300,
+			"concurrent_analyses":   50,
+			"peak_analyses_per_min": 500,
 		},
 		QualityTargets: &QualityTargets{
-			AccuracyThreshold:      0.85, // 85% accuracy in predictions
-			ConsistencyThreshold:   0.90, // 90% consistency in ratings
-			CompletenessThreshold:  0.95, // 95% of analyses should be complete
+			AccuracyThreshold:     0.85, // 85% accuracy in predictions
+			ConsistencyThreshold:  0.90, // 90% consistency in ratings
+			CompletenessThreshold: 0.95, // 95% of analyses should be complete
 		},
 		ResourceLimits: &ResourceLimits{
 			MaxMemoryPerAnalysis: 50, // MB

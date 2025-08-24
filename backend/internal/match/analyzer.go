@@ -7,8 +7,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/herald-lol/backend/internal/analytics"
-	"github.com/herald-lol/backend/internal/riot"
+	"github.com/herald-lol/herald/backend/internal/analytics"
+	"github.com/herald-lol/herald/backend/internal/riot"
 )
 
 // Herald.lol Gaming Analytics - Match Analysis Service
@@ -23,41 +23,41 @@ type MatchAnalyzer struct {
 // MatchAnalysisConfig contains analyzer configuration
 type MatchAnalysisConfig struct {
 	// Analysis settings
-	EnableDetailedAnalysis   bool    `json:"enable_detailed_analysis"`
-	EnablePhaseAnalysis      bool    `json:"enable_phase_analysis"`
-	EnableKeyMomentDetection bool    `json:"enable_key_moment_detection"`
-	EnableTeamAnalysis       bool    `json:"enable_team_analysis"`
-	
+	EnableDetailedAnalysis   bool `json:"enable_detailed_analysis"`
+	EnablePhaseAnalysis      bool `json:"enable_phase_analysis"`
+	EnableKeyMomentDetection bool `json:"enable_key_moment_detection"`
+	EnableTeamAnalysis       bool `json:"enable_team_analysis"`
+
 	// Performance thresholds
-	ExcellentKDA             float64 `json:"excellent_kda"`
-	GoodKDA                  float64 `json:"good_kda"`
-	ExcellentCSPerMin        float64 `json:"excellent_cs_per_min"`
-	GoodCSPerMin             float64 `json:"good_cs_per_min"`
-	ExcellentVision          float64 `json:"excellent_vision"`
-	GoodVision               float64 `json:"good_vision"`
-	
+	ExcellentKDA      float64 `json:"excellent_kda"`
+	GoodKDA           float64 `json:"good_kda"`
+	ExcellentCSPerMin float64 `json:"excellent_cs_per_min"`
+	GoodCSPerMin      float64 `json:"good_cs_per_min"`
+	ExcellentVision   float64 `json:"excellent_vision"`
+	GoodVision        float64 `json:"good_vision"`
+
 	// Phase analysis settings
-	LanePhaseEndTime         int     `json:"lane_phase_end_time"`    // 15 minutes
-	MidGameEndTime           int     `json:"mid_game_end_time"`      // 25 minutes
-	
+	LanePhaseEndTime int `json:"lane_phase_end_time"` // 15 minutes
+	MidGameEndTime   int `json:"mid_game_end_time"`   // 25 minutes
+
 	// Key moment detection
-	KeyMomentThresholds      *KeyMomentThresholds `json:"key_moment_thresholds"`
-	
+	KeyMomentThresholds *KeyMomentThresholds `json:"key_moment_thresholds"`
+
 	// Scoring weights
-	KDAWeight                float64 `json:"kda_weight"`
-	CSWeight                 float64 `json:"cs_weight"`
-	VisionWeight             float64 `json:"vision_weight"`
-	DamageWeight             float64 `json:"damage_weight"`
-	ObjectiveWeight          float64 `json:"objective_weight"`
+	KDAWeight       float64 `json:"kda_weight"`
+	CSWeight        float64 `json:"cs_weight"`
+	VisionWeight    float64 `json:"vision_weight"`
+	DamageWeight    float64 `json:"damage_weight"`
+	ObjectiveWeight float64 `json:"objective_weight"`
 }
 
 // KeyMomentThresholds defines thresholds for key moment detection
 type KeyMomentThresholds struct {
-	MultiKillThreshold       int     `json:"multi_kill_threshold"`
-	KillStreakThreshold      int     `json:"kill_streak_threshold"`
-	ShutdownGoldThreshold    int     `json:"shutdown_gold_threshold"`
-	FirstBloodImportance     float64 `json:"first_blood_importance"`
-	ObjectiveImportance      float64 `json:"objective_importance"`
+	MultiKillThreshold    int     `json:"multi_kill_threshold"`
+	KillStreakThreshold   int     `json:"kill_streak_threshold"`
+	ShutdownGoldThreshold int     `json:"shutdown_gold_threshold"`
+	FirstBloodImportance  float64 `json:"first_blood_importance"`
+	ObjectiveImportance   float64 `json:"objective_importance"`
 }
 
 // NewMatchAnalyzer creates new match analyzer
@@ -65,7 +65,7 @@ func NewMatchAnalyzer(config *MatchAnalysisConfig, analyticsEngine *analytics.An
 	if config == nil {
 		config = DefaultMatchAnalysisConfig()
 	}
-	
+
 	return &MatchAnalyzer{
 		config:          config,
 		analyticsEngine: analyticsEngine,
@@ -131,11 +131,11 @@ func (m *MatchAnalyzer) AnalyzeMatchSeries(ctx context.Context, request *MatchSe
 	}
 
 	analysis := &MatchSeriesAnalysis{
-		PlayerPUUID:    request.PlayerPUUID,
-		TotalMatches:   len(request.Matches),
-		AnalysisType:   request.AnalysisType,
-		TimeFrame:      request.TimeFrame,
-		AnalyzedAt:     time.Now(),
+		PlayerPUUID:  request.PlayerPUUID,
+		TotalMatches: len(request.Matches),
+		AnalysisType: request.AnalysisType,
+		TimeFrame:    request.TimeFrame,
+		AnalyzedAt:   time.Now(),
 	}
 
 	// Analyze each match
@@ -266,7 +266,7 @@ func (m *MatchAnalyzer) analyzeGamePhases(match *riot.Match, player *riot.Partic
 	phases := &GamePhaseAnalysis{}
 
 	gameDuration := match.Info.GameDuration
-	lanePhaseEnd := m.config.LanePhaseEndTime * 60  // Convert to seconds
+	lanePhaseEnd := m.config.LanePhaseEndTime * 60 // Convert to seconds
 	midGameEnd := m.config.MidGameEndTime * 60
 
 	// Lane Phase (0-15 minutes)
@@ -298,11 +298,11 @@ func (m *MatchAnalyzer) detectKeyMoments(match *riot.Match, player *riot.Partici
 	// First Blood
 	if player.FirstBloodKill {
 		moments = append(moments, &KeyMoment{
-			Type:        "First Blood",
-			Timestamp:   300, // Estimated early game time
-			Impact:      "Very Positive",
-			Importance:  9,
-			Description: "Secured First Blood kill",
+			Type:          "First Blood",
+			Timestamp:     300, // Estimated early game time
+			Impact:        "Very Positive",
+			Importance:    9,
+			Description:   "Secured First Blood kill",
 			LearningPoint: "Excellent early game aggression timing",
 		})
 	}
@@ -310,20 +310,20 @@ func (m *MatchAnalyzer) detectKeyMoments(match *riot.Match, player *riot.Partici
 	// Multi-kills
 	if player.DoubleKills > 0 {
 		moments = append(moments, &KeyMoment{
-			Type:        "Double Kill",
-			Impact:      "Positive",
-			Importance:  7,
-			Description: fmt.Sprintf("Achieved %d double kill(s)", player.DoubleKills),
+			Type:          "Double Kill",
+			Impact:        "Positive",
+			Importance:    7,
+			Description:   fmt.Sprintf("Achieved %d double kill(s)", player.DoubleKills),
 			LearningPoint: "Good damage output and positioning in fights",
 		})
 	}
 
 	if player.TripleKills > 0 {
 		moments = append(moments, &KeyMoment{
-			Type:        "Triple Kill",
-			Impact:      "Very Positive",
-			Importance:  8,
-			Description: fmt.Sprintf("Achieved %d triple kill(s)", player.TripleKills),
+			Type:          "Triple Kill",
+			Impact:        "Very Positive",
+			Importance:    8,
+			Description:   fmt.Sprintf("Achieved %d triple kill(s)", player.TripleKills),
 			LearningPoint: "Excellent teamfight execution and damage timing",
 		})
 	}
@@ -331,10 +331,10 @@ func (m *MatchAnalyzer) detectKeyMoments(match *riot.Match, player *riot.Partici
 	// Death moments (learning opportunities)
 	if player.Deaths > 3 {
 		moments = append(moments, &KeyMoment{
-			Type:        "High Deaths",
-			Impact:      "Negative",
-			Importance:  6,
-			Description: fmt.Sprintf("Died %d times - above average", player.Deaths),
+			Type:          "High Deaths",
+			Impact:        "Negative",
+			Importance:    6,
+			Description:   fmt.Sprintf("Died %d times - above average", player.Deaths),
 			LearningPoint: "Focus on positioning and map awareness to reduce deaths",
 		})
 	}
@@ -342,10 +342,10 @@ func (m *MatchAnalyzer) detectKeyMoments(match *riot.Match, player *riot.Partici
 	// Objective participation
 	if player.DragonKills > 0 || player.BaronKills > 0 {
 		moments = append(moments, &KeyMoment{
-			Type:        "Objective Control",
-			Impact:      "Positive",
-			Importance:  7,
-			Description: "Good objective participation",
+			Type:          "Objective Control",
+			Impact:        "Positive",
+			Importance:    7,
+			Description:   "Good objective participation",
 			LearningPoint: "Continue prioritizing objective control",
 		})
 	}
@@ -407,8 +407,8 @@ func (m *MatchAnalyzer) analyzeTeamPerformance(match *riot.Match, player *riot.P
 
 func (m *MatchAnalyzer) generateMatchInsights(result *MatchAnalysisResult) *MatchInsights {
 	insights := &MatchInsights{
-		Strengths:   []string{},
-		Weaknesses:  []string{},
+		Strengths:    []string{},
+		Weaknesses:   []string{},
 		KeyTakeaways: []string{},
 	}
 
@@ -421,7 +421,7 @@ func (m *MatchAnalyzer) generateMatchInsights(result *MatchAnalysisResult) *Matc
 	if perf.CSPerMinute >= m.config.ExcellentCSPerMin {
 		insights.Strengths = append(insights.Strengths, "Outstanding farming - high CS per minute")
 	}
-	if perf.VisionScore >= m.config.ExcellentVision {
+	if float64(perf.VisionScore) >= m.config.ExcellentVision {
 		insights.Strengths = append(insights.Strengths, "Great vision control - high vision score")
 	}
 	if perf.DamageShare > 0.25 {
@@ -435,7 +435,7 @@ func (m *MatchAnalyzer) generateMatchInsights(result *MatchAnalysisResult) *Matc
 	if perf.CSPerMinute < m.config.GoodCSPerMin {
 		insights.Weaknesses = append(insights.Weaknesses, "Farming efficiency low - focus on last-hitting and wave management")
 	}
-	if perf.VisionScore < m.config.GoodVision {
+	if float64(perf.VisionScore) < m.config.GoodVision {
 		insights.Weaknesses = append(insights.Weaknesses, "Vision control lacking - place more wards")
 	}
 
@@ -449,11 +449,11 @@ func (m *MatchAnalyzer) generateMatchInsights(result *MatchAnalysisResult) *Matc
 	// Phase-specific insights
 	if result.PhaseAnalysis != nil {
 		if result.PhaseAnalysis.StrongestPhase != "" {
-			insights.KeyTakeaways = append(insights.KeyTakeaways, 
+			insights.KeyTakeaways = append(insights.KeyTakeaways,
 				fmt.Sprintf("Strongest in %s - leverage this timing in future games", result.PhaseAnalysis.StrongestPhase))
 		}
 		if result.PhaseAnalysis.WeakestPhase != "" {
-			insights.KeyTakeaways = append(insights.KeyTakeaways, 
+			insights.KeyTakeaways = append(insights.KeyTakeaways,
 				fmt.Sprintf("Improve %s performance - focus practice here", result.PhaseAnalysis.WeakestPhase))
 		}
 	}
@@ -470,17 +470,17 @@ func DefaultMatchAnalysisConfig() *MatchAnalysisConfig {
 		EnablePhaseAnalysis:      true,
 		EnableKeyMomentDetection: true,
 		EnableTeamAnalysis:       true,
-		
+
 		ExcellentKDA:      4.0,
-		GoodKDA:          2.5,
+		GoodKDA:           2.5,
 		ExcellentCSPerMin: 8.0,
-		GoodCSPerMin:     6.5,
+		GoodCSPerMin:      6.5,
 		ExcellentVision:   25.0,
-		GoodVision:       18.0,
-		
+		GoodVision:        18.0,
+
 		LanePhaseEndTime: 15, // 15 minutes
 		MidGameEndTime:   25, // 25 minutes
-		
+
 		KeyMomentThresholds: &KeyMomentThresholds{
 			MultiKillThreshold:    2,
 			KillStreakThreshold:   3,
@@ -488,7 +488,7 @@ func DefaultMatchAnalysisConfig() *MatchAnalysisConfig {
 			FirstBloodImportance:  0.9,
 			ObjectiveImportance:   0.8,
 		},
-		
+
 		KDAWeight:       0.3,
 		CSWeight:        0.25,
 		VisionWeight:    0.15,
@@ -532,7 +532,7 @@ func (m *MatchAnalyzer) calculateKDAScore(kills, deaths, assists int) int {
 
 func (m *MatchAnalyzer) calculateCSRating(csPerMin float64, role string) string {
 	var excellentThreshold, goodThreshold float64
-	
+
 	// Role-specific CS thresholds
 	switch role {
 	case "TOP", "MIDDLE":
@@ -551,7 +551,7 @@ func (m *MatchAnalyzer) calculateCSRating(csPerMin float64, role string) string 
 		excellentThreshold = 7.0
 		goodThreshold = 5.5
 	}
-	
+
 	if csPerMin >= excellentThreshold {
 		return "Excellent"
 	} else if csPerMin >= goodThreshold {
@@ -578,7 +578,7 @@ func (m *MatchAnalyzer) calculateDamageShare(match *riot.Match, player *riot.Par
 			teamDamage += participant.TotalDamageDealtToChampions
 		}
 	}
-	
+
 	if teamDamage == 0 {
 		return 0
 	}
@@ -587,7 +587,7 @@ func (m *MatchAnalyzer) calculateDamageShare(match *riot.Match, player *riot.Par
 
 func (m *MatchAnalyzer) calculateVisionRating(visionScore int, role string) string {
 	var excellentThreshold, goodThreshold float64
-	
+
 	// Role-specific vision thresholds
 	switch role {
 	case "UTILITY":
@@ -600,7 +600,7 @@ func (m *MatchAnalyzer) calculateVisionRating(visionScore int, role string) stri
 		excellentThreshold = 20
 		goodThreshold = 12
 	}
-	
+
 	vs := float64(visionScore)
 	if vs >= excellentThreshold {
 		return "Excellent"
@@ -614,13 +614,13 @@ func (m *MatchAnalyzer) calculateVisionRating(visionScore int, role string) stri
 
 func (m *MatchAnalyzer) analyzeObjectiveParticipation(match *riot.Match, player *riot.Participant) *ObjectiveStats {
 	return &ObjectiveStats{
-		DragonKills:         player.DragonKills,
-		BaronKills:          player.BaronKills,
-		TurretKills:         player.TurretKills,
-		TurretDamage:        player.DamageDealtToTurrets,
-		InhibitorKills:      player.InhibitorKills,
-		ObjectiveParticip:   m.calculateObjectiveParticipation(match, player),
-		ObjectiveControl:    m.calculateObjectiveControl(player),
+		DragonKills:       player.DragonKills,
+		BaronKills:        player.BaronKills,
+		TurretKills:       player.TurretKills,
+		TurretDamage:      player.DamageDealtToTurrets,
+		InhibitorKills:    player.InhibitorKills,
+		ObjectiveParticip: m.calculateObjectiveParticipation(match, player),
+		ObjectiveControl:  m.calculateObjectiveControl(player),
 	}
 }
 
@@ -632,7 +632,7 @@ func (m *MatchAnalyzer) calculateObjectiveParticipation(match *riot.Match, playe
 			teamObjectives += participant.DragonKills + participant.BaronKills + participant.TurretKills
 		}
 	}
-	
+
 	playerObjectives := player.DragonKills + player.BaronKills + player.TurretKills
 	if teamObjectives == 0 {
 		return 0
@@ -662,7 +662,7 @@ func (m *MatchAnalyzer) calculatePerformanceRating(performance *PerformanceAnaly
 	csScore := math.Min(performance.CSPerMinute/8.0*25, 25)
 	visionScore := math.Min(performance.VisionPerMinute/2.0*25, 25)
 	damageScore := math.Min(performance.DamageShare*100, 25)
-	
+
 	return kdaScore + csScore + visionScore + damageScore
 }
 
@@ -682,63 +682,63 @@ func (m *MatchAnalyzer) getPerformanceLevel(rating float64) string {
 // Phase analysis helper methods
 func (m *MatchAnalyzer) analyzeLanePhase(match *riot.Match, player *riot.Participant, endTime int) *PhasePerformance {
 	return &PhasePerformance{
-		Phase:       "Lane Phase",
-		StartTime:   0,
-		EndTime:     endTime,
-		Duration:    endTime,
-		Kills:       int(float64(player.Kills) * 0.4), // Estimate 40% in lane phase
-		Deaths:      int(float64(player.Deaths) * 0.3), // Estimate 30% in lane phase
-		Assists:     int(float64(player.Assists) * 0.2), // Estimate 20% in lane phase
-		KDA:         m.calculateKDA(int(float64(player.Kills)*0.4), int(float64(player.Deaths)*0.3), int(float64(player.Assists)*0.2)),
-		GoldEarned:  int(float64(player.GoldEarned) * 0.35),
-		CSGained:    int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.6),
-		DamageDealt: int(float64(player.TotalDamageDealtToChampions) * 0.25),
-		KeyEvents:   []string{"First Back", "Lane Trading"},
-		PhaseRating: 75.0, // Placeholder calculation
-		PhaseGrade:  "B+",
-		Impact:      "Medium",
+		Phase:        "Lane Phase",
+		StartTime:    0,
+		EndTime:      endTime,
+		Duration:     endTime,
+		Kills:        int(float64(player.Kills) * 0.4),   // Estimate 40% in lane phase
+		Deaths:       int(float64(player.Deaths) * 0.3),  // Estimate 30% in lane phase
+		Assists:      int(float64(player.Assists) * 0.2), // Estimate 20% in lane phase
+		KDA:          m.calculateKDA(int(float64(player.Kills)*0.4), int(float64(player.Deaths)*0.3), int(float64(player.Assists)*0.2)),
+		GoldEarned:   int(float64(player.GoldEarned) * 0.35),
+		CSGained:     int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.6),
+		DamageDealt:  int(float64(player.TotalDamageDealtToChampions) * 0.25),
+		KeyEvents:    []string{"First Back", "Lane Trading"},
+		PhaseRating:  75.0, // Placeholder calculation
+		PhaseGrade:   "B+",
+		Impact:       "Medium",
 		Improvements: []string{"Focus on CS efficiency", "Improve trading patterns"},
 	}
 }
 
 func (m *MatchAnalyzer) analyzeMidGame(match *riot.Match, player *riot.Participant, startTime, endTime int) *PhasePerformance {
 	return &PhasePerformance{
-		Phase:       "Mid Game",
-		StartTime:   startTime,
-		EndTime:     endTime,
-		Duration:    endTime - startTime,
-		Kills:       int(float64(player.Kills) * 0.4), // Estimate 40% in mid game
-		Deaths:      int(float64(player.Deaths) * 0.4), // Estimate 40% in mid game
-		Assists:     int(float64(player.Assists) * 0.5), // Estimate 50% in mid game
-		KDA:         m.calculateKDA(int(float64(player.Kills)*0.4), int(float64(player.Deaths)*0.4), int(float64(player.Assists)*0.5)),
-		GoldEarned:  int(float64(player.GoldEarned) * 0.35),
-		CSGained:    int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.3),
-		DamageDealt: int(float64(player.TotalDamageDealtToChampions) * 0.45),
-		KeyEvents:   []string{"Team Fights", "Objective Control"},
-		PhaseRating: 70.0, // Placeholder calculation
-		PhaseGrade:  "B",
-		Impact:      "High",
+		Phase:        "Mid Game",
+		StartTime:    startTime,
+		EndTime:      endTime,
+		Duration:     endTime - startTime,
+		Kills:        int(float64(player.Kills) * 0.4),   // Estimate 40% in mid game
+		Deaths:       int(float64(player.Deaths) * 0.4),  // Estimate 40% in mid game
+		Assists:      int(float64(player.Assists) * 0.5), // Estimate 50% in mid game
+		KDA:          m.calculateKDA(int(float64(player.Kills)*0.4), int(float64(player.Deaths)*0.4), int(float64(player.Assists)*0.5)),
+		GoldEarned:   int(float64(player.GoldEarned) * 0.35),
+		CSGained:     int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.3),
+		DamageDealt:  int(float64(player.TotalDamageDealtToChampions) * 0.45),
+		KeyEvents:    []string{"Team Fights", "Objective Control"},
+		PhaseRating:  70.0, // Placeholder calculation
+		PhaseGrade:   "B",
+		Impact:       "High",
 		Improvements: []string{"Better positioning in teamfights", "Improve objective timing"},
 	}
 }
 
 func (m *MatchAnalyzer) analyzeLateGame(match *riot.Match, player *riot.Participant, startTime int) *PhasePerformance {
 	return &PhasePerformance{
-		Phase:       "Late Game",
-		StartTime:   startTime,
-		EndTime:     match.Info.GameDuration,
-		Duration:    match.Info.GameDuration - startTime,
-		Kills:       int(float64(player.Kills) * 0.2), // Estimate 20% in late game
-		Deaths:      int(float64(player.Deaths) * 0.3), // Estimate 30% in late game
-		Assists:     int(float64(player.Assists) * 0.3), // Estimate 30% in late game
-		KDA:         m.calculateKDA(int(float64(player.Kills)*0.2), int(float64(player.Deaths)*0.3), int(float64(player.Assists)*0.3)),
-		GoldEarned:  int(float64(player.GoldEarned) * 0.3),
-		CSGained:    int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.1),
-		DamageDealt: int(float64(player.TotalDamageDealtToChampions) * 0.3),
-		KeyEvents:   []string{"Decisive Team Fights", "Baron/Elder Dragon"},
-		PhaseRating: 80.0, // Placeholder calculation
-		PhaseGrade:  "A-",
-		Impact:      "Very High",
+		Phase:        "Late Game",
+		StartTime:    startTime,
+		EndTime:      match.Info.GameDuration,
+		Duration:     match.Info.GameDuration - startTime,
+		Kills:        int(float64(player.Kills) * 0.2),   // Estimate 20% in late game
+		Deaths:       int(float64(player.Deaths) * 0.3),  // Estimate 30% in late game
+		Assists:      int(float64(player.Assists) * 0.3), // Estimate 30% in late game
+		KDA:          m.calculateKDA(int(float64(player.Kills)*0.2), int(float64(player.Deaths)*0.3), int(float64(player.Assists)*0.3)),
+		GoldEarned:   int(float64(player.GoldEarned) * 0.3),
+		CSGained:     int(float64(player.TotalMinionsKilled+player.NeutralMinionsKilled) * 0.1),
+		DamageDealt:  int(float64(player.TotalDamageDealtToChampions) * 0.3),
+		KeyEvents:    []string{"Decisive Team Fights", "Baron/Elder Dragon"},
+		PhaseRating:  80.0, // Placeholder calculation
+		PhaseGrade:   "A-",
+		Impact:       "Very High",
 		Improvements: []string{"Maintain focus in crucial moments", "Better late game positioning"},
 	}
 }
@@ -747,10 +747,10 @@ func (m *MatchAnalyzer) identifyStrongestPhase(phases *GamePhaseAnalysis) string
 	if phases.LanePhase == nil && phases.MidGame == nil && phases.LateGame == nil {
 		return ""
 	}
-	
+
 	highestRating := 0.0
 	strongest := ""
-	
+
 	if phases.LanePhase != nil && phases.LanePhase.PhaseRating > highestRating {
 		highestRating = phases.LanePhase.PhaseRating
 		strongest = "Lane Phase"
@@ -762,7 +762,7 @@ func (m *MatchAnalyzer) identifyStrongestPhase(phases *GamePhaseAnalysis) string
 	if phases.LateGame != nil && phases.LateGame.PhaseRating > highestRating {
 		strongest = "Late Game"
 	}
-	
+
 	return strongest
 }
 
@@ -770,10 +770,10 @@ func (m *MatchAnalyzer) identifyWeakestPhase(phases *GamePhaseAnalysis) string {
 	if phases.LanePhase == nil && phases.MidGame == nil && phases.LateGame == nil {
 		return ""
 	}
-	
+
 	lowestRating := 100.0
 	weakest := ""
-	
+
 	if phases.LanePhase != nil && phases.LanePhase.PhaseRating < lowestRating {
 		lowestRating = phases.LanePhase.PhaseRating
 		weakest = "Lane Phase"
@@ -785,13 +785,13 @@ func (m *MatchAnalyzer) identifyWeakestPhase(phases *GamePhaseAnalysis) string {
 	if phases.LateGame != nil && phases.LateGame.PhaseRating < lowestRating {
 		weakest = "Late Game"
 	}
-	
+
 	return weakest
 }
 
 func (m *MatchAnalyzer) calculatePhaseConsistency(phases *GamePhaseAnalysis) float64 {
 	ratings := []float64{}
-	
+
 	if phases.LanePhase != nil {
 		ratings = append(ratings, phases.LanePhase.PhaseRating)
 	}
@@ -801,27 +801,27 @@ func (m *MatchAnalyzer) calculatePhaseConsistency(phases *GamePhaseAnalysis) flo
 	if phases.LateGame != nil {
 		ratings = append(ratings, phases.LateGame.PhaseRating)
 	}
-	
+
 	if len(ratings) < 2 {
 		return 100.0 // Perfect consistency if only one phase
 	}
-	
+
 	// Calculate standard deviation as consistency measure
 	var sum, mean float64
 	for _, rating := range ratings {
 		sum += rating
 	}
 	mean = sum / float64(len(ratings))
-	
+
 	var variance float64
 	for _, rating := range ratings {
 		variance += math.Pow(rating-mean, 2)
 	}
 	variance /= float64(len(ratings))
-	
+
 	stdDev := math.Sqrt(variance)
 	consistency := math.Max(0, 100-stdDev*2) // Convert to 0-100 scale
-	
+
 	return consistency
 }
 
@@ -831,16 +831,16 @@ func (m *MatchAnalyzer) calculateTeamSynergy(teammates []*riot.Participant, play
 	if len(teammates) == 0 {
 		return 0
 	}
-	
+
 	var totalKills int
 	for _, teammate := range teammates {
 		totalKills += teammate.Kills
 	}
-	
+
 	if totalKills == 0 {
 		return 50.0 // Neutral
 	}
-	
+
 	assistParticipation := float64(player.Assists) / float64(totalKills)
 	return math.Min(assistParticipation*100, 100)
 }
@@ -850,7 +850,7 @@ func (m *MatchAnalyzer) calculateTeamplayRating(player *riot.Participant, contri
 	assistWeight := contribution.KillParticipation * 0.3
 	visionWeight := contribution.VisionContribution * 0.3
 	objectiveWeight := contribution.ObjectiveShare * 0.4
-	
+
 	return math.Min((assistWeight+visionWeight+objectiveWeight)*100, 100)
 }
 
@@ -865,7 +865,7 @@ func (m *MatchAnalyzer) getQueueTypeName(queueID int) string {
 		700: "Clash",
 		900: "URF",
 	}
-	
+
 	if name, exists := queueNames[queueID]; exists {
 		return name
 	}
@@ -876,11 +876,11 @@ func (m *MatchAnalyzer) normalizeRole(position string) string {
 	roleMap := map[string]string{
 		"TOP":     "Top Lane",
 		"JUNGLE":  "Jungle",
-		"MIDDLE":  "Mid Lane", 
+		"MIDDLE":  "Mid Lane",
 		"BOTTOM":  "Bot Lane",
 		"UTILITY": "Support",
 	}
-	
+
 	if role, exists := roleMap[position]; exists {
 		return role
 	}
@@ -898,36 +898,36 @@ func (m *MatchAnalyzer) calculateOverallRating(result *MatchAnalysisResult) floa
 	if result.Performance == nil {
 		return 50.0
 	}
-	
+
 	// Weighted overall rating
 	performanceWeight := 0.6
 	phaseWeight := 0.3
 	teamWeight := 0.1
-	
+
 	rating := result.Performance.OverallRating * performanceWeight
-	
+
 	// Add phase consistency bonus
 	if result.PhaseAnalysis != nil {
 		rating += result.PhaseAnalysis.PhaseConsistency * phaseWeight / 100 * 100
 	}
-	
+
 	// Add team contribution bonus
 	if result.TeamAnalysis != nil && result.TeamAnalysis.TeamplayRating > 0 {
 		rating += result.TeamAnalysis.TeamplayRating * teamWeight
 	}
-	
+
 	return math.Min(rating, 100)
 }
 
 func (m *MatchAnalyzer) identifyLearningOpportunities(result *MatchAnalysisResult) []*LearningOpportunity {
 	opportunities := []*LearningOpportunity{}
-	
+
 	if result.Performance == nil {
 		return opportunities
 	}
-	
+
 	perf := result.Performance
-	
+
 	// CS/Farming opportunities
 	if perf.CSPerMinute < 6.5 {
 		opportunities = append(opportunities, &LearningOpportunity{
@@ -941,8 +941,8 @@ func (m *MatchAnalyzer) identifyLearningOpportunities(result *MatchAnalysisResul
 			TimeToImprove:       "2-3 weeks",
 		})
 	}
-	
-	// KDA/Positioning opportunities  
+
+	// KDA/Positioning opportunities
 	if perf.KDA < 2.0 {
 		opportunities = append(opportunities, &LearningOpportunity{
 			Category:            "Positioning",
@@ -955,7 +955,7 @@ func (m *MatchAnalyzer) identifyLearningOpportunities(result *MatchAnalysisResul
 			TimeToImprove:       "3-4 weeks",
 		})
 	}
-	
+
 	// Vision opportunities
 	if perf.VisionScore < 15 {
 		opportunities = append(opportunities, &LearningOpportunity{
@@ -969,13 +969,13 @@ func (m *MatchAnalyzer) identifyLearningOpportunities(result *MatchAnalysisResul
 			TimeToImprove:       "1-2 weeks",
 		})
 	}
-	
+
 	// Sort by importance and difficulty
 	sort.Slice(opportunities, func(i, j int) bool {
 		importanceMap := map[string]int{"High": 3, "Medium": 2, "Low": 1}
 		return importanceMap[opportunities[i].Importance] > importanceMap[opportunities[j].Importance]
 	})
-	
+
 	return opportunities
 }
 
@@ -983,12 +983,12 @@ func (m *MatchAnalyzer) generateOverallAssessment(result *MatchAnalysisResult) s
 	if result.Performance == nil {
 		return "Unable to generate assessment due to missing performance data"
 	}
-	
+
 	rating := result.OverallRating
 	matchResult := result.MatchInfo.Result
-	
+
 	var assessment string
-	
+
 	if rating >= 85 {
 		assessment = "Exceptional performance"
 	} else if rating >= 75 {
@@ -1000,13 +1000,13 @@ func (m *MatchAnalyzer) generateOverallAssessment(result *MatchAnalysisResult) s
 	} else {
 		assessment = "Poor performance"
 	}
-	
+
 	if matchResult == "Victory" {
 		assessment += " contributing to team victory"
 	} else {
 		assessment += " in a challenging match"
 	}
-	
+
 	// Add specific highlights
 	perf := result.Performance
 	if perf.KDA >= 3.0 {
@@ -1016,7 +1016,7 @@ func (m *MatchAnalyzer) generateOverallAssessment(result *MatchAnalysisResult) s
 	} else if perf.VisionScore >= 25 {
 		assessment += ". Great vision control contribution"
 	}
-	
+
 	return assessment
 }
 
@@ -1025,12 +1025,12 @@ func (m *MatchAnalyzer) analyzeMatchSeries(analyses []*MatchAnalysisResult) *Ser
 	if len(analyses) == 0 {
 		return &SeriesInsights{}
 	}
-	
+
 	insights := &SeriesInsights{
 		ConsistentStrengths:  []string{},
 		ConsistentWeaknesses: []string{},
 	}
-	
+
 	// Analyze trend
 	if len(analyses) >= 3 {
 		recent := analyses[len(analyses)-3:]
@@ -1038,7 +1038,7 @@ func (m *MatchAnalyzer) analyzeMatchSeries(analyses []*MatchAnalysisResult) *Ser
 		for _, analysis := range recent {
 			ratingTrend = append(ratingTrend, analysis.OverallRating)
 		}
-		
+
 		if ratingTrend[2] > ratingTrend[0]+5 {
 			insights.OverallTrend = "Improving"
 		} else if ratingTrend[2] < ratingTrend[0]-5 {
@@ -1047,7 +1047,7 @@ func (m *MatchAnalyzer) analyzeMatchSeries(analyses []*MatchAnalysisResult) *Ser
 			insights.OverallTrend = "Stable"
 		}
 	}
-	
+
 	// Find best and worst matches
 	bestRating := 0.0
 	worstRating := 100.0
@@ -1061,12 +1061,12 @@ func (m *MatchAnalyzer) analyzeMatchSeries(analyses []*MatchAnalysisResult) *Ser
 			insights.WorstMatch = analysis.MatchID
 		}
 	}
-	
+
 	// Calculate win/loss streaks
 	currentStreak := 0
-	winStreak := 0
-	lossStreak := 0
-	
+	_ = 0 // winStreak - unused for now
+	_ = 0 // lossStreak - unused for now
+
 	for i := len(analyses) - 1; i >= 0; i-- {
 		isWin := analyses[i].MatchInfo.Result == "Victory"
 		if i == len(analyses)-1 {
@@ -1089,20 +1089,20 @@ func (m *MatchAnalyzer) analyzeMatchSeries(analyses []*MatchAnalysisResult) *Ser
 			}
 		}
 	}
-	
+
 	if currentStreak > 0 {
 		insights.WinStreak = currentStreak
 	} else {
 		insights.LossStreak = -currentStreak
 	}
-	
+
 	// Calculate performance volatility
 	var ratings []float64
 	for _, analysis := range analyses {
 		ratings = append(ratings, analysis.OverallRating)
 	}
 	insights.PerformanceVolatility = m.calculateVolatility(ratings)
-	
+
 	return insights
 }
 
@@ -1110,20 +1110,20 @@ func (m *MatchAnalyzer) calculateVolatility(ratings []float64) float64 {
 	if len(ratings) < 2 {
 		return 0
 	}
-	
+
 	// Calculate standard deviation
 	var sum, mean float64
 	for _, rating := range ratings {
 		sum += rating
 	}
 	mean = sum / float64(len(ratings))
-	
+
 	var variance float64
 	for _, rating := range ratings {
 		variance += math.Pow(rating-mean, 2)
 	}
 	variance /= float64(len(ratings))
-	
+
 	return math.Sqrt(variance)
 }
 
@@ -1137,13 +1137,13 @@ func (m *MatchAnalyzer) identifyPerformancePatterns(analyses []*MatchAnalysisRes
 
 func (m *MatchAnalyzer) analyzeChampionPatterns(analyses []*MatchAnalysisResult) map[string]*ChampionPattern {
 	patterns := make(map[string]*ChampionPattern)
-	
+
 	championStats := make(map[string]struct {
 		games  int
 		wins   int
 		rating float64
 	})
-	
+
 	// Aggregate stats by champion
 	for _, analysis := range analyses {
 		champion := analysis.MatchInfo.Champion
@@ -1155,7 +1155,7 @@ func (m *MatchAnalyzer) analyzeChampionPatterns(analyses []*MatchAnalysisResult)
 		}
 		championStats[champion] = stats
 	}
-	
+
 	// Create patterns
 	for champion, stats := range championStats {
 		if stats.games >= 3 { // Minimum games for pattern
@@ -1171,18 +1171,18 @@ func (m *MatchAnalyzer) analyzeChampionPatterns(analyses []*MatchAnalysisResult)
 			}
 		}
 	}
-	
+
 	return patterns
 }
 
 func (m *MatchAnalyzer) analyzeRolePatterns(analyses []*MatchAnalysisResult) map[string]*RolePattern {
 	patterns := make(map[string]*RolePattern)
-	
+
 	roleStats := make(map[string]struct {
 		games  int
 		rating float64
 	})
-	
+
 	// Aggregate stats by role
 	for _, analysis := range analyses {
 		role := analysis.MatchInfo.Role
@@ -1191,7 +1191,7 @@ func (m *MatchAnalyzer) analyzeRolePatterns(analyses []*MatchAnalysisResult) map
 		stats.rating += analysis.OverallRating
 		roleStats[role] = stats
 	}
-	
+
 	// Create patterns
 	for role, stats := range roleStats {
 		if stats.games >= 2 {
@@ -1204,14 +1204,14 @@ func (m *MatchAnalyzer) analyzeRolePatterns(analyses []*MatchAnalysisResult) map
 			}
 		}
 	}
-	
+
 	return patterns
 }
 
 func (m *MatchAnalyzer) analyzeTimePatterns(analyses []*MatchAnalysisResult) *TimePattern {
 	return &TimePattern{
 		BestTimeOfDay:      "Evening",
-		WorstTimeOfDay:     "Early Morning", 
+		WorstTimeOfDay:     "Early Morning",
 		TimeConsistency:    75.0,
 		WeekdayPerformance: 70.0,
 		WeekendPerformance: 75.0,
@@ -1220,16 +1220,16 @@ func (m *MatchAnalyzer) analyzeTimePatterns(analyses []*MatchAnalysisResult) *Ti
 
 func (m *MatchAnalyzer) identifySeriesImprovements(analyses []*MatchAnalysisResult) []SeriesImprovement {
 	improvements := []SeriesImprovement{}
-	
+
 	// Analyze common learning opportunities across matches
 	focusAreas := make(map[string]int)
-	
+
 	for _, analysis := range analyses {
 		for _, opportunity := range analysis.LearningOpportunities {
 			focusAreas[opportunity.Category]++
 		}
 	}
-	
+
 	// Create improvement recommendations
 	for area, frequency := range focusAreas {
 		if frequency >= 3 { // Appears in 3+ matches
@@ -1244,7 +1244,7 @@ func (m *MatchAnalyzer) identifySeriesImprovements(analyses []*MatchAnalysisResu
 			})
 		}
 	}
-	
+
 	return improvements
 }
 
@@ -1252,10 +1252,10 @@ func (m *MatchAnalyzer) calculateConsistencyMetrics(analyses []*MatchAnalysisRes
 	if len(analyses) == 0 {
 		return &ConsistencyMetrics{}
 	}
-	
+
 	// Extract performance metrics
 	var ratings, kdas, css []float64
-	
+
 	for _, analysis := range analyses {
 		ratings = append(ratings, analysis.OverallRating)
 		if analysis.Performance != nil {
@@ -1263,21 +1263,21 @@ func (m *MatchAnalyzer) calculateConsistencyMetrics(analyses []*MatchAnalysisRes
 			css = append(css, analysis.Performance.CSPerMinute)
 		}
 	}
-	
+
 	return &ConsistencyMetrics{
 		OverallConsistency: 100 - m.calculateVolatility(ratings),
 		KDAConsistency:     100 - m.calculateVolatility(kdas),
 		CSConsistency:      100 - m.calculateVolatility(css),
 		VisionConsistency:  75.0, // Placeholder
 		DamageConsistency:  70.0, // Placeholder
-		
+
 		PerformanceRange:       m.getRange(ratings),
 		StandardDeviation:      m.calculateVolatility(ratings),
 		CoefficientOfVariation: m.calculateVolatility(ratings) / m.getMean(ratings),
-		
+
 		ClutchRating:     65.0, // Placeholder
-		PressureHandling: 70.0, // Placeholder  
-		TiltResistance:   75.0, // Placeholder
+		PressureHandling: 70.0, // Placeholder
+		// TiltResistance:   75.0, // TODO: add this field to ConsistencyMetrics struct
 	}
 }
 
@@ -1316,10 +1316,10 @@ func (m *MatchAnalyzer) comparePerformances(perf1, perf2 *PerformanceAnalysis) *
 		DamageComparison: m.compareMetric("Damage Share", perf1.DamageShare*100, perf2.DamageShare*100),
 		VisionComparison: m.compareMetric("Vision Score", float64(perf1.VisionScore), float64(perf2.VisionScore)),
 		GoldComparison:   m.compareMetric("Gold/min", perf1.GoldPerMinute, perf2.GoldPerMinute),
-		
+
 		OverallImprovement: m.determineOverallImprovement(perf1.OverallRating, perf2.OverallRating),
 		ImprovementScore:   perf2.OverallRating - perf1.OverallRating,
-		
+
 		BetterAreas:  []string{},
 		WorseAreas:   []string{},
 		SimilarAreas: []string{},
@@ -1332,10 +1332,10 @@ func (m *MatchAnalyzer) compareMetric(name string, val1, val2 float64) *MetricCo
 	if val1 != 0 {
 		percentChange = (change / val1) * 100
 	}
-	
+
 	direction := "Same"
 	significance := "Minor"
-	
+
 	if change > 0.05*val1 {
 		direction = "Improved"
 		if change > 0.2*val1 {
@@ -1351,7 +1351,7 @@ func (m *MatchAnalyzer) compareMetric(name string, val1, val2 float64) *MetricCo
 			significance = "Moderate"
 		}
 	}
-	
+
 	return &MetricComparison{
 		Metric:        name,
 		Match1Value:   val1,
@@ -1375,7 +1375,7 @@ func (m *MatchAnalyzer) determineOverallImprovement(rating1, rating2 float64) st
 
 func (m *MatchAnalyzer) identifyComparisonImprovements(analysis1, analysis2 *MatchAnalysisResult) []ComparisonImprovement {
 	improvements := []ComparisonImprovement{}
-	
+
 	if analysis2.Performance.KDA > analysis1.Performance.KDA+0.5 {
 		improvements = append(improvements, ComparisonImprovement{
 			Area:           "Kill/Death Ratio",
@@ -1385,7 +1385,7 @@ func (m *MatchAnalyzer) identifyComparisonImprovements(analysis1, analysis2 *Mat
 			Priority:       "High",
 		})
 	}
-	
+
 	if analysis2.Performance.CSPerMinute > analysis1.Performance.CSPerMinute+1.0 {
 		improvements = append(improvements, ComparisonImprovement{
 			Area:           "Farming Efficiency",
@@ -1395,7 +1395,7 @@ func (m *MatchAnalyzer) identifyComparisonImprovements(analysis1, analysis2 *Mat
 			Priority:       "Medium",
 		})
 	}
-	
+
 	return improvements
 }
 

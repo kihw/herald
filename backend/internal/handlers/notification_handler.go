@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/herald-lol/backend/internal/services"
+	"github.com/herald-lol/herald/backend/internal/services"
 )
 
 // NotificationHandler handles notification-related requests
@@ -38,37 +38,37 @@ func (h *NotificationHandler) RegisterRoutes(r *gin.RouterGroup) {
 	{
 		// WebSocket connection
 		notifications.GET("/ws/:user_id", h.HandleWebSocket)
-		
+
 		// Notification management
 		notifications.POST("/send", h.SendNotification)
 		notifications.POST("/send-bulk", h.SendBulkNotifications)
 		notifications.POST("/schedule", h.ScheduleNotification)
-		
+
 		// Specific notification types
 		notifications.POST("/email", h.SendEmailNotification)
 		notifications.POST("/push", h.SendPushNotification)
 		notifications.POST("/realtime", h.SendRealtimeNotification)
-		
+
 		// Gaming-specific notifications
 		notifications.POST("/match-complete", h.NotifyMatchComplete)
 		notifications.POST("/rank-change", h.NotifyRankChange)
 		notifications.POST("/achievement", h.NotifyAchievement)
 		notifications.POST("/coaching-tip", h.SendCoachingTip)
-		
+
 		// User preferences
 		notifications.GET("/preferences/:user_id", h.GetNotificationPreferences)
 		notifications.PUT("/preferences/:user_id", h.UpdateNotificationPreferences)
-		
+
 		// Notification history
 		notifications.GET("/history/:user_id", h.GetNotificationHistory)
 		notifications.GET("/unread/:user_id", h.GetUnreadNotifications)
 		notifications.PUT("/mark-read", h.MarkNotificationsRead)
-		
+
 		// System management
 		notifications.GET("/metrics", h.GetNotificationMetrics)
 		notifications.GET("/status", h.GetSystemStatus)
 		notifications.GET("/connections", h.GetActiveConnections)
-		
+
 		// Templates
 		notifications.GET("/templates", h.GetNotificationTemplates)
 		notifications.POST("/test-template", h.TestNotificationTemplate)
@@ -89,7 +89,7 @@ func (h *NotificationHandler) HandleWebSocket(c *gin.Context) {
 	conn, err := h.wsUpgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to upgrade WebSocket connection",
+			"error":   "Failed to upgrade WebSocket connection",
 			"details": err.Error(),
 		})
 		return
@@ -97,10 +97,10 @@ func (h *NotificationHandler) HandleWebSocket(c *gin.Context) {
 
 	// Extract client info
 	clientInfo := &services.ClientInfo{
-		UserAgent: c.Request.Header.Get("User-Agent"),
-		IPAddress: c.ClientIP(),
-		Platform:  c.Query("platform"),
-		Version:   c.Query("version"),
+		UserAgent:    c.Request.Header.Get("User-Agent"),
+		IPAddress:    c.ClientIP(),
+		Platform:     c.Query("platform"),
+		Version:      c.Query("version"),
 		Capabilities: []string{"realtime", "push"},
 	}
 
@@ -114,17 +114,17 @@ func (h *NotificationHandler) HandleWebSocket(c *gin.Context) {
 // SendNotification handles general notification sending requests
 func (h *NotificationHandler) SendNotification(c *gin.Context) {
 	var request struct {
-		UserID    string                        `json:"user_id" binding:"required"`
-		Type      services.NotificationType     `json:"type" binding:"required"`
-		Channels  []services.NotificationChannel `json:"channels" binding:"required"`
-		Content   *services.NotificationContent `json:"content" binding:"required"`
-		Priority  services.NotificationPriority `json:"priority"`
-		Context   map[string]interface{}        `json:"context"`
+		UserID   string                         `json:"user_id" binding:"required"`
+		Type     services.NotificationType      `json:"type" binding:"required"`
+		Channels []services.NotificationChannel `json:"channels" binding:"required"`
+		Content  *services.NotificationContent  `json:"content" binding:"required"`
+		Priority services.NotificationPriority  `json:"priority"`
+		Context  map[string]interface{}         `json:"context"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid notification request",
+			"error":   "Invalid notification request",
 			"details": err.Error(),
 		})
 		return
@@ -141,16 +141,16 @@ func (h *NotificationHandler) SendNotification(c *gin.Context) {
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send notification",
+			"error":   "Failed to send notification",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"notification_id": notification.ID,
-		"status": "queued",
-		"message": "Notification queued successfully",
+		"notification_id":    notification.ID,
+		"status":             "queued",
+		"message":            "Notification queued successfully",
 		"estimated_delivery": time.Now().Add(5 * time.Second),
 	})
 }
@@ -158,17 +158,17 @@ func (h *NotificationHandler) SendNotification(c *gin.Context) {
 // SendBulkNotifications handles bulk notification sending
 func (h *NotificationHandler) SendBulkNotifications(c *gin.Context) {
 	var request struct {
-		UserIDs   []string                      `json:"user_ids" binding:"required"`
-		Type      services.NotificationType     `json:"type" binding:"required"`
-		Channels  []services.NotificationChannel `json:"channels" binding:"required"`
-		Content   *services.NotificationContent `json:"content" binding:"required"`
-		Priority  services.NotificationPriority `json:"priority"`
-		Context   map[string]interface{}        `json:"context"`
+		UserIDs  []string                       `json:"user_ids" binding:"required"`
+		Type     services.NotificationType      `json:"type" binding:"required"`
+		Channels []services.NotificationChannel `json:"channels" binding:"required"`
+		Content  *services.NotificationContent  `json:"content" binding:"required"`
+		Priority services.NotificationPriority  `json:"priority"`
+		Context  map[string]interface{}         `json:"context"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid bulk notification request",
+			"error":   "Invalid bulk notification request",
 			"details": err.Error(),
 		})
 		return
@@ -202,30 +202,30 @@ func (h *NotificationHandler) SendBulkNotifications(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"batch_id": batchID,
-		"total_users": len(request.UserIDs),
+		"batch_id":      batchID,
+		"total_users":   len(request.UserIDs),
 		"success_count": successCount,
 		"failure_count": failureCount,
-		"success_rate": float64(successCount) / float64(len(request.UserIDs)) * 100,
-		"message": "Bulk notifications processed",
+		"success_rate":  float64(successCount) / float64(len(request.UserIDs)) * 100,
+		"message":       "Bulk notifications processed",
 	})
 }
 
 // ScheduleNotification handles notification scheduling requests
 func (h *NotificationHandler) ScheduleNotification(c *gin.Context) {
 	var request struct {
-		UserID      string                        `json:"user_id" binding:"required"`
-		Type        services.NotificationType     `json:"type" binding:"required"`
+		UserID      string                         `json:"user_id" binding:"required"`
+		Type        services.NotificationType      `json:"type" binding:"required"`
 		Channels    []services.NotificationChannel `json:"channels" binding:"required"`
-		Content     *services.NotificationContent `json:"content" binding:"required"`
-		Priority    services.NotificationPriority `json:"priority"`
-		ScheduledAt time.Time                     `json:"scheduled_at" binding:"required"`
-		Context     map[string]interface{}        `json:"context"`
+		Content     *services.NotificationContent  `json:"content" binding:"required"`
+		Priority    services.NotificationPriority  `json:"priority"`
+		ScheduledAt time.Time                      `json:"scheduled_at" binding:"required"`
+		Context     map[string]interface{}         `json:"context"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid scheduled notification request",
+			"error":   "Invalid scheduled notification request",
 			"details": err.Error(),
 		})
 		return
@@ -250,7 +250,7 @@ func (h *NotificationHandler) ScheduleNotification(c *gin.Context) {
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to schedule notification",
+			"error":   "Failed to schedule notification",
 			"details": err.Error(),
 		})
 		return
@@ -258,29 +258,29 @@ func (h *NotificationHandler) ScheduleNotification(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"notification_id": notification.ID,
-		"scheduled_at": request.ScheduledAt,
-		"status": "scheduled",
-		"message": "Notification scheduled successfully",
+		"scheduled_at":    request.ScheduledAt,
+		"status":          "scheduled",
+		"message":         "Notification scheduled successfully",
 	})
 }
 
 // SendEmailNotification handles email-specific notifications
 func (h *NotificationHandler) SendEmailNotification(c *gin.Context) {
 	var request struct {
-		To           []string               `json:"to" binding:"required"`
-		CC           []string               `json:"cc"`
-		BCC          []string               `json:"bcc"`
-		Subject      string                 `json:"subject" binding:"required"`
-		Template     string                 `json:"template"`
-		TemplateData map[string]interface{} `json:"template_data"`
-		TextBody     string                 `json:"text_body"`
-		HTMLBody     string                 `json:"html_body"`
+		To           []string                      `json:"to" binding:"required"`
+		CC           []string                      `json:"cc"`
+		BCC          []string                      `json:"bcc"`
+		Subject      string                        `json:"subject" binding:"required"`
+		Template     string                        `json:"template"`
+		TemplateData map[string]interface{}        `json:"template_data"`
+		TextBody     string                        `json:"text_body"`
+		HTMLBody     string                        `json:"html_body"`
 		Priority     services.NotificationPriority `json:"priority"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid email notification request",
+			"error":   "Invalid email notification request",
 			"details": err.Error(),
 		})
 		return
@@ -300,38 +300,38 @@ func (h *NotificationHandler) SendEmailNotification(c *gin.Context) {
 
 	if err := h.notificationService.SendEmailNotification(c.Request.Context(), email); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send email notification",
+			"error":   "Failed to send email notification",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"email_id": email.ID,
+		"email_id":   email.ID,
 		"recipients": len(request.To),
-		"status": "queued",
-		"message": "Email notification queued successfully",
+		"status":     "queued",
+		"message":    "Email notification queued successfully",
 	})
 }
 
 // SendPushNotification handles push-specific notifications
 func (h *NotificationHandler) SendPushNotification(c *gin.Context) {
 	var request struct {
-		UserID      string                 `json:"user_id" binding:"required"`
-		DeviceToken string                 `json:"device_token"`
-		Platform    string                 `json:"platform" binding:"required"`
-		Title       string                 `json:"title" binding:"required"`
-		Body        string                 `json:"body" binding:"required"`
-		Data        map[string]interface{} `json:"data"`
-		Badge       int                    `json:"badge"`
-		Sound       string                 `json:"sound"`
-		ClickAction string                 `json:"click_action"`
+		UserID      string                        `json:"user_id" binding:"required"`
+		DeviceToken string                        `json:"device_token"`
+		Platform    string                        `json:"platform" binding:"required"`
+		Title       string                        `json:"title" binding:"required"`
+		Body        string                        `json:"body" binding:"required"`
+		Data        map[string]interface{}        `json:"data"`
+		Badge       int                           `json:"badge"`
+		Sound       string                        `json:"sound"`
+		ClickAction string                        `json:"click_action"`
 		Priority    services.NotificationPriority `json:"priority"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid push notification request",
+			"error":   "Invalid push notification request",
 			"details": err.Error(),
 		})
 		return
@@ -352,18 +352,18 @@ func (h *NotificationHandler) SendPushNotification(c *gin.Context) {
 
 	if err := h.notificationService.SendPushNotification(c.Request.Context(), push); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send push notification",
+			"error":   "Failed to send push notification",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"push_id": push.ID,
-		"user_id": push.UserID,
+		"push_id":  push.ID,
+		"user_id":  push.UserID,
 		"platform": push.Platform,
-		"status": "queued",
-		"message": "Push notification queued successfully",
+		"status":   "queued",
+		"message":  "Push notification queued successfully",
 	})
 }
 
@@ -376,7 +376,7 @@ func (h *NotificationHandler) SendRealtimeNotification(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid real-time notification request",
+			"error":   "Invalid real-time notification request",
 			"details": err.Error(),
 		})
 		return
@@ -384,16 +384,16 @@ func (h *NotificationHandler) SendRealtimeNotification(c *gin.Context) {
 
 	if err := h.notificationService.SendRealTimeNotification(request.UserID, request.Data); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send real-time notification",
+			"error":   "Failed to send real-time notification",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": request.UserID,
-		"status": "sent",
-		"message": "Real-time notification sent successfully",
+		"user_id":   request.UserID,
+		"status":    "sent",
+		"message":   "Real-time notification sent successfully",
 		"timestamp": time.Now(),
 	})
 }
@@ -403,20 +403,20 @@ func (h *NotificationHandler) SendRealtimeNotification(c *gin.Context) {
 // NotifyMatchComplete handles match completion notifications
 func (h *NotificationHandler) NotifyMatchComplete(c *gin.Context) {
 	var request struct {
-		UserID      string  `json:"user_id" binding:"required"`
-		MatchID     string  `json:"match_id" binding:"required"`
-		Result      string  `json:"result" binding:"required"` // "victory" or "defeat"
-		Champion    string  `json:"champion" binding:"required"`
-		KDA         string  `json:"kda" binding:"required"`
-		Duration    int     `json:"duration" binding:"required"`
-		Rating      float64 `json:"rating"`
-		RankChange  int     `json:"rank_change"`
-		Channels    []services.NotificationChannel `json:"channels"`
+		UserID     string                         `json:"user_id" binding:"required"`
+		MatchID    string                         `json:"match_id" binding:"required"`
+		Result     string                         `json:"result" binding:"required"` // "victory" or "defeat"
+		Champion   string                         `json:"champion" binding:"required"`
+		KDA        string                         `json:"kda" binding:"required"`
+		Duration   int                            `json:"duration" binding:"required"`
+		Rating     float64                        `json:"rating"`
+		RankChange int                            `json:"rank_change"`
+		Channels   []services.NotificationChannel `json:"channels"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid match complete notification request",
+			"error":   "Invalid match complete notification request",
 			"details": err.Error(),
 		})
 		return
@@ -441,16 +441,16 @@ func (h *NotificationHandler) NotifyMatchComplete(c *gin.Context) {
 		Message: fmt.Sprintf("Your %s match as %s is complete! KDA: %s, Duration: %dm, Rating: %.1f",
 			request.Result, request.Champion, request.KDA, request.Duration/60, request.Rating),
 		Data: map[string]interface{}{
-			"match_id": request.MatchID,
-			"result": request.Result,
-			"champion": request.Champion,
-			"kda": request.KDA,
-			"duration": request.Duration,
-			"rating": request.Rating,
+			"match_id":    request.MatchID,
+			"result":      request.Result,
+			"champion":    request.Champion,
+			"kda":         request.KDA,
+			"duration":    request.Duration,
+			"rating":      request.Rating,
 			"rank_change": request.RankChange,
 		},
-		Icon: "match_complete",
-		Category: "gaming",
+		Icon:        "match_complete",
+		Category:    "gaming",
 		ClickAction: fmt.Sprintf("/matches/%s", request.MatchID),
 	}
 
@@ -462,13 +462,13 @@ func (h *NotificationHandler) NotifyMatchComplete(c *gin.Context) {
 		Priority: services.PriorityNormal,
 		Context: map[string]interface{}{
 			"match_id": request.MatchID,
-			"result": request.Result,
+			"result":   request.Result,
 		},
 	}
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send match complete notification",
+			"error":   "Failed to send match complete notification",
 			"details": err.Error(),
 		})
 		return
@@ -476,29 +476,29 @@ func (h *NotificationHandler) NotifyMatchComplete(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"notification_id": notification.ID,
-		"match_id": request.MatchID,
-		"result": request.Result,
-		"message": "Match complete notification sent successfully",
+		"match_id":        request.MatchID,
+		"result":          request.Result,
+		"message":         "Match complete notification sent successfully",
 	})
 }
 
 // NotifyRankChange handles rank change notifications
 func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 	var request struct {
-		UserID      string `json:"user_id" binding:"required"`
-		OldRank     string `json:"old_rank" binding:"required"`
-		NewRank     string `json:"new_rank" binding:"required"`
-		LP          int    `json:"lp"`
-		LPChange    int    `json:"lp_change"`
-		QueueType   string `json:"queue_type"`
-		IsPromotion bool   `json:"is_promotion"`
-		IsDemotion  bool   `json:"is_demotion"`
+		UserID      string                         `json:"user_id" binding:"required"`
+		OldRank     string                         `json:"old_rank" binding:"required"`
+		NewRank     string                         `json:"new_rank" binding:"required"`
+		LP          int                            `json:"lp"`
+		LPChange    int                            `json:"lp_change"`
+		QueueType   string                         `json:"queue_type"`
+		IsPromotion bool                           `json:"is_promotion"`
+		IsDemotion  bool                           `json:"is_demotion"`
 		Channels    []services.NotificationChannel `json:"channels"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid rank change notification request",
+			"error":   "Invalid rank change notification request",
 			"details": err.Error(),
 		})
 		return
@@ -535,16 +535,16 @@ func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 		Title:   title,
 		Message: message,
 		Data: map[string]interface{}{
-			"old_rank": request.OldRank,
-			"new_rank": request.NewRank,
-			"lp": request.LP,
-			"lp_change": request.LPChange,
-			"queue_type": request.QueueType,
+			"old_rank":     request.OldRank,
+			"new_rank":     request.NewRank,
+			"lp":           request.LP,
+			"lp_change":    request.LPChange,
+			"queue_type":   request.QueueType,
 			"is_promotion": request.IsPromotion,
-			"is_demotion": request.IsDemotion,
+			"is_demotion":  request.IsDemotion,
 		},
-		Icon: "rank_change",
-		Category: "gaming",
+		Icon:        "rank_change",
+		Category:    "gaming",
 		ClickAction: "/profile/ranked",
 	}
 
@@ -556,8 +556,8 @@ func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 		Priority: priority,
 		Context: map[string]interface{}{
 			"rank_change": map[string]interface{}{
-				"old": request.OldRank,
-				"new": request.NewRank,
+				"old":       request.OldRank,
+				"new":       request.NewRank,
 				"promotion": request.IsPromotion,
 			},
 		},
@@ -565,7 +565,7 @@ func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send rank change notification",
+			"error":   "Failed to send rank change notification",
 			"details": err.Error(),
 		})
 		return
@@ -573,11 +573,11 @@ func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"notification_id": notification.ID,
-		"old_rank": request.OldRank,
-		"new_rank": request.NewRank,
+		"old_rank":        request.OldRank,
+		"new_rank":        request.NewRank,
 		"change_type": map[string]interface{}{
 			"promotion": request.IsPromotion,
-			"demotion": request.IsDemotion,
+			"demotion":  request.IsDemotion,
 		},
 		"message": "Rank change notification sent successfully",
 	})
@@ -586,19 +586,19 @@ func (h *NotificationHandler) NotifyRankChange(c *gin.Context) {
 // NotifyAchievement handles achievement notifications
 func (h *NotificationHandler) NotifyAchievement(c *gin.Context) {
 	var request struct {
-		UserID          string `json:"user_id" binding:"required"`
-		AchievementID   string `json:"achievement_id" binding:"required"`
-		AchievementName string `json:"achievement_name" binding:"required"`
-		Description     string `json:"description"`
-		Icon            string `json:"icon"`
-		Points          int    `json:"points"`
-		Rarity          string `json:"rarity"`
+		UserID          string                         `json:"user_id" binding:"required"`
+		AchievementID   string                         `json:"achievement_id" binding:"required"`
+		AchievementName string                         `json:"achievement_name" binding:"required"`
+		Description     string                         `json:"description"`
+		Icon            string                         `json:"icon"`
+		Points          int                            `json:"points"`
+		Rarity          string                         `json:"rarity"`
 		Channels        []services.NotificationChannel `json:"channels"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid achievement notification request",
+			"error":   "Invalid achievement notification request",
 			"details": err.Error(),
 		})
 		return
@@ -623,14 +623,14 @@ func (h *NotificationHandler) NotifyAchievement(c *gin.Context) {
 		Message: fmt.Sprintf("You've earned the '%s' achievement! %s",
 			request.AchievementName, request.Description),
 		Data: map[string]interface{}{
-			"achievement_id": request.AchievementID,
+			"achievement_id":   request.AchievementID,
 			"achievement_name": request.AchievementName,
-			"description": request.Description,
-			"points": request.Points,
-			"rarity": request.Rarity,
+			"description":      request.Description,
+			"points":           request.Points,
+			"rarity":           request.Rarity,
 		},
-		Icon: request.Icon,
-		Category: "achievement",
+		Icon:        request.Icon,
+		Category:    "achievement",
 		ClickAction: fmt.Sprintf("/achievements/%s", request.AchievementID),
 	}
 
@@ -647,8 +647,8 @@ func (h *NotificationHandler) NotifyAchievement(c *gin.Context) {
 		Priority: priority,
 		Context: map[string]interface{}{
 			"achievement": map[string]interface{}{
-				"id": request.AchievementID,
-				"name": request.AchievementName,
+				"id":     request.AchievementID,
+				"name":   request.AchievementName,
 				"rarity": request.Rarity,
 			},
 		},
@@ -656,37 +656,37 @@ func (h *NotificationHandler) NotifyAchievement(c *gin.Context) {
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send achievement notification",
+			"error":   "Failed to send achievement notification",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"notification_id": notification.ID,
-		"achievement_id": request.AchievementID,
+		"notification_id":  notification.ID,
+		"achievement_id":   request.AchievementID,
 		"achievement_name": request.AchievementName,
-		"points": request.Points,
-		"message": "Achievement notification sent successfully",
+		"points":           request.Points,
+		"message":          "Achievement notification sent successfully",
 	})
 }
 
 // SendCoachingTip handles coaching tip notifications
 func (h *NotificationHandler) SendCoachingTip(c *gin.Context) {
 	var request struct {
-		UserID      string   `json:"user_id" binding:"required"`
-		TipCategory string   `json:"tip_category" binding:"required"`
-		Title       string   `json:"title" binding:"required"`
-		Content     string   `json:"content" binding:"required"`
-		Priority    string   `json:"priority"`
-		Tags        []string `json:"tags"`
-		URL         string   `json:"url"`
+		UserID      string                         `json:"user_id" binding:"required"`
+		TipCategory string                         `json:"tip_category" binding:"required"`
+		Title       string                         `json:"title" binding:"required"`
+		Content     string                         `json:"content" binding:"required"`
+		Priority    string                         `json:"priority"`
+		Tags        []string                       `json:"tags"`
+		URL         string                         `json:"url"`
 		Channels    []services.NotificationChannel `json:"channels"`
 	}
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid coaching tip notification request",
+			"error":   "Invalid coaching tip notification request",
 			"details": err.Error(),
 		})
 		return
@@ -703,12 +703,12 @@ func (h *NotificationHandler) SendCoachingTip(c *gin.Context) {
 		Message: request.Content,
 		Data: map[string]interface{}{
 			"tip_category": request.TipCategory,
-			"tags": request.Tags,
+			"tags":         request.Tags,
 		},
-		Icon: "coaching_tip",
+		Icon:     "coaching_tip",
 		Category: "coaching",
-		URL: request.URL,
-		Tags: request.Tags,
+		URL:      request.URL,
+		Tags:     request.Tags,
 	}
 
 	priority := services.PriorityLow
@@ -727,14 +727,14 @@ func (h *NotificationHandler) SendCoachingTip(c *gin.Context) {
 		Context: map[string]interface{}{
 			"coaching": map[string]interface{}{
 				"category": request.TipCategory,
-				"tags": request.Tags,
+				"tags":     request.Tags,
 			},
 		},
 	}
 
 	if err := h.notificationService.SendNotification(c.Request.Context(), notification); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to send coaching tip notification",
+			"error":   "Failed to send coaching tip notification",
 			"details": err.Error(),
 		})
 		return
@@ -742,9 +742,9 @@ func (h *NotificationHandler) SendCoachingTip(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"notification_id": notification.ID,
-		"tip_category": request.TipCategory,
-		"title": request.Title,
-		"message": "Coaching tip notification sent successfully",
+		"tip_category":    request.TipCategory,
+		"title":           request.Title,
+		"message":         "Coaching tip notification sent successfully",
 	})
 }
 
@@ -761,7 +761,7 @@ func (h *NotificationHandler) GetNotificationPreferences(c *gin.Context) {
 	preferences, err := h.notificationService.GetNotificationPreferences(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get notification preferences",
+			"error":   "Failed to get notification preferences",
 			"details": err.Error(),
 		})
 		return
@@ -769,7 +769,7 @@ func (h *NotificationHandler) GetNotificationPreferences(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"preferences": preferences,
-		"message": "Notification preferences retrieved successfully",
+		"message":     "Notification preferences retrieved successfully",
 	})
 }
 
@@ -786,7 +786,7 @@ func (h *NotificationHandler) UpdateNotificationPreferences(c *gin.Context) {
 	var preferences services.NotificationPreferences
 	if err := c.ShouldBindJSON(&preferences); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid notification preferences",
+			"error":   "Invalid notification preferences",
 			"details": err.Error(),
 		})
 		return
@@ -794,16 +794,16 @@ func (h *NotificationHandler) UpdateNotificationPreferences(c *gin.Context) {
 
 	if err := h.notificationService.UpdateNotificationPreferences(userID, &preferences); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update notification preferences",
+			"error":   "Failed to update notification preferences",
 			"details": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
+		"user_id":    userID,
 		"updated_at": time.Now(),
-		"message": "Notification preferences updated successfully",
+		"message":    "Notification preferences updated successfully",
 	})
 }
 
@@ -834,35 +834,35 @@ func (h *NotificationHandler) GetNotificationHistory(c *gin.Context) {
 		"user_id": userID,
 		"notifications": []gin.H{
 			{
-				"id": "notif_123456789",
-				"type": "match_complete",
-				"title": "🏆 Match Complete",
-				"message": "Your victory match as Jinx is complete! KDA: 8/2/12",
-				"channels": []string{"realtime", "push"},
-				"priority": "normal",
-				"read": false,
-				"created_at": "2024-01-15T14:30:00Z",
+				"id":           "notif_123456789",
+				"type":         "match_complete",
+				"title":        "🏆 Match Complete",
+				"message":      "Your victory match as Jinx is complete! KDA: 8/2/12",
+				"channels":     []string{"realtime", "push"},
+				"priority":     "normal",
+				"read":         false,
+				"created_at":   "2024-01-15T14:30:00Z",
 				"delivered_at": "2024-01-15T14:30:02Z",
 			},
 			{
-				"id": "notif_123456790",
-				"type": "rank_change",
-				"title": "🎉 Rank Promotion!",
-				"message": "Your rank changed from Gold III to Gold II (+18 LP)",
-				"channels": []string{"realtime", "email", "push"},
-				"priority": "high",
-				"read": true,
-				"created_at": "2024-01-15T13:45:00Z",
+				"id":           "notif_123456790",
+				"type":         "rank_change",
+				"title":        "🎉 Rank Promotion!",
+				"message":      "Your rank changed from Gold III to Gold II (+18 LP)",
+				"channels":     []string{"realtime", "email", "push"},
+				"priority":     "high",
+				"read":         true,
+				"created_at":   "2024-01-15T13:45:00Z",
 				"delivered_at": "2024-01-15T13:45:01Z",
 			},
 		},
 		"pagination": gin.H{
-			"limit": limit,
-			"total": 25,
+			"limit":    limit,
+			"total":    25,
 			"has_more": false,
 		},
 		"filters": gin.H{
-			"type": notificationType,
+			"type":    notificationType,
 			"channel": channel,
 		},
 	})
@@ -880,31 +880,31 @@ func (h *NotificationHandler) GetUnreadNotifications(c *gin.Context) {
 
 	// Mock response
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": userID,
+		"user_id":      userID,
 		"unread_count": 3,
 		"notifications": []gin.H{
 			{
-				"id": "notif_123456789",
-				"type": "match_complete",
-				"title": "🏆 Match Complete",
-				"message": "Your victory match as Jinx is complete!",
-				"priority": "normal",
+				"id":         "notif_123456789",
+				"type":       "match_complete",
+				"title":      "🏆 Match Complete",
+				"message":    "Your victory match as Jinx is complete!",
+				"priority":   "normal",
 				"created_at": "2024-01-15T14:30:00Z",
 			},
 			{
-				"id": "notif_123456791",
-				"type": "coaching_tip",
-				"title": "💡 Farming Tip",
-				"message": "Focus on CS in the first 15 minutes to maximize gold income",
-				"priority": "low",
+				"id":         "notif_123456791",
+				"type":       "coaching_tip",
+				"title":      "💡 Farming Tip",
+				"message":    "Focus on CS in the first 15 minutes to maximize gold income",
+				"priority":   "low",
 				"created_at": "2024-01-15T14:00:00Z",
 			},
 			{
-				"id": "notif_123456792",
-				"type": "achievement",
-				"title": "🏅 Achievement Unlocked!",
-				"message": "You've earned the 'Pentakill Master' achievement!",
-				"priority": "normal",
+				"id":         "notif_123456792",
+				"type":       "achievement",
+				"title":      "🏅 Achievement Unlocked!",
+				"message":    "You've earned the 'Pentakill Master' achievement!",
+				"priority":   "normal",
 				"created_at": "2024-01-15T13:50:00Z",
 			},
 		},
@@ -921,7 +921,7 @@ func (h *NotificationHandler) MarkNotificationsRead(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid mark read request",
+			"error":   "Invalid mark read request",
 			"details": err.Error(),
 		})
 		return
@@ -933,11 +933,11 @@ func (h *NotificationHandler) MarkNotificationsRead(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id": request.UserID,
+		"user_id":           request.UserID,
 		"marked_read_count": markedCount,
-		"mark_all_read": request.MarkAllRead,
-		"updated_at": time.Now(),
-		"message": "Notifications marked as read successfully",
+		"mark_all_read":     request.MarkAllRead,
+		"updated_at":        time.Now(),
+		"message":           "Notifications marked as read successfully",
 	})
 }
 
@@ -953,7 +953,7 @@ func (h *NotificationHandler) GetNotificationMetrics(c *gin.Context) {
 	metrics, err := h.notificationService.GetMetrics(since)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to get notification metrics",
+			"error":   "Failed to get notification metrics",
 			"details": err.Error(),
 		})
 		return
@@ -961,8 +961,8 @@ func (h *NotificationHandler) GetNotificationMetrics(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"time_range_hours": hours,
-		"metrics": metrics,
-		"generated_at": time.Now(),
+		"metrics":          metrics,
+		"generated_at":     time.Now(),
 	})
 }
 
@@ -970,52 +970,52 @@ func (h *NotificationHandler) GetNotificationMetrics(c *gin.Context) {
 func (h *NotificationHandler) GetSystemStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"system_status": gin.H{
-			"status": "healthy",
-			"uptime": "8h 32m 15s",
+			"status":  "healthy",
+			"uptime":  "8h 32m 15s",
 			"version": "v1.2.0",
 		},
 		"queue_status": gin.H{
 			"notification_queue": gin.H{
-				"size": 12,
-				"capacity": 1000,
+				"size":        12,
+				"capacity":    1000,
 				"utilization": 0.012,
 			},
 			"email_queue": gin.H{
-				"size": 5,
-				"capacity": 1000,
+				"size":        5,
+				"capacity":    1000,
 				"utilization": 0.005,
 			},
 			"push_queue": gin.H{
-				"size": 8,
-				"capacity": 1000,
+				"size":        8,
+				"capacity":    1000,
 				"utilization": 0.008,
 			},
 		},
 		"worker_status": gin.H{
 			"notification_workers": gin.H{
-				"total": 3,
+				"total":  3,
 				"active": 2,
-				"idle": 1,
+				"idle":   1,
 			},
 			"email_workers": gin.H{
-				"total": 1,
+				"total":  1,
 				"active": 1,
-				"idle": 0,
+				"idle":   0,
 			},
 			"push_workers": gin.H{
-				"total": 1,
+				"total":  1,
 				"active": 0,
-				"idle": 1,
+				"idle":   1,
 			},
 		},
 		"performance": gin.H{
 			"average_processing_time": "120ms",
-			"success_rate": 98.5,
-			"error_rate": 1.5,
+			"success_rate":            98.5,
+			"error_rate":              1.5,
 		},
 		"connections": gin.H{
-			"websocket_connections": 145,
-			"max_connections": 1000,
+			"websocket_connections":  145,
+			"max_connections":        1000,
 			"connection_utilization": 0.145,
 		},
 	})
@@ -1027,30 +1027,30 @@ func (h *NotificationHandler) GetActiveConnections(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"total_connections": 145,
 		"connections_by_platform": gin.H{
-			"web": 89,
-			"mobile": 45,
+			"web":     89,
+			"mobile":  45,
 			"desktop": 11,
 		},
 		"recent_connections": []gin.H{
 			{
-				"user_id": "user_123",
-				"platform": "web",
+				"user_id":      "user_123",
+				"platform":     "web",
 				"connected_at": "2024-01-15T14:30:00Z",
-				"last_ping": "2024-01-15T14:32:15Z",
-				"ip_address": "192.168.1.100",
+				"last_ping":    "2024-01-15T14:32:15Z",
+				"ip_address":   "192.168.1.100",
 			},
 			{
-				"user_id": "user_456",
-				"platform": "mobile",
+				"user_id":      "user_456",
+				"platform":     "mobile",
 				"connected_at": "2024-01-15T14:25:00Z",
-				"last_ping": "2024-01-15T14:32:10Z",
-				"ip_address": "192.168.1.101",
+				"last_ping":    "2024-01-15T14:32:10Z",
+				"ip_address":   "192.168.1.101",
 			},
 		},
 		"connection_stats": gin.H{
 			"average_session_duration": "25m 30s",
-			"total_messages_sent": 8450,
-			"messages_per_minute": 125,
+			"total_messages_sent":      8450,
+			"messages_per_minute":      125,
 		},
 	})
 }
@@ -1060,36 +1060,36 @@ func (h *NotificationHandler) GetNotificationTemplates(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"email_templates": []gin.H{
 			{
-				"name": "match_complete",
-				"title": "Match Complete",
+				"name":        "match_complete",
+				"title":       "Match Complete",
 				"description": "Notification sent when a match is completed",
-				"variables": []string{"player_name", "result", "champion", "kda", "duration"},
+				"variables":   []string{"player_name", "result", "champion", "kda", "duration"},
 			},
 			{
-				"name": "rank_change",
-				"title": "Rank Change",
+				"name":        "rank_change",
+				"title":       "Rank Change",
 				"description": "Notification sent when player rank changes",
-				"variables": []string{"player_name", "old_rank", "new_rank", "lp_change"},
+				"variables":   []string{"player_name", "old_rank", "new_rank", "lp_change"},
 			},
 			{
-				"name": "weekly_report",
-				"title": "Weekly Performance Report",
+				"name":        "weekly_report",
+				"title":       "Weekly Performance Report",
 				"description": "Weekly summary of player performance",
-				"variables": []string{"player_name", "matches_played", "win_rate", "favorite_champion"},
+				"variables":   []string{"player_name", "matches_played", "win_rate", "favorite_champion"},
 			},
 		},
 		"push_templates": []gin.H{
 			{
-				"name": "achievement",
-				"title": "Achievement Unlocked",
+				"name":        "achievement",
+				"title":       "Achievement Unlocked",
 				"description": "Notification sent when player unlocks achievement",
-				"variables": []string{"achievement_name", "description", "points"},
+				"variables":   []string{"achievement_name", "description", "points"},
 			},
 			{
-				"name": "coaching_tip",
-				"title": "Coaching Tip",
+				"name":        "coaching_tip",
+				"title":       "Coaching Tip",
 				"description": "Daily coaching tip notification",
-				"variables": []string{"tip_category", "tip_content"},
+				"variables":   []string{"tip_category", "tip_content"},
 			},
 		},
 	})
@@ -1106,7 +1106,7 @@ func (h *NotificationHandler) TestNotificationTemplate(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid template test request",
+			"error":   "Invalid template test request",
 			"details": err.Error(),
 		})
 		return
@@ -1116,7 +1116,7 @@ func (h *NotificationHandler) TestNotificationTemplate(c *gin.Context) {
 	renderedContent := gin.H{
 		"template_name": request.TemplateName,
 		"template_type": request.TemplateType,
-		"rendered_at": time.Now(),
+		"rendered_at":   time.Now(),
 	}
 
 	if request.TemplateType == "email" {
@@ -1130,11 +1130,11 @@ func (h *NotificationHandler) TestNotificationTemplate(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"template_test_id": fmt.Sprintf("test_%d", time.Now().UnixNano()),
-		"template_name": request.TemplateName,
-		"template_type": request.TemplateType,
-		"test_user_id": request.TestUserID,
+		"template_name":    request.TemplateName,
+		"template_type":    request.TemplateType,
+		"test_user_id":     request.TestUserID,
 		"rendered_content": renderedContent,
-		"test_status": "success",
-		"message": "Template test completed successfully",
+		"test_status":      "success",
+		"message":          "Template test completed successfully",
 	})
 }
